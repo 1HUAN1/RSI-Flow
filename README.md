@@ -4,14 +4,7 @@ Current experiment: **[RSIFlow_4B](RSIFlow_4B/)**. See **[experiment setup and e
 
 ---
 
-# Upstream SIA (Self-Improving AI)
-
-[![arXiv](https://img.shields.io/badge/arXiv-2605.27276-b31b1b.svg)](https://arxiv.org/abs/2605.27276)
-[![CI](https://github.com/hexo-ai/sia/actions/workflows/ci.yml/badge.svg)](https://github.com/hexo-ai/sia/actions/workflows/ci.yml)
-[![PyPI version](https://img.shields.io/pypi/v/sia-agent.svg)](https://pypi.org/project/sia-agent/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/sia-agent.svg)](https://pypi.org/project/sia-agent/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+# RSI-Flow
 
 
 
