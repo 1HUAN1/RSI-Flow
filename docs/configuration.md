@@ -1,0 +1,340 @@
+# Configuration
+
+Full reference for SIA's agent **profiles**, **providers**, and command-line arguments.
+
+## Command-line arguments
+
+SIA has two sub-commands: **`sia run`** (the self-improvement loop) and **`sia web`**
+(the runs visualizer, see [Visualizing runs](#visualizing-runs)). For backward
+compatibility, `sia <flags>` with no sub-command is treated as `sia run <flags>`.
+
+### `sia run`
+
+| Argument | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `--task` | one of | — | Name of a bundled task: `gpqa`, `lawbench`, `longcot-chess`, `spaceship-titanic` |
+| `--task_dir` | one of | — | Path to an external task directory (mutually exclusive with `--task`) |
+| `--max_gen` | no | `3` | Number of self-improvement generations |
+| `--run_id` | no | `1` | Unique run identifier |
+| `--meta-agent-profile` | no | `default-meta` | Profile for the meta/feedback agent (name or path to a `.json`) |
+| `--target-agent-profile` | no | `default-target` | Profile for the target agent (name or path to a `.json`) |
+| `--focus` | no | `harness` | Improvement focus: `harness` (code/prompt changes) or `weights` (RL-based tuning) |
+| `--training_sandbox` | no | `modal` | Sandbox environment for code execution during training rollouts (weights mode): `modal` (default) or `sandboxfusion` |
+| `--sandbox` | no | `none` | Target-agent isolation: `none` or `docker` |
+| `--no-web` | no | off | Don't auto-start the live dashboard during the run |
+| `--web-host` | no | `127.0.0.1` | Bind host for the live dashboard |
+| `--web-port` | no | `8000` | Bind port for the live dashboard |
+
+### `sia web`
+
+| Argument | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `--runs-dir` | no | `./runs` | Directory of runs to visualize |
+| `--host` | no | `127.0.0.1` | Bind host |
+| `--port` | no | `8000` | Bind port |
+| `--no-browser` | no | off | Don't open a browser window automatically |
+
+There are two agent roles, each selected by a profile:
+
+- the **meta/feedback agent** runs *inside* SIA via an agent impl (`claude` / `openhands` /
+  `pydantic-ai`) — selected with `--meta-agent-profile`;
+- the **target agent** is *generated code* SIA never runs as an engine — its model/provider come
+  from `--target-agent-profile`, and the meta-agent refactors that profile's `agent_reference`
+  (the seed code) to the provider's SDK and iteratively improves it.
+
+## Profiles and providers
+
+Configuration is **declarative JSON** you can extend without touching code.
+
+### Provider — an endpoint + credentials
+
+```jsonc
+// sia/defaults/providers/nebius.json
+{
+  "provider_id": "nebius",                                   // stable id (also the filename stem)
+  "name": "Nebius Token Factory",                            // human-readable display name
+  "client_kind": "openai",                                   // anthropic | openai | google
+  "base_url": "https://api.tokenfactory.us-central1.nebius.com/v1/",
+  "api_key_env": "NEBIUS_API_KEY",
+  "litellm_prefix": "openrouter"                             // optional; see below
+}
+```
+
+`litellm_prefix` (optional, `openai` by default) names the litellm provider the `openhands` agent
+impl routes through. Most OpenAI-compatible endpoints want the default. Set it when litellm models
+the gateway as a first-class provider — OpenRouter does — because the generic OpenAI transform
+**strips `cache_control` from every message**, silently disabling prompt caching, and cannot report
+usage or cost. Naming the provider fixes all three.
+
+Bundled providers: `anthropic`, `gemini`, `openai`, `together`, `nebius`, `openrouter`.
+
+### Profiles — one per agent role
+
+A **meta-agent profile** bundles `(agent_impl, model, provider)`:
+
+```jsonc
+// sia/defaults/profiles/kimi-nebius-meta.json
+{
+  "profile_id": "kimi-nebius-meta", // stable id (also the value you pass to --meta-agent-profile)
+  "name": "Kimi K2.6 on Nebius",    // human-readable display name
+  "agent_impl": "openhands",        // claude | openhands | pydantic-ai
+  "model": "moonshotai/Kimi-K2.6",
+  "provider_id": "nebius",          // references a provider by its provider_id
+  "model_canonical_name": null      // optional; see below
+}
+```
+
+`model_canonical_name` (optional) is the vendor's own model id, used **only** for SDK capability
+lookups — prompt caching, context window, cost — while `model` stays the routing id the gateway
+expects. Set it when the two differ: OpenRouter serves Anthropic's `claude-haiku-4-5` as
+`anthropic/claude-haiku-4.5`, and capability tables key on the hyphenated form, so without it
+caching stays off and the context window is undetected. **Change it whenever you change `model`** —
+a stale value applies the wrong model's capabilities, token limits and pricing.
+
+A **target-agent profile** bundles `(model, provider, agent_reference)` — no agent impl, because
+SIA never runs the target as an engine; it generates and improves the code:
+
+```jsonc
+// sia/defaults/profiles/kimi-nebius-target.json
+{
+  "profile_id": "kimi-nebius-target", // stable id (also the value you pass to --target-agent-profile)
+  "name": "Kimi K2.6 on Nebius",
+  "model": "moonshotai/Kimi-K2.6",
+  "provider_id": "nebius",
+  "agent_reference": "default"        // "default" = the task package's reference; see below
+}
+```
+
+Each file carries both a stable `*_id` (used for references and on the CLI — keep it equal to the
+filename stem so name lookups resolve) and a friendly `name` for display.
+
+Bundled profiles:
+
+| Profile | role | agent_impl / reference | model | provider |
+|---------|------|------------------------|-------|----------|
+| `default-meta` | meta | `agent_impl: claude` | `haiku` | `anthropic` |
+| `default-target` | target | `agent_reference: default` | `claude-haiku-4-5-20251001` | `anthropic` |
+| `kimi-nebius-meta` | meta | `agent_impl: openhands` | `moonshotai/Kimi-K2.6` | `nebius` |
+| `kimi-nebius-target` | target | `agent_reference: default` | `moonshotai/Kimi-K2.6` | `nebius` |
+| `openrouter-meta` | meta | `agent_impl: openhands` | `anthropic/claude-haiku-4.5` | `openrouter` |
+| `openrouter-target` | target | `agent_reference: default` | `anthropic/claude-haiku-4.5` | `openrouter` |
+
+### agent_reference — the target agent's seed code + deps
+
+A target-agent profile's `agent_reference` is the improvable seed the meta-agent starts from and the
+feedback-agent rewrites each generation:
+
+- `"default"` — the task package's bundled `reference/` directory (entrypoint
+  `reference_target_agent.py`). This is the historical behavior.
+- `{ "source": "./my_agent.py" }` — a single user file; its text is embedded in the meta prompt.
+- `{ "source": "./my_agent_dir/", "entrypoint": "main.py" }` — a multi-file directory copied into
+  each generation's working dir; the agent reads it with its own tools rather than via the prompt.
+
+Dependencies live in a `requirements.txt` **inside the reference** (not a profile field), installed
+per generation on top of the baseline packages — so the meta/feedback agents can evolve them.
+
+### Resolution — name or path
+
+A profile/provider value that contains `/` or ends in `.json` is loaded as a **file path**.
+Otherwise a bare **name** resolves in order:
+
+1. the user directory — `$SIA_PROFILES_DIR` / `$SIA_PROVIDERS_DIR`, else `./profiles` / `./providers`;
+2. the bundled defaults shipped in the package.
+
+Add your own by dropping a JSON file in `./providers/` or `./profiles/` (no code change):
+
+```bash
+sia run --task gpqa --target-agent-profile kimi-nebius-target   # bundled name
+sia run --task gpqa --target-agent-profile ./profiles/mine.json # explicit path
+```
+
+## Running
+
+### Default (Claude target, Claude meta)
+
+```bash
+sia run --task gpqa --max_gen 5 --run_id 1
+```
+
+Claude model shortcuts (used by the `claude` agent impl and `claude-*` target models):
+`haiku` → `claude-haiku-4-5-20251001`, `sonnet` → `claude-sonnet-4-5-20250929`,
+`opus` → `claude-opus-4-5-20251101`.
+
+### Kimi-K2.6 on Nebius as the target model
+
+```bash
+export NEBIUS_API_KEY="..."        # target provider
+export ANTHROPIC_API_KEY="..."     # default-meta agent
+sia run --task gpqa --target-agent-profile kimi-nebius-target --max_gen 5 --run_id 2
+```
+
+The meta-agent refactors the reference agent to call the `openai` SDK at the Nebius
+`base_url` with `NEBIUS_API_KEY` (dollar-cost is reported as 0 — per-provider pricing is unknown).
+
+### One OpenRouter key for both agents
+
+OpenRouter is an OpenAI-compatible gateway to 400+ models, so a single key covers the meta
+agent *and* the target agent — useful when you don't want a separate account per provider:
+
+```bash
+pip install 'sia-agent[openhands]'   # the meta profile uses the openhands agent impl
+export OPENROUTER_API_KEY="..."      # both agents
+sia run --task gpqa \
+        --meta-agent-profile openrouter-meta \
+        --target-agent-profile openrouter-target \
+        --max_gen 5 --run_id 3
+```
+
+Both bundled OpenRouter profiles use `anthropic/claude-haiku-4.5`. To swap models, copy them into
+`./profiles/` and change `model` to any [OpenRouter model id](https://openrouter.ai/models) —
+the id must keep its vendor namespace (`openai/gpt-oss-120b`, `google/gemini-3-flash-preview`,
+`qwen/qwen3-235b-a22b-2507`), since that is how OpenRouter routes. When you change `model` on the
+**meta** profile, update `model_canonical_name` to match the vendor's own id for that model, or
+delete it — leaving the old value applies the wrong model's capabilities and pricing.
+
+The meta agent cannot use the `claude` agent impl here (see below): OpenRouter is an
+OpenAI-compatible provider, so `openrouter-meta` uses `openhands`.
+
+**Prompt caching is model-gated, not provider-gated.** OpenRouter only accepts Anthropic-style
+cache breakpoints for a subset of models — ids containing `claude`, `gemini`, `glm`, `minimax` or
+`z-ai`. Swapping the meta model to, say, `openai/gpt-oss-120b` routes and runs fine but caches
+nothing, so a long meta-agent loop re-sends its whole prefix every turn.
+
+Cost reporting reflects the **native vendor's** published prices, looked up via
+`model_canonical_name` — not OpenRouter's, which adds a fee and varies by route. Treat per-turn
+figures as an estimate and track real spend on the
+[OpenRouter activity page](https://openrouter.ai/activity).
+
+### Pointing the meta/feedback agent at another provider
+
+The `claude` agent impl is Anthropic-only (a profile pairing `agent_impl: claude` with a non-anthropic
+provider is rejected at load time). To run the meta agent elsewhere, author a profile with the
+`openhands` or `pydantic-ai` agent impl:
+
+```jsonc
+// ./profiles/gemini-meta.json
+{ "profile_id": "gemini-meta", "name": "Gemini meta agent", "agent_impl": "openhands",
+  "model": "gemini/gemini-3.1-pro-preview", "provider_id": "gemini" }
+```
+
+```bash
+sia run --task gpqa --meta-agent-profile gemini-meta
+```
+
+Agent-impl model-spec conventions: OpenHands uses fully-qualified `provider/model`
+(`gemini/gemini-3.1-pro-preview`, `openai/gpt-4`); PydanticAI uses native specs
+(`openai:gpt-4o`, `anthropic:claude-sonnet-4-5-20250929`, `google-gla:gemini-3.1-pro-preview`).
+Install the PydanticAI extra with `pip install 'sia-agent[pydantic-ai]'`.
+
+## API keys
+
+Set the `api_key_env` for each provider you use (the orchestrator warns at startup if one is unset):
+
+```bash
+export ANTHROPIC_API_KEY="..."   # anthropic provider (claude agent impl / claude target models)
+export GEMINI_API_KEY="..."      # gemini provider  (or GOOGLE_API_KEY via openhands)
+export OPENAI_API_KEY="..."      # openai provider
+export TOGETHER_API_KEY="..."    # together provider
+export NEBIUS_API_KEY="..."      # nebius provider
+export OPENROUTER_API_KEY="..."  # openrouter provider (one key, 400+ models)
+```
+
+## Comparing multiple LLMs on the same task
+
+```bash
+sia run --task gpqa --max_gen 3 --run_id 1 --target-agent-profile default-target      # Claude
+sia run --task gpqa --max_gen 3 --run_id 2 --target-agent-profile kimi-nebius-target  # Kimi on Nebius
+```
+
+Each run lands in its own `runs/run_{id}/` directory, so they can be compared side by side.
+
+## Visualizing runs
+
+`sia web` serves a dashboard over the `runs/` directory: per-generation
+target-agent code (syntax-highlighted), meta/feedback prompts, improvement
+plans, evaluation scores (accuracy-across-generations chart + per-domain
+breakdown), execution trajectories, and logs.
+
+```bash
+sia web                                  # serve ./runs at http://127.0.0.1:8000
+sia web --runs-dir ./runs --port 8080    # custom directory / port
+```
+
+The same dashboard auto-starts in a background thread during `sia run` so you can
+watch generations land live; pass `--no-web` to disable it, or `--web-port` /
+`--web-host` to change where it binds. If FastAPI/uvicorn are missing, the
+run logs a warning and continues without the dashboard.
+
+## Weights Mode (RL-based tuning)
+
+SIA supports two improvement modes:
+
+### Harness Mode (default)
+Generates and improves the target agent's **code and prompts** across generations.
+
+```bash
+sia run --task gpqa --max_gen 5 --run_id 1
+```
+
+### Weights Mode
+Used tune model weights/parameters via the `tinker-cookbook` library. The meta-agent generates `train.py` (training script) instead of `target_agent.py`. During training, `train.py` performs rollouts (samples code solutions) in a sandbox, executes them to get outputs.
+
+**Requirements:**
+- `TINKER_API_KEY` environment variable (required)
+- `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` if using Modal (default)
+
+```bash
+export TINKER_API_KEY="your-tinker-api-key"
+export MODAL_TOKEN_ID="your-modal-token-id"
+export MODAL_TOKEN_SECRET="your-modal-token-secret"
+
+sia run --task gpqa --max_gen 5 --run_id 1 --focus weights --training_sandbox modal
+```
+
+### Training Sandbox Options
+
+When using weights mode, choose the sandbox environment where rollout code execution happens (where sampled code solutions are executed during training):
+
+- **Modal** (default): Cloud-based execution, requires `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET`
+- **SandboxFusion**: Local Docker-based execution service
+
+#### SandboxFusion Setup
+
+Start the SandboxFusion service on your host (requires Docker and 40GB+ free disk):
+
+```bash
+docker run \
+  --rm \
+  -it \
+  -p 8080:8080 \
+  --name sia-sandbox-fusion \
+  volcengine/sandbox-fusion:server-20250609
+```
+
+Then run SIA with SandboxFusion:
+
+```bash
+export TINKER_API_KEY="your-tinker-api-key"
+
+sia run --task gpqa --max_gen 5 --run_id 1 \
+    --focus weights \
+    --training_sandbox sandboxfusion
+```
+
+The orchestrator automatically passes the SandboxFusion URL to train.py via the `SANDBOX_URL` environment variable (defaults to `http://localhost:8080`). To use a custom URL:
+
+```bash
+export SANDBOX_URL="http://your-sandboxfusion-host:8080"
+sia run --task gpqa --max_gen 5 --run_id 1 --focus weights --training_sandbox sandboxfusion
+```
+
+## Environment-variable defaults
+
+`SIA_META_AGENT_PROFILE` / `SIA_TARGET_AGENT_PROFILE` set the default profile names (overridden by
+the CLI flags). `SIA_MAX_GENERATIONS`, `SIA_MAX_TURNS`, and `SIA_SANDBOX_MODE` are also honored.
+
+## Notes
+
+- The `claude` agent impl only accepts the Claude shortcut names (`haiku`, `sonnet`, `opus`) and an
+  `anthropic` provider. For any other provider, use an `openhands` or `pydantic-ai` profile.
+- Make sure the API key matching each chosen provider is in the environment before launching.

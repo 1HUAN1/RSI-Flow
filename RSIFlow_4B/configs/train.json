@@ -1,0 +1,175 @@
+{
+  "rounds": 3,
+  "seed": 42,
+  "runtime_source": "runtime",
+  "base_config": "configs/base.json",
+  "dataset_root": "/root/data/RSI_iclr2027/dataset",
+  "environment_files": [
+    "train/tool_use/envscaler/train/environments.jsonl",
+    "train/tool_use/envscaler/heldout/environments.jsonl"
+  ],
+  "datasets": [
+    {
+      "name": "envscaler",
+      "domain": "tool_use",
+      "files": [
+        {
+          "path": "train/tool_use/envscaler/train/scenarios.jsonl",
+          "original_split": "train"
+        },
+        {
+          "path": "train/tool_use/envscaler/heldout/scenarios.jsonl",
+          "original_split": "heldout"
+        }
+      ],
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    },
+    {
+      "name": "deepcoder_taco",
+      "domain": "code",
+      "files": [
+        {
+          "path": "train/code/deepcoder_taco/train.jsonl",
+          "original_split": "train"
+        }
+      ],
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    },
+    {
+      "name": "nq_open",
+      "domain": "searchqa",
+      "files": [
+        {
+          "path": "train/searchqa/nq_open/train.jsonl",
+          "original_split": "train"
+        }
+      ],
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    },
+    {
+      "name": "hotpotqa",
+      "domain": "searchqa",
+      "files": [
+        {
+          "path": "train/searchqa/hotpotqa/train.jsonl",
+          "original_split": "train"
+        }
+      ],
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    },
+    {
+      "name": "2wiki",
+      "domain": "searchqa",
+      "files": [
+        {
+          "path": "train/searchqa/2wiki/train.jsonl",
+          "original_split": "train"
+        }
+      ],
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    }
+  ],
+  "sft_epochs_per_update": 1,
+  "sft_max_steps": -1,
+  "max_length": 16384,
+  "max_sft_samples": 10000000,
+  "training_timeout_seconds": 604800,
+  "max_wall_seconds": 2592000,
+  "validation_config": "configs/validation.json",
+  "output_root": "/root/data/RSI_iclr2027/rsiH/Rollout_logs",
+  "run_name": "rsiflow_4b_harnessforge_ds41_isolated_v1",
+  "meta_worker_socket": "/tmp/rsi_meta_joint_20260918_worker.sock",
+  "meta_relay_socket": "/tmp/rsi_meta_joint_20260918_relay.sock",
+  "ports": [
+    8171,
+    8172,
+    8173,
+    8174
+  ],
+  "training_schedule": "round_disjoint",
+  "split_seed": 42,
+  "rollout_seed": 42,
+  "training_seed": 42,
+  "allocated_tasks": 1080,
+  "minimum_sft_samples": 1,
+  "train_quotas_per_round": {
+    "envscaler": 120,
+    "deepcoder_taco": 120,
+    "nq_open": 30,
+    "hotpotqa": 45,
+    "2wiki": 45
+  },
+  "grouping": {
+    "family_fields": [
+      "group_id",
+      "problem_id",
+      "conversation_id",
+      "dialogue_id",
+      "parent_id",
+      "original_id"
+    ],
+    "envscaler_environment_family": true,
+    "max_environment_fraction_per_round": 0.1
+  },
+  "exposure_ledger": null,
+  "validation_limits": {
+    "bfcl_v3": 50,
+    "acebench": 50,
+    "livecodebench": 50,
+    "humaneval_plus": 25,
+    "mbpp_plus": 25,
+    "hotpotqa_dev": 50,
+    "2wiki_dev": 50
+  },
+  "final_test_limits": {
+    "bfcl_v3": null,
+    "acebench": null,
+    "livecodebench": null,
+    "humaneval_plus": null,
+    "mbpp_plus": null,
+    "hotpotqa_dev": 1000,
+    "2wiki_dev": 1000
+  },
+  "retrieval_index": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918/runtime/data/joint_full/search.sqlite",
+  "validation_vault": "/root/data/RSI_iclr2027/rsiH/evaluation_vault/append_memory_1080_fast",
+  "rollout_collection_policy": "meta_one_component_one_candidate_strict_positive_gain",
+  "training_rollouts_per_round": {
+    "min": 360,
+    "max": 720
+  },
+  "training_tasks_per_pass": 360,
+  "evaluate_initial_system": false,
+  "data_release": "rounds_1080",
+  "memory_policy": "append_component_skill_then_general_principle",
+  "sequential_domains": false,
+  "frozen_data_dir": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260919_360_fast/runtime/data/rounds_1080",
+  "candidate_policy": "single_candidate_strict_positive_gain",
+  "max_dataset_passes_per_stage": 2,
+  "artifact_evaluation": "direct_submission",
+  "evidence_bound_interventions": true
+}

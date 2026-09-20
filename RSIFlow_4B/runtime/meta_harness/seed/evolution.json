@@ -1,0 +1,476 @@
+{
+  "diagnosis": {
+    "instruction": "Diagnose from trusted facts and attributable evidence. Distinguish tool-check facts from hypotheses. Choose exactly one currently executable component using observed history, expected effect and cost; do not preassign components by error class.",
+    "rules": [
+      {
+        "id": "zero_delta_unconfirmed",
+        "instruction": "Zero observed delta does not establish mechanism success or exhaustion. Distinguish diagnostic training windows from the supplied paired internal-development evidence; inspect implementation, activation opportunities, target errors, costs and counter-evidence before deciding whether the same target remains justified. Do not infer an isolated causal effect.",
+        "when": true
+      },
+      {
+        "id": "cross_task_contamination_priority",
+        "instruction": "Identifiers or notes from other task_ids are evidence to inspect artifact provenance and scoping. Treat unintended scope leakage as a hypothesis, not proof or an automatic HARNESS choice: reusable cross-task content can be legitimate. Compare actual H consumption, A content and available MODEL training signal before routing; in branch operations retain the accepted component.",
+        "when": true
+      },
+      {
+        "id": "memory_completion_assertion_priority",
+        "instruction": "Finalization based on a summary completion assertion without confirming tool observations is evidence to investigate the memory/submission mechanism. Check full action-observation context and task conditions, compare feasible remedies and counter-evidence, and do not force HARNESS solely from this label. Branch operations only implement the frozen decision.",
+        "when": true
+      },
+      {
+        "id": "tool_argument_misuse_priority",
+        "instruction": "Malformed entity lookup or collection replacement patterns are evidence to investigate tool-use behavior. Inspect schema, action-observation pairs, content availability, current execution mechanisms and eligible training signal. They do not by themselves establish component ownership or require a fixed priority. Respect the operation and accepted decision.",
+        "when": true
+      },
+      {
+        "id": "first_turn_activation_audit",
+        "instruction": "When paired before/after traces exist for an evaluated first-turn or input intervention, before selecting the next Task component compare the first non-system action and its observation for every paired key. Record activated, not_activated, or no_opportunity per pair; separately report implementation, activation, outcome, and paired model_calls, tool_call_denominator, input_tokens, output_tokens, and wall_time_seconds. Treat cost and partial changes as observations rather than causal proof, do not infer component exhaustion, and do not reuse the identical target without new activation evidence. Require the activation audit to state the opportunity test used for each pair (whether an unresolved-ID or other targeted event occurred); if the trace exposes no such event, record no_opportunity or unknown rather than treating changed call counts or partial score as activation.",
+        "when": true
+      },
+      {
+        "id": "validator_opportunity_audit",
+        "instruction": "When a HARNESS intervention changes a validator, retry, or other execution guard, require the next self-update to inspect paired traces for the guard's opportunity and event separately: count eligible malformed/schema-trigger opportunities, observed guard events, downstream dispatch, and task/tool outcomes per pair. If traces expose no opportunity or event, record no_opportunity or unknown; do not treat zero tool errors, fewer calls, partial-score movement, or loaded identity as activation or causal benefit. Use this audit before reusing the target or selecting a follow-up, while preserving uncertainty and single-component selection.",
+        "when": true
+      },
+      {
+        "id": "infrastructure_outcome_separation",
+        "instruction": "When paired trajectories include an environment_runtime_error or execution_error, classify infrastructure status separately from task behavior before comparing target errors or selecting a component. For each affected pair, record infrastructure_error, task outcome, opportunity/event evidence, and whether the trace is comparable; do not attribute an infrastructure failure to MODEL, HARNESS, or ARTIFACTS without task-level evidence. Preserve the affected rollout and uncertainty, and use the classification to bound—not predetermine—the next component choice.",
+        "when": true
+      },
+      {
+        "id": "parse_continuation_opportunity_audit",
+        "instruction": "When paired trajectories contain invalid_answer, parse_failure, or premature-stop evidence after a continuation-oriented intervention, inspect each full permitted trace for the exact serialized response, parse result, continuation opportunity, and stop/finalization decision before attributing the error. Report denominators separately for parse-valid responses, eligible continuation opportunities, observed continuation events, and terminal outcomes; distinguish malformed emission, local budget/context exhaustion, infrastructure failure, and task incompletion. Do not treat a changed call count, partial score, or prompt loading identity as activation or causal benefit.",
+        "when": true
+      },
+      {
+        "id": "serialized_context_feasibility_audit",
+        "instruction": "Before routing or proposing another prompt-growing HARNESS change after repeated non-positive prompt interventions or any parse/execution failure, inspect authoritative serving context and resource facts and measure the exact serialized Task input with the current checkpoint tokenizer and serving chat template/thinking settings, including instructions, history, tool schemas, observations, assets, and reserved output. For added planning, review, summary, or recovery calls, estimate worst-case call count and context growth. Report measured headroom or the specific unknown limit separately from task behavior and infrastructure status. If the required tokenizer, template, active context limit, or token-dimension observation is unavailable, record that engineering dependency and do not claim a prompt edit implements a context guard. Use this feasibility audit to bound, not predetermine, autonomous MODEL/HARNESS/ARTIFACTS selection.",
+        "when": true
+      }
+    ]
+  },
+  "evidence": {
+    "field_chars": 1200,
+    "fields": [
+      "task_id",
+      "domain",
+      "error_type",
+      "terminal_reward",
+      "verification",
+      "model_ref"
+    ],
+    "filter": true,
+    "fragments": {
+      "after": 1,
+      "anchor": {
+        "any": [
+          {
+            "op": "contains",
+            "path": "message.content",
+            "value": "Error"
+          },
+          {
+            "op": "contains",
+            "path": "message.content",
+            "value": "error"
+          }
+        ]
+      },
+      "before": 1,
+      "fallback": "tail",
+      "max_messages": 6,
+      "message_chars": 2000,
+      "retain_tools": []
+    },
+    "group_by": [
+      "domain",
+      "error_type"
+    ],
+    "max_chars": 32000,
+    "max_items": 8,
+    "score_rules": [],
+    "sort": [
+      {
+        "direction": "desc",
+        "field": "generation"
+      }
+    ]
+  },
+  "experience": {
+    "applicability": [],
+    "exclude_failed": false,
+    "failure": [],
+    "field_chars": 1600,
+    "fields": [
+      "generation",
+      "experience_id",
+      "chosen_action",
+      "requested_change",
+      "actual_change",
+      "observed_performance_delta",
+      "performance_delta",
+      "deployment_status",
+      "candidate_attempts",
+      "modification",
+      "cost_before",
+      "cost_after",
+      "update_cost",
+      "versions",
+      "attempted_component",
+      "attempted_state_after",
+      "attempted_intervention_diff",
+      "attempted_performance_after",
+      "attempted_performance_delta",
+      "attempted_outcome"
+    ],
+    "filter": true,
+    "group_by": [
+      "chosen_action"
+    ],
+    "max_chars": 24000,
+    "max_items": 8,
+    "require_applicable": false,
+    "score_rules": [],
+    "sort": [
+      {
+        "direction": "desc",
+        "field": "generation"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "self_update": {
+    "instruction": "### Role\nAfter each real Task-component attempt and its same-task outcome, update Meta principle memory K from the evidence. G is an optional mechanism update, not a per-round quota. Task state T=(M,H,A) remains frozen during this operation.\n\n### Objective and Acceptance Contract\nAppend grounded reusable memory for every attempted component, including accepted positive gain, zero gain, negative gain, incomplete comparison, and an unexecutable candidate. Add each component-specific skill first, then derive at least one general principle. Return status=UPDATED because K changes. Change G only when the evidence exposes a concrete structural defect in the current improvement procedure; never force a G edit to pass validation.\n\n### Inputs\nUse frozen pre-intervention expectations, exact decisions and actual diffs, loading/validation receipts, all candidate attempts, controller-bound same-task comparisons, complete permitted trajectories, costs, current G/K, prior successes/failures/counterexamples, active memory_update_contract, and the supplied schema. Preserve unavailable and incomparable outcomes as evidence with explicit limits.\n\n### Procedure\n1. Recover each prospective expectation without rewriting it after the outcome.\n2. Assess implementation, activation opportunity/event, comparability, task outcome, and cost separately. Distinguish validation failure, infrastructure failure, incomplete comparison, zero/negative gain, and accepted positive gain.\n3. For every actually attempted MODEL/HARNESS/ARTIFACTS component, ADD a new `skill.<COMPONENT>.<id>` grounded in its real mechanism and outcome. Record applicability, reusable success conditions or failure/avoidance conditions, counter-evidence, unknowns, and invalidation conditions.\n4. After all component skills, ADD at least one `principle.<id>` that cites the new skill evidence and states only the supported general lesson. Keep all previous K records byte-identical and retain failures.\n5. By default leave instructions.md, context.json, workflow.json, and evolution.json unchanged. If current evidence demonstrates a structural Meta-procedure defect, propose the smallest operative G correction and bind it to the new principle with an exact g_target, harness_binding, purpose, and next observable event. No evidence-backed defect means no G edit.\n6. Validate schema, exact evidence IDs, append-only IDs, component coverage, skill-before-principle order, and G/K consistency. The controller commits validated K and any justified G change atomically.\n\n### Boundaries\nDo not reroute, perform a second Task update, change Task M/H/A, edit fixed scoring/data/permissions/budgets, or use final-test evidence. Do not fabricate causality, comparability, success, checks, or structural defects. A K-only update is valid; formatting or version labels without grounded new K are not.\n\n### Output\nReturn FiveStageMetaUpdate exactly. Copy the current instructions.md into harness. For a K-only update, leave bundle_files empty, changed_rules may describe only the new memory records, harness_bindings and g_targets are empty, and principle_operations contain the required ADD records. For an evidence-backed G edit, include only complete changed legal G files and the required bindings. Include implementation, activation, outcome, expectation/outcome identities, and subsequent_verification. Do not place principles.json or self_update_protocol.md in bundle_files.\n\n### Subsequent Use and Reporting\nThe next routing may retrieve applicable new skills/principles as advisory evidence and reports IDs actually used. Keep separate facts for K committed, optional G changed, later G/K use, and later Task performance; this operation cannot claim future improvement.",
+    "rules": [
+      {
+        "id": "new_failure_class_priority",
+        "when": true,
+        "instruction": "New error classes deserve investigation, including whether the change was implemented, whether the opportunity occurred, and whether errors are infrastructural or task-level. Different training windows cannot establish newly caused errors. Do not force a component from an error label or assume a newly sampled error was absent from all earlier behavior."
+      },
+      {
+        "id": "prompt_growth_cost_observation",
+        "when": true,
+        "instruction": "Include measured cost changes (model_calls, input_tokens, wall_time_seconds) in the intended-vs-observed comparison. Cost changes are observations, not validation: a prompt-rule addition that coincides with higher per-call input tokens and higher total cost, or a config change that coincides with lower total cost only through fewer model calls while per-call input tokens do not fall, is a cost observation to report in the next expected-cost estimate; do not assert causality from it."
+      },
+      {
+        "id": "repeated_zero_delta_requires_new_evidence",
+        "when": true,
+        "instruction": "Non-positive outcomes require honest attribution and do not prove component exhaustion. Ground the mandatory G change in an observed procedural weakness or evidence gap; no fabricated gain or predetermined component."
+      },
+      {
+        "id": "mechanism_removal_is_observation",
+        "when": true,
+        "instruction": "A removed mechanism or fewer model calls can establish implementation/cost observations when supported by actual events; they do not establish task success, causal attribution, or exhaustion of the targeted part. Check paired task outcomes and opportunities separately. Further work on that part requires evidence, not automatic exclusion or compulsory redirection."
+      }
+    ]
+  },
+  "workflows": {
+    "artifact_patch": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "dependencies",
+        "kind": "read_dependencies",
+        "max_chars": 32000,
+        "offset": 0
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose",
+        "instruction": "### Role\nImplement the accepted ARTIFACTS decision by editing reusable Task content only. Do not change H, model weights, Meta K, or G.\n\n### Objective\nAdd or correct attributable content with clear applicability that the existing H can consume. H/A ownership follows operational effect, not file extension.\n\n### Inputs\nRead the frozen decision/expectations, intervention-base A_out manifest and contents, requested_changes, existing H consumption rules and capacity, provenance/verification status, applicable experience/principles, and budget. A_in produced the evaluated state; A_out is the intervention base. Do not conflate them.\n\n### Procedure\n1. **Review history and the content gap.** Identify missing, incorrect, conflicting, or stale content with evidence and applicability. A filename or a successful terminal trajectory does not prove that every note is correct.\n2. **Verify consumption.** Confirm how the current H reads this type/path, supported size, and invocation mode. If no consumption path exists, do not enable use_artifacts or introduce an executor through A. Saving a script does not mean it will execute.\n3. **Prepare content.** Use authorized training sources and verifiable materials to formulate reusable knowledge, methods, templates, or supported content. State provenance, applicability, invalidation conditions, uncertainty, and verification limits. Exclude task-specific development answers, entity answer tables, logs, evaluation receipts, secrets, and the Meta principle library.\n4. **Implement explicit operations.** Touch only requested relative paths. write_asset requires complete text; delete_asset requires null and an existing declared path. Preserve unrelated assets and the existing lifecycle. Do not escape the asset root, restore expired assets, or convert history into a permanent uncontrolled knowledge store.\n5. **Specify later checks.** In summary, map paths to provenance, content changes, actual consumption, and expected read/use events. Distinguish loading content, adopting it, and solving the task. Actual receipts and outcomes determine these facts.\n\n### Boundaries\nChanging retrieval, loading, generation, or consumption policy is H and cannot be hidden in A. Asset code cannot modify models, evaluators, permissions, or invoke external models. K and original experiences are not Task artifacts. Do not turn probe trajectories into repair assets.\n\n### Output\nUse ArtifactChanges: only edits and summary. Each edit contains path and content. Paths are unique and exactly match declared targets. content is complete text or null for deletion. Put useful provenance/applicability in the content and concise operation/consumption reasoning in summary. Do not invent provenance, verified, manifest, or status fields or assert independent verification that did not occur.\n\n### Failure\nReport missing path/type/consumption capabilities and allow existing constraint handling. Do not edit H to make A usable or silently omit unfinished targets. Unknown effects require reconciliation."
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        },
+        "instruction": "### Role\nImplement the accepted ARTIFACTS decision by editing reusable Task content only. Do not change H, model weights, Meta K, or G.\n\n### Objective\nAdd or correct attributable content with clear applicability that the existing H can consume. H/A ownership follows operational effect, not file extension.\n\n### Inputs\nRead the frozen decision/expectations, intervention-base A_out manifest and contents, requested_changes, existing H consumption rules and capacity, provenance/verification status, applicable experience/principles, and budget. A_in produced the evaluated state; A_out is the intervention base. Do not conflate them.\n\n### Procedure\n1. **Review history and the content gap.** Identify missing, incorrect, conflicting, or stale content with evidence and applicability. A filename or a successful terminal trajectory does not prove that every note is correct.\n2. **Verify consumption.** Confirm how the current H reads this type/path, supported size, and invocation mode. If no consumption path exists, do not enable use_artifacts or introduce an executor through A. Saving a script does not mean it will execute.\n3. **Prepare content.** Use authorized training sources and verifiable materials to formulate reusable knowledge, methods, templates, or supported content. State provenance, applicability, invalidation conditions, uncertainty, and verification limits. Exclude task-specific development answers, entity answer tables, logs, evaluation receipts, secrets, and the Meta principle library.\n4. **Implement explicit operations.** Touch only requested relative paths. write_asset requires complete text; delete_asset requires null and an existing declared path. Preserve unrelated assets and the existing lifecycle. Do not escape the asset root, restore expired assets, or convert history into a permanent uncontrolled knowledge store.\n5. **Specify later checks.** In summary, map paths to provenance, content changes, actual consumption, and expected read/use events. Distinguish loading content, adopting it, and solving the task. Actual receipts and outcomes determine these facts.\n\n### Boundaries\nChanging retrieval, loading, generation, or consumption policy is H and cannot be hidden in A. Asset code cannot modify models, evaluators, permissions, or invoke external models. K and original experiences are not Task artifacts. Do not turn probe trajectories into repair assets.\n\n### Output\nUse ArtifactChanges: only edits and summary. Each edit contains path and content. Paths are unique and exactly match declared targets. content is complete text or null for deletion. Put useful provenance/applicability in the content and concise operation/consumption reasoning in summary. Do not invent provenance, verified, manifest, or status fields or assert independent verification that did not occur.\n\n### Failure\nReport missing path/type/consumption capabilities and allow existing constraint handling. Do not edit H to make A usable or silently omit unfinished targets. Unknown effects require reconciliation.\n\n### Role\nRepair candidate_errors for the current operation and candidate, without rerouting or redesigning the method.\n### Objective\nCorrect the smallest schema/interface defect while preserving the accepted objective.\n### Inputs\nUse the original operation instructions, decision, frozen expectations, parent state, candidate, actual validation errors, and remaining budget.\n### Procedure\nLocate the concrete error, inspect only necessary dependencies, and correct the same candidate. Retain the selected component and all declared targets. Claims about checks must refer to checks actually executed.\n### Boundaries\nDo not change expectations, scoring, permissions, receipts, or external budgets. All repair attempts share the original operation budget and configured attempt limit.\n### Output\nReturn the original business schema; do not add repair_status or fabricated checks. Preserve identity through the existing request envelope.\n### Failure\nReport an unsupported objective rather than shrinking it or submitting an empty success. Uncertain API/training effects require controller reconciliation, not candidate repair or automatic replay."
+      }
+    ],
+    "compatibility_smoke": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose"
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        }
+      }
+    ],
+    "final_consolidation": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "task_harness_source",
+        "kind": "read_dependencies",
+        "paths": [
+          "harness_manifest.json"
+        ],
+        "max_chars": 120000,
+        "when": {
+          "path": "facts.current_harness_identity.kind",
+          "op": "eq",
+          "value": "harnessforge_candidate_bundle"
+        }
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "checks": [
+          "experience_outcome"
+        ],
+        "id": "outcome",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose",
+        "instruction": "### Role\nConsolidate existing evidence-backed component skills into reusable Meta principle memory K. Task state T=(M,H,A) remains frozen; G changes are optional.\n\n### Objective\nUse the supplied completed experiences and component-specific skills to ADD at least one conditional general principle that preserves success mechanisms, failure/avoidance conditions, incomparability, and infrastructure uncertainty. Change G only when cross-experience evidence identifies a concrete structural defect in the current improvement procedure.\n\n### Inputs\nUse only the declared historical experiences, candidate attempts, component skills, paired outcomes, costs, active/retired K, current G, and supplied evidence IDs. Do not reinterpret final-test data or treat repeated summaries as independent evidence.\n\n### Procedure\n1. Compare mechanisms and preconditions across the supplied component skills, including accepted, zero, negative, incomplete, and unexecutable attempts.\n2. Separate domain-specific observations from supported transferable conditions and counterexamples.\n3. ADD a new `principle.<id>` only for a genuinely new general lesson, citing the source skill IDs and exact evidence. Preserve all existing K entries.\n4. Leave G unchanged unless the comparison demonstrates a structural Meta-procedure defect. Any G edit must be minimal, executable, and bound to the new principle with an exact g_target and observable next event.\n5. Validate append-only K, citations, applicability, invalidation conditions, and optional G/K consistency.\n\n### Boundaries\nDo not perform another Task intervention, reroute a past decision, fabricate independent support, or force a G edit. A K-only update is valid. Do not modify model/provider, scoring, data, permissions, budgets, receipts, or the fixed protocol.\n\n### Output\nReturn FiveStageMetaUpdate exactly. Copy current instructions.md in harness. For K-only consolidation, leave bundle_files, harness_bindings, and g_targets empty. Include the new general principle operation, outcome limitations, and subsequent verification. Do not put principles.json or self_update_protocol.md in bundle_files."
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        },
+        "instruction": "### Role\nConsolidate existing evidence-backed component skills into reusable Meta principle memory K. Task state T=(M,H,A) remains frozen; G changes are optional.\n\n### Objective\nUse the supplied completed experiences and component-specific skills to ADD at least one conditional general principle that preserves success mechanisms, failure/avoidance conditions, incomparability, and infrastructure uncertainty. Change G only when cross-experience evidence identifies a concrete structural defect in the current improvement procedure.\n\n### Inputs\nUse only the declared historical experiences, candidate attempts, component skills, paired outcomes, costs, active/retired K, current G, and supplied evidence IDs. Do not reinterpret final-test data or treat repeated summaries as independent evidence.\n\n### Procedure\n1. Compare mechanisms and preconditions across the supplied component skills, including accepted, zero, negative, incomplete, and unexecutable attempts.\n2. Separate domain-specific observations from supported transferable conditions and counterexamples.\n3. ADD a new `principle.<id>` only for a genuinely new general lesson, citing the source skill IDs and exact evidence. Preserve all existing K entries.\n4. Leave G unchanged unless the comparison demonstrates a structural Meta-procedure defect. Any G edit must be minimal, executable, and bound to the new principle with an exact g_target and observable next event.\n5. Validate append-only K, citations, applicability, invalidation conditions, and optional G/K consistency.\n\n### Boundaries\nDo not perform another Task intervention, reroute a past decision, fabricate independent support, or force a G edit. A K-only update is valid. Do not modify model/provider, scoring, data, permissions, budgets, receipts, or the fixed protocol.\n\n### Output\nReturn FiveStageMetaUpdate exactly. Copy current instructions.md in harness. For K-only consolidation, leave bundle_files, harness_bindings, and g_targets empty. Include the new general principle operation, outcome limitations, and subsequent verification. Do not put principles.json or self_update_protocol.md in bundle_files.\n\nRepair only supplied candidate_errors without expanding evidence, Task scope, or optional G authority."
+      }
+    ],
+    "harness_patch": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "dependencies",
+        "kind": "read_dependencies",
+        "max_chars": 32000,
+        "offset": 0
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose",
+        "instruction": "### Role\nExecute the accepted HARNESS decision through the exact pinned upstream HarnessForge production request supplied in payload.request. The decision is frozen and bundle-level; do not reroute or change MODEL, ARTIFACTS, G, or K.\n\n### Objective\nReturn the one business object requested by the active upstream stage. Stage 1 localizes faults from the complete parent Harness, metrics, and success/failure trajectories; Stage 2 forms improvement directions with Meta experience as optional advice; Stage 3 generates one complete independent Harness bundle; Stage 4 repairs only concrete validator defects, at most through the controller's bounded retries.\n\n### Inputs\nTreat payload.request as the authoritative stage prompt and obey its exact file contract, target round/name, parent snapshot, evidence, archive examples, and validation report. Use declared dependencies and current identities; do not traverse host provenance paths.\n\n### Procedure\n1. Preserve the frozen HARNESS ownership and the single-candidate objective.\n2. For localization, inspect the whole parent bundle and attribute observed failures to executable mechanisms without prespecifying which file must change.\n3. For directions, connect localization, trajectories, metrics, counter-evidence, and applicable Meta experience. Experience may guide but may not override current evidence.\n4. For generation, emit exactly one complete self-contained upstream bundle with every required file and any safe optional files needed by the design. Planning, Action/Workflow, Memory/skill, builder, prompts, and helpers may all change within the upstream contract.\n5. For validation repair, change only files necessary to resolve the supplied static/import/build failures while preserving the proposed mechanism. Do not regenerate or add another candidate.\n\n### Boundaries\nDo not translate the request into a legacy patch format, preselected target list, configuration override, or event hook. Do not constrain changes to one provider or forbid provider/builder code. Do not alter external tools, permissions, budgets, scoring, model checkpoint, artifacts, or evaluation data. Passing validation does not establish performance gain.\n\n### Output\nReturn exactly the supplied business schema. For StageResponse, content contains the precise Markdown or complete file blocks demanded by payload.request. For RepairResponse, return only summary and the complete replacement files requested by the validator. No extra fields, second candidate, status claim, or commentary.\n\n### Failure\nIf the requested bundle cannot satisfy the upstream contract, return the most accurate same-schema candidate for validation to reject. Do not shrink the objective, reroute, fabricate checks, or claim an unexecuted repair succeeded."
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        },
+        "instruction": "### Role\nExecute the accepted HARNESS decision through the exact pinned upstream HarnessForge production request supplied in payload.request. The decision is frozen and bundle-level; do not reroute or change MODEL, ARTIFACTS, G, or K.\n\n### Objective\nReturn the one business object requested by the active upstream stage. Stage 1 localizes faults from the complete parent Harness, metrics, and success/failure trajectories; Stage 2 forms improvement directions with Meta experience as optional advice; Stage 3 generates one complete independent Harness bundle; Stage 4 repairs only concrete validator defects, at most through the controller's bounded retries.\n\n### Inputs\nTreat payload.request as the authoritative stage prompt and obey its exact file contract, target round/name, parent snapshot, evidence, archive examples, and validation report. Use declared dependencies and current identities; do not traverse host provenance paths.\n\n### Procedure\n1. Preserve the frozen HARNESS ownership and the single-candidate objective.\n2. For localization, inspect the whole parent bundle and attribute observed failures to executable mechanisms without prespecifying which file must change.\n3. For directions, connect localization, trajectories, metrics, counter-evidence, and applicable Meta experience. Experience may guide but may not override current evidence.\n4. For generation, emit exactly one complete self-contained upstream bundle with every required file and any safe optional files needed by the design. Planning, Action/Workflow, Memory/skill, builder, prompts, and helpers may all change within the upstream contract.\n5. For validation repair, change only files necessary to resolve the supplied static/import/build failures while preserving the proposed mechanism. Do not regenerate or add another candidate.\n\n### Boundaries\nDo not translate the request into a legacy patch format, preselected target list, configuration override, or event hook. Do not constrain changes to one provider or forbid provider/builder code. Do not alter external tools, permissions, budgets, scoring, model checkpoint, artifacts, or evaluation data. Passing validation does not establish performance gain.\n\n### Output\nReturn exactly the supplied business schema. For StageResponse, content contains the precise Markdown or complete file blocks demanded by payload.request. For RepairResponse, return only summary and the complete replacement files requested by the validator. No extra fields, second candidate, status claim, or commentary.\n\n### Failure\nIf the requested bundle cannot satisfy the upstream contract, return the most accurate same-schema candidate for validation to reject. Do not shrink the objective, reroute, fabricate checks, or claim an unexecuted repair succeeded."
+      }
+    ],
+    "meta_self_update": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "task_harness_source",
+        "kind": "read_dependencies",
+        "paths": [
+          "harness_manifest.json"
+        ],
+        "max_chars": 120000,
+        "when": {
+          "path": "facts.current_harness_identity.kind",
+          "op": "eq",
+          "value": "harnessforge_candidate_bundle"
+        }
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "checks": [
+          "experience_outcome"
+        ],
+        "id": "outcome",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose",
+        "instruction": "### Role\nAfter each real Task-component attempt and its same-task outcome, update Meta principle memory K from the evidence. G is an optional mechanism update, not a per-round quota. Task state T=(M,H,A) remains frozen during this operation.\n\n### Objective and Acceptance Contract\nAppend grounded reusable memory for every attempted component, including accepted positive gain, zero gain, negative gain, incomplete comparison, and an unexecutable candidate. Add each component-specific skill first, then derive at least one general principle. Return status=UPDATED because K changes. Change G only when the evidence exposes a concrete structural defect in the current improvement procedure; never force a G edit to pass validation.\n\n### Inputs\nUse frozen pre-intervention expectations, exact decisions and actual diffs, loading/validation receipts, all candidate attempts, controller-bound same-task comparisons, complete permitted trajectories, costs, current G/K, prior successes/failures/counterexamples, active memory_update_contract, and the supplied schema. Preserve unavailable and incomparable outcomes as evidence with explicit limits.\n\n### Procedure\n1. Recover each prospective expectation without rewriting it after the outcome.\n2. Assess implementation, activation opportunity/event, comparability, task outcome, and cost separately. Distinguish validation failure, infrastructure failure, incomplete comparison, zero/negative gain, and accepted positive gain.\n3. For every actually attempted MODEL/HARNESS/ARTIFACTS component, ADD a new `skill.<COMPONENT>.<id>` grounded in its real mechanism and outcome. Record applicability, reusable success conditions or failure/avoidance conditions, counter-evidence, unknowns, and invalidation conditions.\n4. After all component skills, ADD at least one `principle.<id>` that cites the new skill evidence and states only the supported general lesson. Keep all previous K records byte-identical and retain failures.\n5. By default leave instructions.md, context.json, workflow.json, and evolution.json unchanged. If current evidence demonstrates a structural Meta-procedure defect, propose the smallest operative G correction and bind it to the new principle with an exact g_target, harness_binding, purpose, and next observable event. No evidence-backed defect means no G edit.\n6. Validate schema, exact evidence IDs, append-only IDs, component coverage, skill-before-principle order, and G/K consistency. The controller commits validated K and any justified G change atomically.\n\n### Boundaries\nDo not reroute, perform a second Task update, change Task M/H/A, edit fixed scoring/data/permissions/budgets, or use final-test evidence. Do not fabricate causality, comparability, success, checks, or structural defects. A K-only update is valid; formatting or version labels without grounded new K are not.\n\n### Output\nReturn FiveStageMetaUpdate exactly. Copy the current instructions.md into harness. For a K-only update, leave bundle_files empty, changed_rules may describe only the new memory records, harness_bindings and g_targets are empty, and principle_operations contain the required ADD records. For an evidence-backed G edit, include only complete changed legal G files and the required bindings. Include implementation, activation, outcome, expectation/outcome identities, and subsequent_verification. Do not place principles.json or self_update_protocol.md in bundle_files.\n\n### Subsequent Use and Reporting\nThe next routing may retrieve applicable new skills/principles as advisory evidence and reports IDs actually used. Keep separate facts for K committed, optional G changed, later G/K use, and later Task performance; this operation cannot claim future improvement."
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        },
+        "instruction": "### Role\nAfter each real Task-component attempt and its same-task outcome, update Meta principle memory K from the evidence. G is an optional mechanism update, not a per-round quota. Task state T=(M,H,A) remains frozen during this operation.\n\n### Objective and Acceptance Contract\nAppend grounded reusable memory for every attempted component, including accepted positive gain, zero gain, negative gain, incomplete comparison, and an unexecutable candidate. Add each component-specific skill first, then derive at least one general principle. Return status=UPDATED because K changes. Change G only when the evidence exposes a concrete structural defect in the current improvement procedure; never force a G edit to pass validation.\n\n### Inputs\nUse frozen pre-intervention expectations, exact decisions and actual diffs, loading/validation receipts, all candidate attempts, controller-bound same-task comparisons, complete permitted trajectories, costs, current G/K, prior successes/failures/counterexamples, active memory_update_contract, and the supplied schema. Preserve unavailable and incomparable outcomes as evidence with explicit limits.\n\n### Procedure\n1. Recover each prospective expectation without rewriting it after the outcome.\n2. Assess implementation, activation opportunity/event, comparability, task outcome, and cost separately. Distinguish validation failure, infrastructure failure, incomplete comparison, zero/negative gain, and accepted positive gain.\n3. For every actually attempted MODEL/HARNESS/ARTIFACTS component, ADD a new `skill.<COMPONENT>.<id>` grounded in its real mechanism and outcome. Record applicability, reusable success conditions or failure/avoidance conditions, counter-evidence, unknowns, and invalidation conditions.\n4. After all component skills, ADD at least one `principle.<id>` that cites the new skill evidence and states only the supported general lesson. Keep all previous K records byte-identical and retain failures.\n5. By default leave instructions.md, context.json, workflow.json, and evolution.json unchanged. If current evidence demonstrates a structural Meta-procedure defect, propose the smallest operative G correction and bind it to the new principle with an exact g_target, harness_binding, purpose, and next observable event. No evidence-backed defect means no G edit.\n6. Validate schema, exact evidence IDs, append-only IDs, component coverage, skill-before-principle order, and G/K consistency. The controller commits validated K and any justified G change atomically.\n\n### Boundaries\nDo not reroute, perform a second Task update, change Task M/H/A, edit fixed scoring/data/permissions/budgets, or use final-test evidence. Do not fabricate causality, comparability, success, checks, or structural defects. A K-only update is valid; formatting or version labels without grounded new K are not.\n\n### Output\nReturn FiveStageMetaUpdate exactly. Copy the current instructions.md into harness. For a K-only update, leave bundle_files empty, changed_rules may describe only the new memory records, harness_bindings and g_targets are empty, and principle_operations contain the required ADD records. For an evidence-backed G edit, include only complete changed legal G files and the required bindings. Include implementation, activation, outcome, expectation/outcome identities, and subsequent_verification. Do not place principles.json or self_update_protocol.md in bundle_files.\n\n### Subsequent Use and Reporting\nThe next routing may retrieve applicable new skills/principles as advisory evidence and reports IDs actually used. Keep separate facts for K committed, optional G changed, later G/K use, and later Task performance; this operation cannot claim future improvement.\n\nRepair only the supplied candidate_errors while preserving the same append-only K operations and optional evidence-backed G scope."
+      }
+    ],
+    "model_request": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "dependencies",
+        "kind": "read_dependencies",
+        "max_chars": 32000,
+        "offset": 0
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose",
+        "instruction": "### Role\nOrganize the accepted MODEL decision into the objective specification used by the fixed trainer. Do not edit weights directly, generate a new training program, or independently start another training job.\n\n### Objective\nExplain how eligible training signals can support the intended behavior and which behaviors must be preserved. The trusted backend performs SFT, checkpoint publication, and service reloading.\n\n### Inputs\nRead the frozen MODEL decision, current checkpoint, fixed trainer/profile, program-confirmed eligible training data and coverage, current H/A, relevant experiences/principles, resources, and output schema. Dataset manifests, executable training parameters, and parent identities are trusted inputs and receipts, not fields to redefine in this output.\n\n### Procedure\n1. **Verify eligibility.** Confirm MODEL/current_checkpoint, the registered backend, and training trajectories satisfying the unchanged domain success filter. Do not relabel partial rewards or failures as successes. Probe/final-test data and derived solutions remain excluded.\n2. **Connect evidence to learning.** Identify intended behaviors actually represented in eligible examples and failures without positive coverage. State historical support, counter-evidence, and limitations. Failed H/A interventions do not prove a model capability ceiling.\n3. **Specify the objective.** objective describes the learning goal and its link to the accepted decision. preserve_behaviors lists behaviors to retain. rationale records evidence/principle references, signal limitations, cost/resource uncertainty, and later verification needs.\n4. **Preserve fixed execution.** Use positive_sft_lora from current_checkpoint. Learning rate, steps, LoRA scope, optimizer, sequence handling, sampling, and loss masks remain controlled by the current fixed configuration; this interface exposes none of them. Do not add teacher answers, modify rewards, write train.py, or switch to RL.\n5. **Await actual verification.** Training receipts establish data, steps, parameter/checkpoint changes, and next-generation loading. Paired internal-development outcomes test benefit. Request generation, lower training loss, or a new file alone does not establish improved Task capability.\n\n### Boundaries\nRequest only MODEL changes; preserve H and A content. SFT does not repair transport/isolation or expand serving context limits. Keep the existing assistant-loss mask; system/user/tool observations are not assistant training targets. Do not fabricate loss values, step counts, checkpoint hashes, or costs.\n\n### Output\nUse ModelRequestPlan with exactly objective, preserve_behaviors, rationale, training_method, and target. training_method is positive_sft_lora; target is current_checkpoint. objective and rationale are nonempty and at most 8000 characters each; preserve_behaviors has at most 20 items.\nDo not add dataset_manifest, learning_rate, epochs, max_steps, trainer_code, cost, or completed. Existing controller requests/receipts bind identity and actual training parameters. Unknown monetary cost is not zero.\n\n### Failure\nIf eligible samples or required training resources are unavailable, state the specific gap and allow controller rejection. Do not switch to H/A or copy an old checkpoint as a fake update. Never independently repeat training whose outcome is unresolved."
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        },
+        "instruction": "### Role\nOrganize the accepted MODEL decision into the objective specification used by the fixed trainer. Do not edit weights directly, generate a new training program, or independently start another training job.\n\n### Objective\nExplain how eligible training signals can support the intended behavior and which behaviors must be preserved. The trusted backend performs SFT, checkpoint publication, and service reloading.\n\n### Inputs\nRead the frozen MODEL decision, current checkpoint, fixed trainer/profile, program-confirmed eligible training data and coverage, current H/A, relevant experiences/principles, resources, and output schema. Dataset manifests, executable training parameters, and parent identities are trusted inputs and receipts, not fields to redefine in this output.\n\n### Procedure\n1. **Verify eligibility.** Confirm MODEL/current_checkpoint, the registered backend, and training trajectories satisfying the unchanged domain success filter. Do not relabel partial rewards or failures as successes. Probe/final-test data and derived solutions remain excluded.\n2. **Connect evidence to learning.** Identify intended behaviors actually represented in eligible examples and failures without positive coverage. State historical support, counter-evidence, and limitations. Failed H/A interventions do not prove a model capability ceiling.\n3. **Specify the objective.** objective describes the learning goal and its link to the accepted decision. preserve_behaviors lists behaviors to retain. rationale records evidence/principle references, signal limitations, cost/resource uncertainty, and later verification needs.\n4. **Preserve fixed execution.** Use positive_sft_lora from current_checkpoint. Learning rate, steps, LoRA scope, optimizer, sequence handling, sampling, and loss masks remain controlled by the current fixed configuration; this interface exposes none of them. Do not add teacher answers, modify rewards, write train.py, or switch to RL.\n5. **Await actual verification.** Training receipts establish data, steps, parameter/checkpoint changes, and next-generation loading. Paired internal-development outcomes test benefit. Request generation, lower training loss, or a new file alone does not establish improved Task capability.\n\n### Boundaries\nRequest only MODEL changes; preserve H and A content. SFT does not repair transport/isolation or expand serving context limits. Keep the existing assistant-loss mask; system/user/tool observations are not assistant training targets. Do not fabricate loss values, step counts, checkpoint hashes, or costs.\n\n### Output\nUse ModelRequestPlan with exactly objective, preserve_behaviors, rationale, training_method, and target. training_method is positive_sft_lora; target is current_checkpoint. objective and rationale are nonempty and at most 8000 characters each; preserve_behaviors has at most 20 items.\nDo not add dataset_manifest, learning_rate, epochs, max_steps, trainer_code, cost, or completed. Existing controller requests/receipts bind identity and actual training parameters. Unknown monetary cost is not zero.\n\n### Failure\nIf eligible samples or required training resources are unavailable, state the specific gap and allow controller rejection. Do not switch to H/A or copy an old checkpoint as a fake update. Never independently repeat training whose outcome is unresolved.\n\n### Role\nRepair candidate_errors for the current operation and candidate, without rerouting or redesigning the method.\n### Objective\nCorrect the smallest schema/interface defect while preserving the accepted objective.\n### Inputs\nUse the original operation instructions, decision, frozen expectations, parent state, candidate, actual validation errors, and remaining budget.\n### Procedure\nLocate the concrete error, inspect only necessary dependencies, and correct the same candidate. Retain the selected component and all declared targets. Claims about checks must refer to checks actually executed.\n### Boundaries\nDo not change expectations, scoring, permissions, receipts, or external budgets. All repair attempts share the original operation budget and configured attempt limit.\n### Output\nReturn the original business schema; do not add repair_status or fabricated checks. Preserve identity through the existing request envelope.\n### Failure\nReport an unsupported objective rather than shrinking it or submitting an empty success. Uncertain API/training effects require controller reconciliation, not candidate repair or automatic replay."
+      }
+    ],
+    "routing": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "task_harness_source",
+        "kind": "read_dependencies",
+        "paths": [
+          "harness_manifest.json"
+        ],
+        "max_chars": 120000,
+        "when": {
+          "path": "facts.current_harness_identity.kind",
+          "op": "eq",
+          "value": "harnessforge_candidate_bundle"
+        }
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose",
+        "instruction": "### Role\nChoose exactly one currently executable Task component: HARNESS, MODEL, or ARTIFACTS. Record a prospective intervention; do not implement it or update G/K during routing.\n\n### Objective\nUse the current rollout evidence plus applicable successful and failed Meta experience to select one feasible component and state what later paired evidence would support or contradict the intervention. Experience is advisory, not a fixed selector.\n\n### Inputs\nRead the current Task/G/K identities, trusted baseline statistics and coverage, complete representative success/failure trajectories, available_actions, current HarnessForge manifest, artifact consumption facts, MODEL training eligibility/resources, experience_context, and active principles. A fragment is not a complete trajectory and an error label does not determine component ownership.\n\n### Procedure\n1. Verify that evidence and capabilities belong to the current state. Separate task failure, parse/tool misuse, local budget exhaustion, and infrastructure failure.\n2. Diagnose one main mechanism from concrete action-observation evidence, counterexamples, metrics, and coverage. State unknowns.\n3. Retrieve relevant component-specific and general experience by mechanism and preconditions. Consider successful, zero, negative, incomplete, and unavailable attempts with their applicability limits.\n4. Compare HARNESS, MODEL, and ARTIFACTS on feasibility, expected mechanism, existing consumption path, cost, risk, and supporting evidence. Do not rotate components or impose a fixed priority.\n5. Select exactly one component. HARNESS selection is bundle-level only: do not localize a file, provider, or module during routing. The pinned HarnessForge production stages own localization and implementation after selection.\n6. Record prospective expectations against the registered metric and trusted baseline. Unsupported numeric forecasts stay null. Keep implementation, activation, outcome, comparability, and cost distinct.\n\n### Boundaries\nDo not modify Task state, G, K, receipts, metrics, budgets, data, or hidden scoring. Do not generate multiple candidates. A past failed component attempt is evidence, not proof that the component is exhausted.\n\n### Output\nUse ExpectedMetaDecision exactly:\n- action is HARNESS, MODEL, or ARTIFACTS and target_components contains only the same action.\n- diagnosis is an evidence-bound hypothesis; rationale includes applicable principle IDs, counter-evidence, the three-component comparison, and limitations.\n- For HARNESS, requested_changes contains exactly one item with operation=produce_harness and target=harness_bundle. Its instruction describes the behavior/mechanism to improve without preselecting implementation files.\n- For MODEL, use the advertised sft/current_checkpoint capability. For ARTIFACTS, use advertised write_asset/delete_asset relative paths.\n- expectations.performance, errors, implementation_events, preserve, risks, unknowns, evidence, principle_ids, and the two cost scopes follow the supplied schema. Unknown numbers are null.\n- Follow supplied identity rules for decision_id and decision_source and report used_principle_ids only when actually used.\nReturn only the business object; do not add analysis, status, or implementation content.\n\n### Failure\nOn constraint feedback, repair the same unimplemented decision using actual capabilities. If no action is feasible, expose the exact gap to the controller; do not invent a fourth action or silently reroute after freezing."
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        },
+        "instruction": "### Role\nChoose exactly one currently executable Task component: HARNESS, MODEL, or ARTIFACTS. Record a prospective intervention; do not implement it or update G/K during routing.\n\n### Objective\nUse the current rollout evidence plus applicable successful and failed Meta experience to select one feasible component and state what later paired evidence would support or contradict the intervention. Experience is advisory, not a fixed selector.\n\n### Inputs\nRead the current Task/G/K identities, trusted baseline statistics and coverage, complete representative success/failure trajectories, available_actions, current HarnessForge manifest, artifact consumption facts, MODEL training eligibility/resources, experience_context, and active principles. A fragment is not a complete trajectory and an error label does not determine component ownership.\n\n### Procedure\n1. Verify that evidence and capabilities belong to the current state. Separate task failure, parse/tool misuse, local budget exhaustion, and infrastructure failure.\n2. Diagnose one main mechanism from concrete action-observation evidence, counterexamples, metrics, and coverage. State unknowns.\n3. Retrieve relevant component-specific and general experience by mechanism and preconditions. Consider successful, zero, negative, incomplete, and unavailable attempts with their applicability limits.\n4. Compare HARNESS, MODEL, and ARTIFACTS on feasibility, expected mechanism, existing consumption path, cost, risk, and supporting evidence. Do not rotate components or impose a fixed priority.\n5. Select exactly one component. HARNESS selection is bundle-level only: do not localize a file, provider, or module during routing. The pinned HarnessForge production stages own localization and implementation after selection.\n6. Record prospective expectations against the registered metric and trusted baseline. Unsupported numeric forecasts stay null. Keep implementation, activation, outcome, comparability, and cost distinct.\n\n### Boundaries\nDo not modify Task state, G, K, receipts, metrics, budgets, data, or hidden scoring. Do not generate multiple candidates. A past failed component attempt is evidence, not proof that the component is exhausted.\n\n### Output\nUse ExpectedMetaDecision exactly:\n- action is HARNESS, MODEL, or ARTIFACTS and target_components contains only the same action.\n- diagnosis is an evidence-bound hypothesis; rationale includes applicable principle IDs, counter-evidence, the three-component comparison, and limitations.\n- For HARNESS, requested_changes contains exactly one item with operation=produce_harness and target=harness_bundle. Its instruction describes the behavior/mechanism to improve without preselecting implementation files.\n- For MODEL, use the advertised sft/current_checkpoint capability. For ARTIFACTS, use advertised write_asset/delete_asset relative paths.\n- expectations.performance, errors, implementation_events, preserve, risks, unknowns, evidence, principle_ids, and the two cost scopes follow the supplied schema. Unknown numbers are null.\n- Follow supplied identity rules for decision_id and decision_source and report used_principle_ids only when actually used.\nReturn only the business object; do not add analysis, status, or implementation content.\n\n### Failure\nOn constraint feedback, repair the same unimplemented decision using actual capabilities. If no action is feasible, expose the exact gap to the controller; do not invent a fourth action or silently reroute after freezing."
+      }
+    ]
+  }
+}

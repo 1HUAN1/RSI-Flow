@@ -1,0 +1,7 @@
+{
+  "profile_id": "qwen-openrouter-meta",
+  "name": "Qwen3 Coder meta via OpenRouter",
+  "agent_impl": "pydantic-ai",
+  "model": "qwen/qwen3-coder",
+  "provider_id": "openrouter"
+}

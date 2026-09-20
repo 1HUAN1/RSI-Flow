@@ -1,0 +1,17 @@
+{
+  "status": "IMPLEMENTED_NOT_API_VALIDATED",
+  "model": "deepseek/deepseek-v4-flash-0731",
+  "codex_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+  "catalog_sha256": "d088084652c0d4cbe207db054ba374d13f79da1355ff645dd813c4fd36171d49",
+  "metadata_sha256": "1aef4ef8ae03083af04902fcd5bd5f01a4abad3c3e89229e8e5f389ff8a6f892",
+  "native_base_instructions_sha256": "ac8ae107a0d72fe3476b430afb161ea4e67da2e446d778aefc44828160559807",
+  "public_model_context_length": 1310720,
+  "public_top_provider_context_length": 1048576,
+  "selected_context_limit": 1048576,
+  "api_called": false,
+  "native_tools": "unified_exec/freeform apply_patch: declared for compatibility smoke, unverified",
+  "controller_policy": {
+    "output_truncation_bytes": 10000,
+    "context_headroom_percent": 5
+  }
+}

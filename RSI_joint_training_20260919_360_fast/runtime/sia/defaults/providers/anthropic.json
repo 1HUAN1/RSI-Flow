@@ -1,0 +1,7 @@
+{
+  "provider_id": "anthropic",
+  "name": "Anthropic",
+  "client_kind": "anthropic",
+  "base_url": null,
+  "api_key_env": "ANTHROPIC_API_KEY"
+}

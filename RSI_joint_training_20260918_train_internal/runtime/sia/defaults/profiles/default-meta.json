@@ -1,0 +1,7 @@
+{
+  "profile_id": "default-meta",
+  "name": "Default meta agent (Claude Haiku)",
+  "agent_impl": "claude",
+  "model": "haiku",
+  "provider_id": "anthropic"
+}

@@ -1,0 +1,32 @@
+===== EXECUTION STATUS =====
+FAILED: Target agent failed with exit code 1
+
+**EVALUATION RESULTS**: No results.json found (evaluation may not have run or may have failed)
+
+
+**Last 10 lines of output**:
+```
+boot
+running
+crash
+
+```
+
+Full logs available at: <GEN>/target_agent_stdout.log
+
+STDERR:
+Traceback: boom
+
+===== EXECUTION SECTION =====
+
+Here is the target agent execution trajectory:
+```json
+[
+  {
+    "role": "user",
+    "content": "attempt"
+  }
+]
+```
+
+NOTE: If you see an "error" field in the above JSON, it means the execution log was malformed or missing. Focus on making the agent more robust.

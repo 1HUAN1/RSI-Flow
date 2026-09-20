@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "mode": "full",
+  "task_checkpoint": "/root/data/zh/huggingface/Qwen3-4B",
+  "task_base_url": "http://127.0.0.1:8071/v1",
+  "task_enable_thinking": false,
+  "task_timeout": 180,
+  "seed_harness": "seed_harness/v2/seed.json",
+  "source_manifest": "/root/data/RSI_iclr2027/dataset/manifests/dataset_manifest.json",
+  "data_dir": "data/pipeline_v2",
+  "search_dev_fraction": 0.1,
+  "probe_per_domain": {
+    "tool_use": 16,
+    "code": 16,
+    "searchqa": 16
+  },
+  "window_quotas": {
+    "tool_use": 3,
+    "code": 1,
+    "searchqa": 1
+  },
+  "rollouts_per_task": 1,
+  "probe_rollouts": 1,
+  "seed": 42,
+  "max_generations": 3,
+  "max_wall_seconds": 7200,
+  "model_call_limit": 128,
+  "max_output_tokens": 2048,
+  "inference_gpu": 0,
+  "training_gpu": 1,
+  "trainer_python": "/root/data/conda/envs/sia/bin/python",
+  "training": {
+    "max_steps": 4,
+    "learning_rate": 2e-05,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "max_length": 8192,
+    "lora_rank": 16,
+    "lora_target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ],
+    "save_steps": 4,
+    "seed": 42
+  },
+  "supervision": "final_assistant",
+  "external_corpus": null,
+  "envscaler_root": "/root/data/RSI_iclr2027/dataset/train/tool_use/envscaler",
+  "envscaler_utils": "/root/data/RSI_iclr2027/dataset/evaluators/envscaler/EnvScaler/interact_with_env/envscaler_env/utils/env_util.py",
+  "envscaler_commit": "96ae8b02dc0187c911b8e2101e7bb6904271597b",
+  "meta": {
+    "backend": "codex_openrouter",
+    "provider": "openrouter",
+    "model": "openai/gpt-5.6-sol:batch",
+    "base_url": "https://openrouter.ai/api/v1",
+    "api_key_env": "OPENROUTER_API_KEY",
+    "wire_api": "responses",
+    "allow_model_fallback": false,
+    "run_mode": "full",
+    "codex_source": "/root/data/RSI_iclr2027/rsiH/third_party/codex",
+    "codex_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+    "codex_executable": "/root/data/RSI_iclr2027/rsiH/third_party/codex-bin/codex-x86_64-unknown-linux-musl",
+    "codex_binary_sha256": "56ef98ab4032d317ab26e9b5e5a175650717351edb16ed9cde0cb6d1734d62da",
+    "provenance_file": "/root/data/RSI_iclr2027/rsiH/third_party/codex-provenance.json",
+    "model_catalog_json": "/root/data/RSI_iclr2027/rsiH/configs/openrouter-codex-authorized-models.json",
+    "model_catalog_sha256": "6e262d5bb754d199a479e6167e489d45983e2ba60938caa9a6bbf8d2d189019c",
+    "compatibility_report": null,
+    "provider_order": [],
+    "allow_provider_fallback": false,
+    "harness_version": "seed",
+    "harness_root": "meta_harness",
+    "budget": {
+      "wall_time_seconds": 300,
+      "max_requests": 12,
+      "max_output_tokens_per_request": 8192,
+      "max_total_output_tokens": 32768,
+      "max_event_bytes": 16000000,
+      "max_workspace_bytes": 4000000,
+      "memory_bytes": 4294967296,
+      "max_processes": 128
+    },
+    "execution_location": "ssh_worker",
+    "compatibility_mode": "in_run",
+    "remote_worker_socket": "/tmp/rsi_meta_worker.sock",
+    "remote_relay_socket": "/tmp/rsi_meta_relay.sock",
+    "remote_worker_sha256": "78b0e027936c8ef804b8d955547e64a6a977419736325f19957f2c5118c6f23a",
+    "remote_bwrap_sha256": "52231e1caf55bcbc667b269f49c63599a6f7db4767ae6a039580d0ff853db712"
+  },
+  "experiment_scope": "envscaler_validation",
+  "scope_train_limit": 9,
+  "scope_probe_limit": 3,
+  "task_replicas": [
+    {
+      "gpu": 0,
+      "base_url": "http://127.0.0.1:8071/v1"
+    },
+    {
+      "gpu": 2,
+      "base_url": "http://127.0.0.1:8072/v1"
+    },
+    {
+      "gpu": 3,
+      "base_url": "http://127.0.0.1:8073/v1"
+    }
+  ]
+}

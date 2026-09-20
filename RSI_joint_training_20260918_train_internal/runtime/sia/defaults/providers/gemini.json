@@ -1,0 +1,7 @@
+{
+  "provider_id": "gemini",
+  "name": "Google Gemini",
+  "client_kind": "google",
+  "base_url": null,
+  "api_key_env": "GEMINI_API_KEY"
+}

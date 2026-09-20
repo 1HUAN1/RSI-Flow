@@ -1,0 +1,8 @@
+{
+  "provider_id": "task-meta-local",
+  "name": "Local Qwen OpenAI endpoint",
+  "client_kind": "openai",
+  "base_url": "http://127.0.0.1:8001/v1",
+  "api_key_env": "LOCAL_QWEN_API_KEY",
+  "request_timeout_seconds": 300
+}

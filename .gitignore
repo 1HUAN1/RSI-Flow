@@ -1,0 +1,47 @@
+# Secrets and machine-local authentication
+API_key.md
+**/API_key.md
+.env
+.env.*
+!.env.example
+auth.json
+credentials.json
+*.pem
+*.key
+
+# Runtime outputs and environments (keep source config below runs explicitly)
+Rollout_logs/
+local_baseline/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.ipynb_checkpoints/
+**/.venv/
+**/venv/
+**/node_modules/
+**/preflight/
+**/.runs/
+**/logs/
+**/locks/
+**/meta_worker/
+*.pyc
+*.log
+*.lock
+*.egg-info/
+
+# External datasets, checkpoints and binary dependencies
+data/
+**/data/
+evaluation_vault/
+**/checkpoints/
+*.sqlite
+*.sqlite-*
+*.safetensors
+*.pt
+*.pth
+*.tar.gz
+*.tgz
+*.zip
+third_party/codex/
+third_party/codex-bin/
+deepseek-harness/

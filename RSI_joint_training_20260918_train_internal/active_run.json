@@ -1,0 +1,7 @@
+{
+  "run": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/runtime/runs/joint_train_internal_3600_r3",
+  "status": "stopped_by_user",
+  "exit_code": 1,
+  "log": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/logs/joint_train_internal_3600_r3.log",
+  "successor_bundle": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_paired1200"
+}

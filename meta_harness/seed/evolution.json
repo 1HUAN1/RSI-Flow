@@ -1,0 +1,394 @@
+{
+  "diagnosis": {
+    "instruction": "Diagnose from trusted facts and attributable evidence. Distinguish tool-check facts from hypotheses. Choose exactly one currently executable component using observed history, expected effect and cost; do not preassign components by error class.",
+    "rules": []
+  },
+  "evidence": {
+    "field_chars": 1200,
+    "fields": [
+      "task_id",
+      "domain",
+      "error_type",
+      "terminal_reward",
+      "verification",
+      "model_ref"
+    ],
+    "filter": true,
+    "fragments": {
+      "after": 1,
+      "anchor": {
+        "any": [
+          {
+            "op": "contains",
+            "path": "message.content",
+            "value": "Error"
+          },
+          {
+            "op": "contains",
+            "path": "message.content",
+            "value": "error"
+          }
+        ]
+      },
+      "before": 1,
+      "fallback": "tail",
+      "max_messages": 6,
+      "message_chars": 2000,
+      "retain_tools": []
+    },
+    "group_by": [
+      "domain",
+      "error_type"
+    ],
+    "max_chars": 32000,
+    "max_items": 8,
+    "score_rules": [],
+    "sort": [
+      {
+        "direction": "desc",
+        "field": "generation"
+      }
+    ]
+  },
+  "experience": {
+    "applicability": [],
+    "exclude_failed": true,
+    "failure": [],
+    "field_chars": 1600,
+    "fields": [
+      "generation",
+      "chosen_action",
+      "requested_change",
+      "actual_change",
+      "observed_performance_delta",
+      "cost_before",
+      "cost_after",
+      "versions"
+    ],
+    "filter": true,
+    "group_by": [
+      "chosen_action"
+    ],
+    "max_chars": 24000,
+    "max_items": 8,
+    "require_applicable": false,
+    "score_rules": [],
+    "sort": [
+      {
+        "direction": "desc",
+        "field": "generation"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "self_update": {
+    "instruction": "Use the actual experience and engineering checks to compare intended and observed changes. Identify insufficient evidence, attribution uncertainty and execution failures. Change relevant executable Meta policy rules and/or instructions; NO_CHANGE is valid when no justified substantive update is available. Preserve the fixed experiment contract.",
+    "rules": []
+  },
+  "workflows": {
+    "artifact_patch": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "dependencies",
+        "kind": "read_dependencies",
+        "max_chars": 32000,
+        "offset": 0
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose"
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        }
+      }
+    ],
+    "compatibility_smoke": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose"
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        }
+      }
+    ],
+    "final_consolidation": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "task_harness_source",
+        "kind": "read_dependencies",
+        "paths": [
+          "seed.json"
+        ],
+        "max_chars": 120000,
+        "when": {
+          "path": "facts.current_harness_identity.schema_version",
+          "op": "in",
+          "value": [
+            1,
+            2
+          ]
+        }
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "checks": [
+          "experience_outcome"
+        ],
+        "id": "outcome",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose"
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        }
+      }
+    ],
+    "harness_patch": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "dependencies",
+        "kind": "read_dependencies",
+        "max_chars": 32000,
+        "offset": 0
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose"
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        }
+      }
+    ],
+    "meta_self_update": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "task_harness_source",
+        "kind": "read_dependencies",
+        "paths": [
+          "seed.json"
+        ],
+        "max_chars": 120000,
+        "when": {
+          "path": "facts.current_harness_identity.schema_version",
+          "op": "in",
+          "value": [
+            1,
+            2
+          ]
+        }
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "checks": [
+          "experience_outcome"
+        ],
+        "id": "outcome",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose"
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        }
+      }
+    ],
+    "model_request": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "dependencies",
+        "kind": "read_dependencies",
+        "max_chars": 32000,
+        "offset": 0
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose"
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        }
+      }
+    ],
+    "routing": [
+      {
+        "id": "select",
+        "kind": "evidence"
+      },
+      {
+        "id": "retrieve",
+        "kind": "experience"
+      },
+      {
+        "id": "task_harness_source",
+        "kind": "read_dependencies",
+        "paths": [
+          "seed.json"
+        ],
+        "max_chars": 120000,
+        "when": {
+          "path": "facts.current_harness_identity.schema_version",
+          "op": "in",
+          "value": [
+            1,
+            2
+          ]
+        }
+      },
+      {
+        "checks": [
+          "source_integrity",
+          "requested_targets"
+        ],
+        "id": "facts",
+        "kind": "check"
+      },
+      {
+        "id": "propose",
+        "kind": "propose"
+      },
+      {
+        "id": "repair",
+        "kind": "repair",
+        "max_attempts": 1,
+        "when": {
+          "op": "eq",
+          "path": "candidate_valid",
+          "value": false
+        }
+      }
+    ]
+  }
+}

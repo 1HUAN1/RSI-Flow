@@ -1,0 +1,231 @@
+{
+  "training": {
+    "rounds": 3,
+    "seed": 42,
+    "runtime_source": "/root/data/RSI_iclr2027/rsiH/runs/output_submission_20260916/runtime",
+    "base_config": "configs/envscaler-256-direct-five-global-until-20260917-235900.json",
+    "dataset_root": "/root/data/RSI_iclr2027/dataset",
+    "environment_files": [
+      "train/tool_use/envscaler/train/environments.jsonl",
+      "train/tool_use/envscaler/heldout/environments.jsonl"
+    ],
+    "datasets": [
+      {
+        "name": "envscaler",
+        "domain": "tool_use",
+        "files": [
+          {
+            "path": "train/tool_use/envscaler/train/scenarios.jsonl",
+            "original_split": "train"
+          },
+          {
+            "path": "train/tool_use/envscaler/heldout/scenarios.jsonl",
+            "original_split": "heldout"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      },
+      {
+        "name": "deepcoder_taco",
+        "domain": "code",
+        "files": [
+          {
+            "path": "train/code/deepcoder_taco/train.jsonl",
+            "original_split": "train"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      },
+      {
+        "name": "nq_open",
+        "domain": "searchqa",
+        "files": [
+          {
+            "path": "train/searchqa/nq_open/train.jsonl",
+            "original_split": "train"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      },
+      {
+        "name": "hotpotqa",
+        "domain": "searchqa",
+        "files": [
+          {
+            "path": "train/searchqa/hotpotqa/train.jsonl",
+            "original_split": "train"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      },
+      {
+        "name": "2wiki",
+        "domain": "searchqa",
+        "files": [
+          {
+            "path": "train/searchqa/2wiki/train.jsonl",
+            "original_split": "train"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      }
+    ],
+    "dataset_passes_per_round": 2,
+    "sft_epochs_per_update": 1,
+    "sft_max_steps": -1,
+    "max_length": 16384,
+    "max_sft_samples": 10000000,
+    "training_timeout_seconds": 604800,
+    "max_wall_seconds": 2592000,
+    "validation_config": "configs/validation.json",
+    "run_name": "joint_append_memory_1080_fast",
+    "meta_worker_socket": "/tmp/rsi_meta_joint_20260918_worker.sock",
+    "meta_relay_socket": "/tmp/rsi_meta_joint_20260918_relay.sock",
+    "ports": [
+      8171,
+      8172,
+      8173,
+      8174
+    ],
+    "training_schedule": "round_disjoint",
+    "split_seed": 42,
+    "rollout_seed": 42,
+    "training_seed": 42,
+    "allocated_tasks": 1080,
+    "minimum_sft_samples": 1,
+    "train_quotas_per_round": {
+      "envscaler": 120,
+      "deepcoder_taco": 120,
+      "nq_open": 30,
+      "hotpotqa": 45,
+      "2wiki": 45
+    },
+    "grouping": {
+      "family_fields": [
+        "group_id",
+        "problem_id",
+        "conversation_id",
+        "dialogue_id",
+        "parent_id",
+        "original_id"
+      ],
+      "envscaler_environment_family": true,
+      "max_environment_fraction_per_round": 0.1
+    },
+    "exposure_ledger": null,
+    "validation_limits": {
+      "bfcl_v3": 50,
+      "acebench": 50,
+      "livecodebench": 50,
+      "humaneval_plus": 25,
+      "mbpp_plus": 25,
+      "hotpotqa_dev": 50,
+      "2wiki_dev": 50
+    },
+    "final_test_limits": {
+      "bfcl_v3": null,
+      "acebench": null,
+      "livecodebench": null,
+      "humaneval_plus": null,
+      "mbpp_plus": null,
+      "hotpotqa_dev": 1000,
+      "2wiki_dev": 1000
+    },
+    "retrieval_index": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918/runtime/data/joint_full/search.sqlite",
+    "validation_vault": "/root/data/RSI_iclr2027/rsiH/evaluation_vault/append_memory_1080_fast",
+    "rollout_collection_policy": "parent_full_B_then_child_full_B",
+    "training_rollouts_per_round": 720,
+    "training_tasks_per_pass": 360,
+    "evaluate_initial_system": false,
+    "data_release": "rounds_1080",
+    "memory_policy": "append_component_skill_then_general_principle"
+  },
+  "validation": {
+    "frequency": "after_each_committed_round",
+    "feedback_to_training_or_meta": false,
+    "benchmark_ids": [
+      "bfcl_v3",
+      "acebench",
+      "livecodebench",
+      "humaneval_plus",
+      "mbpp_plus",
+      "hotpotqa_dev",
+      "2wiki_dev"
+    ],
+    "official_specs": "/root/data/RSI_iclr2027/rsiH/runs/output_submission_20260916/runtime/configs/report-evaluators.json",
+    "tool_benchmarks": {
+      "bfcl_v3": {
+        "repository_root": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3",
+        "categories": "all_v3",
+        "version_prefix": "BFCL_v3",
+        "data_path": "/root/data/RSI_iclr2027/dataset/test/tool_use/bfcl_v3/test.jsonl",
+        "python_executable": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/.venv/bin/python"
+      },
+      "acebench": {
+        "repository_root": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench",
+        "language": "en",
+        "category": "test_all",
+        "user_model": "gpt-4o-2024-08-06",
+        "user_provider_model": "openai/gpt-4o-2024-08-06",
+        "user_api_key_env": "ACE_USER_API_KEY",
+        "user_base_url_env": "ACE_USER_BASE_URL",
+        "data_path": "/root/data/RSI_iclr2027/dataset/test/tool_use/acebench/test.jsonl",
+        "python_executable": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/.venv/bin/python"
+      }
+    }
+  },
+  "validation_sources_sha256": "4b64ac417ec32384506414c4707e7595b924774c7a82ab1ec21834501bf8a9d5",
+  "script_hashes": {
+    "data_protocol.py": "6496d81774c26be9f2b8a9018d5381daf9e1ab730640acfac33da2b265f85ae8",
+    "status.py": "3f9a241d7a4fa5d19a5738cff019ce10e82af150150b789b76c74c57a8f4257c",
+    "tool_sandbox.py": "103e6ffe8418c7bb06aa0c70593b0389f3e7ab467a28eebeb3fd6fc12788e64c",
+    "evaluation_results.py": "491f45e520bb127a6a2f801b335626c43aba3379826a6e9acbdeb3f59f63ea0b",
+    "round_evolution.py": "88a138b1bac83b6d5f72f6f18c5bb342ab614d9126065ecb4ea68bd525465e0c",
+    "prepare_revision.py": "fe67b6b24829a62cec8488de05f7cbeec2c3f85fcb0a6e9c6c4168315b0a762c",
+    "monitor.py": "01e4cab1dc8c02bfcc269687cabd84ee44cb69602eb27bc50f7f09b90bacb46e",
+    "harness_api.py": "d1c41a3d7173fa607bb6a53e10807c5da0f95462b1c239dfc7cde76f5711063c",
+    "validate.py": "4357d0a41050cdb76fe22f81a220ad0ac80054d0e96a0ad9fc7c4800383874ba",
+    "prepare_data.py": "4953c933256adfd54f9343d23b261e674f55b237fb779df9e43fb49887e1d6af",
+    "inference_optimizations.py": "7933b36ad9eab87d67f663297a99b6af6e8873fa20ede5d96baf83d84ba8e228",
+    "train.py": "16bd4799b09e217e42d126170a1adceba7340757cbce542776bbd60fceee55bc",
+    "protocol_patches.py": "584b674661823bfc016b40865fcd38f03e34bd99c76b6ceebf3d07876421511c",
+    "parallel_predictions.py": "d522fa5e7f2602b42f9cbdc6af42ffdfc8c7c9131f444e9f26af7434b75f8e66",
+    "official_tool_entry.py": "de9d4c87e7b34ce978b38c2c83c46c8b55205dec4f96fa6abc41f627eb274240",
+    "validation_sources.py": "2ba726ae19be5a3a03f70d31c40c7e1fc73a80f31ec2d0d7d8c2d0fc568c7f20",
+    "launch.py": "2de5b3f5cda1a5611466bef334d80f937190d55bdf59d308c6f376136ba6cd4c",
+    "setup_environment.py": "dc35192cf22319d359c9255524779626e5bde9f4f644549ff6520f2150a92d73",
+    "tool_validation.py": "15a9fc81499778631b4c31ff33d3111dfb16073902833075d5ac04d47feab0ce",
+    "common.py": "f6bc42d19dff5eb540027e6fa171604fbeb76bd172c37510c6caa5caaba10f40",
+    "evaluation_manifest.py": "049fdbee98b621dc03ab27dff8938b6a8530d735e83b3b3572f73bc6b0fc50f1",
+    "evolution_protocol.py": "60775add49a86936ff0999586bdb3ec41bb2e9f68b33558da276c5db3943b449",
+    "install_runtime.py": "1951ac26ebe0bc0ba1edd53b37b8c4c774fe7cb4a54dc2977cfc6b8730f9a954",
+    "runtime_extensions.py": "c2b8824931de038179d8f9fb3583f0a0dcedcd52d24e51656c5a29c1376b27f0",
+    "round_validation.py": "89b51060ea63df37e7ff61a7419c0687a2e57d607dc2316e757349d01c7c5948"
+  },
+  "validation_never_used_for_selection": true
+}

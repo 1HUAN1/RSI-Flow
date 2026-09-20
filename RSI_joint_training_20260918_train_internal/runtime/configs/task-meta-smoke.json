@@ -1,0 +1,12 @@
+{
+  "batch_size": 1,
+  "rollouts_per_task": 8,
+  "temperature": 0.7,
+  "max_tokens": 12,
+  "seed": 42,
+  "primary_metric": "success_rate",
+  "primary_metric_mode": "max",
+  "meta_timeout": 180,
+  "meta_max_tokens": 8192,
+  "trainer_command": null
+}

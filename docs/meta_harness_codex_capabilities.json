@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "inspection_date": "2026-09-09",
+  "codex_tag": "rust-v0.153.4",
+  "codex_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+  "reported_server_version": "codex-cli 0.153.4",
+  "version_evidence": "coordinator read-only server probe; source archives hashed here",
+  "source_changes": false,
+  "source_build": false,
+  "real_api_calls": 0,
+  "arbitrary_policy_code_supported": false,
+  "project_extension": "bounded composable JSON rules interpreted by rsiH runtime",
+  "native_agents_consumption_verified": false,
+  "files_sha256": {
+    "codex-home\\src\\instructions\\mod.rs": "fad349ac9be95dfcbf5401d814f35a8cb118ab6cdfe3cf48ae89fda8b39e4614",
+    "codex-home\\src\\instructions\\tests.rs": "330645d00ce248925f1805745a5340d39c76f1df5c18458e40abb408669e5b95",
+    "core\\src\\agents_md.rs": "8bbaf068c099fdeeaf4fe49076d398da7671f20c9a962fde5c4eb7653008fed4",
+    "core\\src\\agents_md_manager.rs": "5e3301c7c8763092748d86f6f92c441c2ffd5050c36ee489b609018803de1591",
+    "core\\src\\agents_md_tests.rs": "f3c2c04087eed398afef2b02ab6955166586b63ebf6788d558534da617e1409a",
+    "core\\src\\codex_thread.rs": "8a79e9f5a498eed6778bd64a79edd8a3c879b193cd6144de2396dd4a9a556057",
+    "core\\src\\context\\user_instructions.rs": "fd331f381cd81c788c50b951fb7f5641581cdd5593ff1cc92dd47428b42ea7b9",
+    "exec\\src\\cli.rs": "ba4767bdf5d83376830864b60a8a5e350e5e189fbc6e97a834d4a7f36240e822",
+    "exec\\src\\event_processor_with_jsonl_output.rs": "2f71fbf8a1b0a79bd342ed3c9caa414f1c5e06d9e52d6a94461799f304a9f255",
+    "exec\\src\\exec_events.rs": "c404928e0f2a463e19d1b263081c9d5e0380aec9f651a05ee0766f7bb7527f32",
+    "exec\\src\\lib.rs": "7497f8b5971cf4a10d237c34a10f39ffd1b51c99cf3e2f161f2bfa25f8e353df"
+  },
+  "archives_sha256": {
+    "codex_inspection.tgz": "0d688dcc578f71c52d46475bf7f6a210945ef05ed063f795dd69f260df9e601f",
+    "codex_instructions_events.tgz": "219eff79d17bc1954b712a28c4248321bd977e711dd23980abef5440f265e9ec"
+  }
+}

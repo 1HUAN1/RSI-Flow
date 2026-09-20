@@ -1,0 +1,7 @@
+{
+  "profile_id": "gptoss-tinker",
+  "name": "GPT OSS 120B on Tinker",
+  "model": "openai/gpt-oss-120b",
+  "provider_id": "tinker",
+  "agent_reference": "default"
+}

@@ -1,0 +1,7 @@
+{
+  "profile_id": "local-qwen-target",
+  "name": "Local Qwen2.5-3B-Instruct target",
+  "model": "/root/data/zh/huggingface/Qwen2.5-3B-Instruct",
+  "provider_id": "local-qwen",
+  "agent_reference": "default"
+}

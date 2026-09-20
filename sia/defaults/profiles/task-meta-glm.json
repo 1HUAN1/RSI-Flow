@@ -1,0 +1,7 @@
+{
+  "profile_id": "task-meta-glm",
+  "name": "Task Meta frozen GLM 5.2 via OpenRouter",
+  "agent_impl": "pydantic-ai",
+  "model": "z-ai/glm-5.2",
+  "provider_id": "openrouter"
+}

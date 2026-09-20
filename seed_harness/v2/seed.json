@@ -1,0 +1,250 @@
+{
+  "budget": {
+    "max_model_calls": 128,
+    "max_tool_calls": 50,
+    "max_tokens": 2048,
+    "temperature": 0.7
+  },
+  "initialization": {
+    "artifacts": [],
+    "shortterm_memory": [],
+    "historical_run_memory": "excluded",
+    "coldstart_rules_component": "HARNESS",
+    "coldstart_rules": {
+      "COLDSTART_STRATEGIC_MEMORIES": [
+        {
+          "content": "Execute directly rather than over-planning. Prioritize immediate action and concrete steps over extensive theoretical analysis.",
+          "tags": [
+            "execution",
+            "planning"
+          ]
+        },
+        {
+          "content": "Interpret task instructions literally and precisely. Pay close attention to output format requirements (units, separators, capitalization).",
+          "tags": [
+            "instruction",
+            "format"
+          ]
+        },
+        {
+          "content": "For numerical tasks, identify all units explicitly and track unit conversions through each step of calculation.",
+          "tags": [
+            "computation",
+            "units"
+          ]
+        },
+        {
+          "content": "When tasks present contradictory instructions that test the agent's internal logic or ability to follow specific directives, prioritize direct compliance with the explicit instruction over meta-analysis of the contradiction.",
+          "tags": [
+            "instruction",
+            "contradiction",
+            "compliance"
+          ]
+        },
+        {
+          "content": "If there is no direct or first-hand authoritative evidence, other sources or the most likely answer analyzed can also be provided when reporting the answer, as long as it is clearly labeled.",
+          "tags": [
+            "evidence",
+            "reporting",
+            "transparency"
+          ]
+        }
+      ],
+      "COLDSTART_OPERATIONAL_MEMORIES": [
+        {
+          "content": "When crawling web pages: Use specific queries for exact information, extract numbers with full context (units, date, conditions).",
+          "tags": [
+            "web_search",
+            "extraction"
+          ]
+        },
+        {
+          "content": "For multi-source information tasks: Navigate to exact source, extract verbatim values, write formula with units, apply formatting only at end.",
+          "tags": [
+            "procedure",
+            "information_retrieval"
+          ]
+        }
+      ]
+    },
+    "longterm_provision": false
+  },
+  "reference": {
+    "repository": "HarnessForge",
+    "commit": "05b3ecadb3c9a7a938f75129ea22b8f2b36cf289",
+    "entry": "harness_factory.base_harness.builder.build_agent_from_context",
+    "files_sha256": {
+      "references/harnessforge/builder.py": "77de46e639dfbead8f1660d5b35d604c32ed775a96db3aab9dc9b1c1734eab5d",
+      "references/harnessforge/planning_module/provider.py": "d12e30aff63304c2ecd6156fbdc6df4cad252caedd0a7bb67a175fa4ba7a3487",
+      "references/harnessforge/action_module/provider.py": "794e7ff734c649b7e8235f90f0dde1af3d709ff6611571e50f8c1efd2e4b835c",
+      "references/harnessforge/memory_module/provider.py": "8fa8efc45e07c3cdb07f80b07c871eb9d9246b287b5bd456bdabb1a1eb471d1b",
+      "references/harnessforge/planning_module/prompts/toolcalling_agent.yaml": "c74270aa0a59885789e2dbe61db4c801fd76eb9da494e5ec873a3e83a71e5917",
+      "references/harnessforge/action_module/prompts/toolcalling_agent.yaml": "a15551dec665acce7721190d71901fb7e9a2b241116256483a1e5d99f1863358",
+      "hf_runtime/Agents/agents.py": "e122e44d02ca99caf533ff88cb674bfe4d9b9a8b5b71a84719393d3fed347c4b",
+      "hf_runtime/Agents/memory.py": "0d018e6518c3942df2f58da2dc6eef13ea13a108d8a65949f2d8da0ca83fb990",
+      "references/harnessforge_root/run_infer.py": "74e6e95ab49b91ea2b063e19c1e784c3b569f1985fe4bfb0d07a2709d703b9b9"
+    }
+  },
+  "name": "rsi_multidomain_seed_v1",
+  "adaptations": [
+    "Three-domain environment.tools/step interfaces replace native benchmark tool loading; same protocol applies to future baseline copies.",
+    "summary_interval fixed to 8 instead of per-item random randint(7,9); plan/summary counter and exhaustion finalization retained.",
+    "One tool per action for all domains instead of native optional cap; calls execute serially to isolate mutable environment state.",
+    "Explicit 128 model calls / 50 tool calls / 2048 output tokens / temperature 0.7 are frozen external budgets; native CLI has no max_tokens default.",
+    "Strict JSON parsing with one bounded repair request replaces json_repair permissive normalization; native successful canonical JSON path is preserved.",
+    "All model roles use the registered Task callable; internal tool-response context is normalized to user as native run_infer transport does.",
+    "Native seven cold-start rules are recorded as Harness preloads with longterm provision disabled; A0 remains empty. Historical memory never imported.",
+    "Rollout short-term memory is isolated; generated notes become unverified current-window artifacts. Native cross-task database ingestion/backfill is replaced by RSI A_in/A_out lifecycle.",
+    "Infrastructure errors propagate as explicit incomplete trajectories instead of native memory-provider silent fallback; task parse/tool errors retain bounded diagnostics."
+  ],
+  "alignment_status": "ADAPTED_CANONICAL_METHOD_REPLAY_VALIDATED",
+  "schema_version": 2,
+  "interface_version": "task-harness-v2",
+  "parts": {
+    "input": {
+      "action_system": "You are a closed-set ReAct tool-using assistant.\n\nYour job is to solve the user's task by reasoning step by step, calling the provided tools when needed, and calling final_answer as soon as the answer is supported by the observed evidence.\n\n**Your ReAct Process:**\n1. **THINK**: Analyze the current situation, what you already know, what is still missing, and whether the answer may already be supported.\n2. **ACT**: If more evidence is needed, call the most appropriate available tool using the required JSON format.\n3. **OBSERVE**: Read the tool result carefully and update your understanding.\n4. **REPEAT**: Continue this Think-Act-Observe cycle until you can provide the final answer, then stop immediately with final_answer.\n\n**ToolCallingAgent Output Contract:**\n- Every non-final response must be one strict JSON object only.\n- Do not include markdown, code fences, or any text outside JSON.\n- Use exactly this shape:\n  {\n    \"think\": \"brief reasoning for the next action\",\n    \"tools\": [\n      {\"name\": \"actual_tool_name\", \"arguments\": {\"arg\": \"value\"}}\n    ]\n  }\n- Tool names and argument keys must exactly match the available tool schemas.\n- Never invent tools, arguments, files, APIs, or observations.\n- Every non-final step must contain at least one valid tool call.\n- Never return an empty tools list. If no more tool is needed, call final_answer instead.\n- If a tool call fails because of invalid arguments, unsupported fields, or schema mismatch, inspect the schema and correct the arguments on the next step instead of repeating the same bad call.\n- Never repeat an identical failed tool call unless the observation gives a concrete reason that the exact same call should now succeed.\n\n**Important Guidelines:**\n- **Always start with THINKING**: Before any action, analyze what you know and what you still need.\n- **One tool call at a step by default**: Use a single tool call unless multiple calls are truly independent.\n- **Observe and think again**: After each tool call, use the new observation to decide the next step.\n- **Schema discipline is mandatory**: Read the tool schema carefully and use only the listed argument names and types. Never substitute alternative argument names.\n- **Do not loop on the same failed pattern**: If the same strategy already failed and you gained no new evidence, change tools, revise arguments, or finalize if possible.\n- **Retry with adaptation, not repetition**: When progress is weak, explicitly change the tool choice, arguments, or strategy. A retry must be meaningfully different from the failed attempt.\n- **Do not over-search**: If the remaining work is only a simple deterministic transformation of observed evidence, do not call another lookup tool.\n- **Provide final answer as soon as supported**: Once the requested value, or all values needed to compute it, are already observed, call final_answer immediately.\n\n**Answer Policy:**\n- Base the final answer only on observed evidence.\n- Do not override, reinterpret, or recompute a supported observed result unless a new observation proves the earlier result wrong.\n- Keep the final answer concise and task-specific.\n- For short-answer or multi-hop lookup tasks, return the raw answer value in final_answer.",
+      "task_template": "New task:\n{{task}}",
+      "action_step": "Continue the ReAct loop using the current task, plan, memory, and previous tool observations.\n\nAvailable tool schemas:\n{{tool_functions_json}}\n\nOriginal task:\n{{task}}\n\nDecision rules:\n- **THINK** about the next missing fact, the next verification, or why the answer is already supported.\n- Select only tools from the available schemas above.\n- Use exact JSON argument objects that match the schema.\n- Read the tool schemas carefully before every call. Never substitute alternative argument names.\n- Prefer one tool call unless multiple calls are truly independent.\n- Never emit an empty tools list.\n- If you cannot justify a new valid tool call from the observations, call final_answer instead.\n- If the current evidence already supports the answer, call final_answer and no other tool.\n- If a tool failed because of arguments or schema mismatch, your next step should repair the arguments or choose a different valid tool.\n- Never repeat an identical failed call with identical arguments unless the observation explicitly justifies it.\n- If one or two retries of the same strategy already failed and no new evidence was gained, switch tools or finalize if possible.\n- Otherwise call at least one tool.\n\nReturn strict JSON only:\n{\n  \"think\": \"brief ReAct thought for the next action\",\n  \"tools\": [\n    {\"name\": \"actual_tool_name\", \"arguments\": {\"arg\": \"value\"}}\n  ]\n}",
+      "section_order": [
+        "history",
+        "guidance",
+        "action"
+      ]
+    },
+    "control": {
+      "planning": {
+        "enabled": true,
+        "summary_interval": 8,
+        "max_steps": 50
+      },
+      "prompts": {
+        "planning_initial": "Create the shortest executable plan for this task:\n1) identify the minimum missing information or action\n2) choose the next useful tool call or reasoning step\n3) finalize immediately once the answer is supported\n4) if a tool call later fails, prefer schema-aware argument repair or a new strategy instead of repeating the same failed call\nDo not output the final answer in this step.\nKeep the plan extremely short and avoid exploratory subgoals unless the task is genuinely unclear.",
+        "planning_task": "Task:\n{{task}}",
+        "summary_pre": "Summarize progress and determine the minimum next step.\nIf the current answer is already supported, recommend final_answer immediately.\nInclude the latest relevant error or result signal if any.\nCall out repeated failures and recommend a concrete argument fix or strategy change instead of a blind retry.",
+        "summary_post": "Provide very short status + next action guidance.\nOutput:\n- current_task_state\n- latest_error_or_result\n- retry_or_repair_guidance\n- next_step"
+      },
+      "graph": {
+        "entry": "prepare",
+        "nodes": [
+          {
+            "id": "prepare",
+            "kind": "prepare",
+            "next": "memory"
+          },
+          {
+            "id": "memory",
+            "kind": "memory",
+            "next": "act"
+          },
+          {
+            "id": "act",
+            "kind": "act",
+            "next": "tools"
+          },
+          {
+            "id": "tools",
+            "kind": "tools",
+            "next": "inspect"
+          },
+          {
+            "id": "inspect",
+            "kind": "inspect",
+            "next": "commit"
+          },
+          {
+            "id": "commit",
+            "kind": "commit",
+            "next": "branch"
+          },
+          {
+            "id": "branch",
+            "kind": "branch",
+            "next": [
+              {
+                "when": {
+                  "path": "state.has_final",
+                  "op": "eq",
+                  "value": true
+                },
+                "to": "stop"
+              },
+              {
+                "when": {
+                  "path": "state.can_continue",
+                  "op": "eq",
+                  "value": true
+                },
+                "to": "prepare"
+              },
+              {
+                "when": true,
+                "to": "finalize"
+              }
+            ]
+          },
+          {
+            "id": "finalize",
+            "kind": "finalize",
+            "next": "stop"
+          },
+          {
+            "id": "stop",
+            "kind": "stop",
+            "next": "stop"
+          }
+        ]
+      }
+    },
+    "tools": {
+      "action": {
+        "max_tools_per_step": 1,
+        "parse_retries": 1
+      },
+      "validate_arguments": false,
+      "recovery": {
+        "max_retries": 0,
+        "prompt": "Repair the failed tool arguments from the genuine error and original tool schema. Return strict JSON with an arguments object."
+      },
+      "roles": []
+    },
+    "memory": {
+      "context": {
+        "shortterm_enabled": true,
+        "shortterm_interval": 3,
+        "max_shortterm_items": 10,
+        "use_artifacts": true,
+        "artifact_char_limit": 12000,
+        "generate_artifacts": true
+      },
+      "prompts": {
+        "memory_extract": "You are analyzing the current step of task execution. Perform TWO tasks:\n\n1. Generate a brief summary of what happened in this step\n2. Extract key information that should be remembered\n\n**Original Task:**\n{{task}}\n\n**Previous Steps Summary:**\n{{previous_steps}}\n\n**Current Working Memory (already remembered):**\n{{current_memory}}\n\n**New Information from Current Step:**\n{{context_delta}}\n\n**Output Format (JSON):**\n{\n  \"step_summary\": \"2-3 sentence summary of what agent did in this step\",\n  \"key_extracts\": [\"item1\", \"item2\", \"item3\"]\n}\n\n**Task 1 - Step Summary Requirements:**\nCapture in 2-3 sentences:\n- What action was taken (searched, calculated, analyzed, etc.)\n- What was discovered or determined\n- Any important state changes\n\n**Task 2 - Key Extraction Requirements (maximum 3 items):**\nExtract ONLY task-related information that is truly critical:\n\n**EXTRACT (Task-Related Information):**\n- Task-specific constraints or requirements discovered during execution (e.g., \"output must be in kilometers\", \"no commas allowed\", \"date format: YYYY-MM-DD\")\n- Key data values or numerical results from the task (e.g., \"Beijing coordinates: 39.9掳N, 116.4掳E\", \"total population: 21.5 million\")\n- Important discoveries or findings related to the task content (e.g., \"source A contradicts source B\", \"calculation requires unit conversion\")\n- Task-specific conditions or constraints (e.g., \"must use data from 2023\", \"exclude weekends\")\n\n**DO NOT EXTRACT (System/Format Instructions):**\n- Memory system guidance\n- System instructions or format requirements (e.g., \"must include think section\", \"use tools array\", \"call final_answer when done\")\n- Tool usage specifications or API requirements\n- General execution guidelines or workflow rules\n- Agent behavior instructions or protocol requirements\n- Any meta-instructions about how to structure responses or use tools\n\n**Extraction Rules:**\n- Each item: ONE concise sentence (15-20 words max), **prefer direct quotes or close paraphrasing from the context to preserve original meaning**\n- **ONLY extract information directly related to the TASK CONTENT, not execution mechanics**\n- **DO NOT extract information already in working memory**\n- Prioritize: Task Constraints > Key Data Values > Important Discoveries\n- If nothing new/important related to the task, set \"key_extracts\" to empty array []\n- **Preserve original meaning: quote or closely paraphrase the source text, don't rephrase unnecessarily**\n\n**Critical Filter:**\nBefore extracting any item, ask: \"Is this about the TASK CONTENT (data, constraints, results) or about SYSTEM INSTRUCTIONS (format, tools, workflow)?\"\n- If about task content 鈫?EXTRACT\n- If about system instructions 鈫?SKIP\n\n**Your Response (JSON only):**",
+        "memory_prune": "You are managing a working memory for an AI agent solving a task. The memory is full and you must decide which items to keep.\n\n**Original Task:**\n{{task}}\n\n**Execution History (what agent has done):**\n{{previous_steps}}\n\n**Current Memory Items (newest at bottom):**\n{{memory_items}}\n\n**Task:**\nSelect exactly {{max_shortterm_items}} MOST IMPORTANT items to keep.\n\n**Use the Execution History to judge:**\n- What stage is the task at? (early exploration / data gathering / calculation / finalization)\n- What information is still needed based on what's been done?\n- Which memory items are critical for the NEXT steps?\n\n**Priority Guidelines:**\n\n**ALWAYS KEEP (regardless of task stage):**\n- Task constraints: units, format, output requirements\n- Key data values that will be used in final answer\n- Critical discoveries that changed the approach\n\n**CONSIDER TASK STAGE:**\n- Early stage (steps 1-10): Keep constraints and initial data\n- Mid stage (steps 11-25): Keep data being actively used, formulas\n- Late stage (steps 26+): Keep constraints, final results, discard superseded intermediate results\n\n**CAN DISCARD:**\n- Information superseded by newer, more accurate data\n- Intermediate steps no longer relevant\n- General actions that don't reveal constraints\n- Redundant information\n\n**CRITICAL REMINDER:** \nConstraints discovered early (like \"no commas\", \"kilometers only\") remain CRITICAL even in late stages because they determine final answer format. Do NOT discard them!\n\n**Output Format (JSON list of indices to KEEP):**\n[1, 3, 5, 7, ...]\n\nOnly provide the JSON array, nothing else.\n\n**Your Selection:**"
+      },
+      "history": {
+        "filter": true,
+        "max_messages": null,
+        "max_chars": null,
+        "required_roles": [
+          "system"
+        ]
+      },
+      "assets": {
+        "filter": true,
+        "max_items": 100000
+      }
+    },
+    "submission": {
+      "prompts": {
+        "final_pre": "You need to produce the final answer from the task, plan, memory, and observed tool results.",
+        "final_post": "Return strict JSON only:\n\n{\n  \"think\": \"brief reason why the answer is supported\",\n  \"answer\": \"the final answer\"\n}\n\nRules:\n- The answer field must contain only the requested final answer.\n- Do not call any non-final tool here.\n- Do not add markdown or extra commentary.\n- If the observed evidence already determines the answer, answer directly instead of hedging.\n- Base the answer on observations only; do not invent missing intermediate values.\n- For short-answer or multi-hop lookup tasks, return the raw short answer only.\n\nTask:\n{{task}}"
+      },
+      "strip_final_answer": false,
+      "checks": [],
+      "repair_prompt": "Repair the current candidate using only visible task information and the internal check errors.",
+      "answer_format": {
+        "mode": "identity",
+        "key": "answer"
+      }
+    }
+  }
+}

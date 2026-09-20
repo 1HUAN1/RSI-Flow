@@ -1,0 +1,15 @@
+{
+  "authorized_at": 1789812825.092215,
+  "run_name": "joint_append_memory_1080_fast_r3",
+  "rounds": 3,
+  "pre_tasks": 360,
+  "post_tasks": 360,
+  "independent_evaluation_tasks": 300,
+  "model_update": "conditional_1_epoch_lora",
+  "config_sha256": "b641fe1100cc17dc06d80dd439dca889f63ae966b1ebf24306a4ec866059274a",
+  "api_scope": "Existing authorized training evidence to Meta and ACE official user simulator only",
+  "old_results_preserved": true,
+  "synthetic_verification_model_calls": 24,
+  "launcher_pid": 623657,
+  "monitor_pid": 623658
+}

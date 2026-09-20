@@ -1,0 +1,7 @@
+{
+  "profile_id": "task-meta-qwen",
+  "name": "Task Meta local Qwen2.5-3B-Instruct",
+  "model": "/root/data/zh/huggingface/Qwen2.5-3B-Instruct",
+  "provider_id": "task-meta-local",
+  "agent_reference": "default"
+}

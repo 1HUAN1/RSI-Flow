@@ -1,0 +1,11 @@
+{
+  "upstream": "https://github.com/openai/codex",
+  "tag": "rust-v0.153.4",
+  "commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+  "binary_sha256": "56ef98ab4032d317ab26e9b5e5a175650717351edb16ed9cde0cb6d1734d62da",
+  "binary": "/root/data/RSI_iclr2027/rsiH/third_party/codex-bin/codex-x86_64-unknown-linux-musl",
+  "binary_origin": "official release asset same tag; not locally built",
+  "source_status": "",
+  "config_schema_sha256": "692da7699367f6f4fbbd46c0021278c1311440bcebf0bcb9b836690c05e56196",
+  "validation_status": "IMPLEMENTED_NOT_API_VALIDATED"
+}

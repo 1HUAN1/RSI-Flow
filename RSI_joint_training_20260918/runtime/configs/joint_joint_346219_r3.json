@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "mode": "full",
+  "task_checkpoint": "/root/data/zh/huggingface/Qwen3-4B",
+  "task_base_url": "http://127.0.0.1:8171/v1",
+  "task_enable_thinking": false,
+  "task_timeout": 180,
+  "seed_harness": "/root/data/RSI_iclr2027/rsiH/runs/envscaler128_seed42_20260914_162929/runtime/meta_harness/task_frozen_parent.json",
+  "initial_meta_bundle": "/root/data/RSI_iclr2027/rsiH/runs/method2_four_gpu_20260916/runtime/runs/stream_rate_limit_fix_1789547630/method2_envscaler_128_five_parentfix_1789544268/meta/harness_versions/v009_63ad4b397f79",
+  "initial_meta_bundle_hash": "63ad4b397f799c06baf14e1801881540746f05677a3420a608f37e9ec689b4ef",
+  "source_manifest": "/root/data/RSI_iclr2027/dataset/manifests/dataset_manifest.json",
+  "data_dir": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918/runtime/data/joint_full",
+  "search_dev_fraction": 0,
+  "probe_per_domain": {
+    "tool_use": 16,
+    "code": 16,
+    "searchqa": 16
+  },
+  "window_quotas": {
+    "tool_use": 2550,
+    "code": 6600,
+    "searchqa": 337069
+  },
+  "rollouts_per_task": 1,
+  "probe_rollouts": 1,
+  "seed": 42,
+  "max_generations": 3,
+  "task_update_policy": "sequential_positive_gain",
+  "max_wall_seconds": 2592000,
+  "model_call_limit": 128,
+  "max_output_tokens": 2048,
+  "inference_gpu": 0,
+  "gpu_execution": "phased_four",
+  "training_gpu": 1,
+  "trainer_python": "/root/data/conda/envs/sia/bin/python",
+  "training": {
+    "max_steps": -1,
+    "learning_rate": 2e-05,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "max_length": 16384,
+    "lora_rank": 16,
+    "lora_target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ],
+    "save_steps": 32,
+    "seed": 42,
+    "num_train_epochs": 1,
+    "max_samples": 10000000
+  },
+  "supervision": "final_assistant",
+  "external_corpus": null,
+  "envscaler_root": "/root/data/RSI_iclr2027/dataset/train/tool_use/envscaler",
+  "envscaler_utils": "/root/data/RSI_iclr2027/dataset/evaluators/envscaler/EnvScaler/interact_with_env/envscaler_env/utils/env_util.py",
+  "envscaler_commit": "96ae8b02dc0187c911b8e2101e7bb6904271597b",
+  "meta": {
+    "backend": "codex_openrouter",
+    "provider": "autodl",
+    "model": "gpt-5.6-sol",
+    "base_url": "https://www.autodl.art/api/v1",
+    "api_key_env": "AUTODL_API_KEY",
+    "wire_api": "responses",
+    "response_delivery": "buffered_json",
+    "response_timeout_seconds": 900,
+    "g_output_delivery": "candidate_file_all",
+    "allow_model_fallback": false,
+    "run_mode": "full",
+    "codex_source": "/root/data/RSI_iclr2027/rsiH/third_party/codex",
+    "codex_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+    "codex_executable": "/root/data/RSI_iclr2027/rsiH/third_party/codex-bin/codex-x86_64-unknown-linux-musl",
+    "codex_binary_sha256": "56ef98ab4032d317ab26e9b5e5a175650717351edb16ed9cde0cb6d1734d62da",
+    "provenance_file": "/root/data/RSI_iclr2027/rsiH/third_party/codex-provenance.json",
+    "model_catalog_json": "/root/data/RSI_iclr2027/rsiH/configs/catalog-meta-reload-providers-20260912.json",
+    "model_catalog_sha256": "ce6a282b552b607dd7bf9ebb4e76ebab0ecf63c6dfb6271f8e67aaeb7c3307aa",
+    "compatibility_report": null,
+    "compatibility_mode": "in_run",
+    "execution_location": "ssh_worker",
+    "remote_worker_socket": "/tmp/rsi_meta_joint_20260918_worker.sock",
+    "remote_relay_socket": "/tmp/rsi_meta_joint_20260918_relay.sock",
+    "remote_worker_token_env": "RSI_REMOTE_WORKER_TOKEN",
+    "remote_worker_sha256": "5e5154104624745b77dcd72ac57ad6f3d0000bbe125ca964adc1e5cc386d940c",
+    "remote_bwrap_sha256": "52231e1caf55bcbc667b269f49c63599a6f7db4767ae6a039580d0ff853db712",
+    "provider_order": [],
+    "allow_provider_fallback": false,
+    "harness_version": "seed",
+    "harness_root": "/root/data/RSI_iclr2027/rsiH/runs/output_submission_20260916/runtime/meta_harness",
+    "budget": {
+      "wall_time_seconds": 7200,
+      "max_requests": 63,
+      "max_output_tokens_per_request": 128000,
+      "max_total_output_tokens": 896000,
+      "max_event_bytes": 512000000,
+      "max_workspace_bytes": 16000000,
+      "memory_bytes": 4294967296,
+      "max_processes": 128
+    }
+  },
+  "experiment_scope": "multidomain",
+  "scope_train_limit": 256,
+  "scope_probe_limit": 16,
+  "task_replicas": [
+    {
+      "gpu": 0,
+      "base_url": "http://127.0.0.1:8171/v1"
+    },
+    {
+      "gpu": 1,
+      "base_url": "http://127.0.0.1:8172/v1"
+    },
+    {
+      "gpu": 2,
+      "base_url": "http://127.0.0.1:8173/v1"
+    },
+    {
+      "gpu": 3,
+      "base_url": "http://127.0.0.1:8174/v1"
+    }
+  ],
+  "training_schedule": "full_cohort",
+  "artifact_evaluation": "rerollout",
+  "allowed_task_components": [
+    "HARNESS",
+    "MODEL"
+  ],
+  "training_timeout_seconds": 604800,
+  "round_validation_config": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918/configs/validation.json"
+}

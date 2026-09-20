@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "mode": "full",
+  "task_checkpoint": "/root/data/zh/huggingface/Qwen3-4B",
+  "task_base_url": "http://127.0.0.1:8071/v1",
+  "task_enable_thinking": false,
+  "task_timeout": 180,
+  "seed_harness": "runs/envscaler_five_20260909_2005_nocache/gen_1/seed.json",
+  "source_manifest": "/root/data/RSI_iclr2027/dataset/manifests/dataset_manifest.json",
+  "data_dir": "data/pipeline_v2",
+  "search_dev_fraction": 0.1,
+  "probe_per_domain": {
+    "tool_use": 16,
+    "code": 16,
+    "searchqa": 16
+  },
+  "window_quotas": {
+    "tool_use": 3,
+    "code": 1,
+    "searchqa": 1
+  },
+  "rollouts_per_task": 1,
+  "probe_rollouts": 1,
+  "seed": 42,
+  "max_generations": 5,
+  "max_wall_seconds": 21600,
+  "model_call_limit": 128,
+  "max_output_tokens": 2048,
+  "inference_gpu": 0,
+  "training_gpu": 1,
+  "trainer_python": "/root/data/conda/envs/sia/bin/python",
+  "training": {
+    "max_steps": 4,
+    "learning_rate": 2e-05,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "max_length": 8192,
+    "lora_rank": 16,
+    "lora_target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ],
+    "save_steps": 4,
+    "seed": 42
+  },
+  "supervision": "final_assistant",
+  "external_corpus": null,
+  "envscaler_root": "/root/data/RSI_iclr2027/dataset/train/tool_use/envscaler",
+  "envscaler_utils": "/root/data/RSI_iclr2027/dataset/evaluators/envscaler/EnvScaler/interact_with_env/envscaler_env/utils/env_util.py",
+  "envscaler_commit": "96ae8b02dc0187c911b8e2101e7bb6904271597b",
+  "meta": {
+    "backend": "codex_openrouter",
+    "provider": "autodl",
+    "model": "DeepSeek-V4-Flash",
+    "base_url": "https://www.autodl.art/api/v1",
+    "api_key_env": "AUTODL_API_KEY",
+    "wire_api": "responses",
+    "allow_model_fallback": false,
+    "run_mode": "full",
+    "codex_source": "/root/data/RSI_iclr2027/rsiH/third_party/codex",
+    "codex_commit": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a",
+    "codex_executable": "/root/data/RSI_iclr2027/rsiH/third_party/codex-bin/codex-x86_64-unknown-linux-musl",
+    "codex_binary_sha256": "56ef98ab4032d317ab26e9b5e5a175650717351edb16ed9cde0cb6d1734d62da",
+    "provenance_file": "/root/data/RSI_iclr2027/rsiH/third_party/codex-provenance.json",
+    "model_catalog_json": "/root/data/RSI_iclr2027/rsiH/configs/codex-autodl-high-models.json",
+    "model_catalog_sha256": "4ca88d70392a5f4ad81c2a9bcf97fc2e26c19fac3af4823a10a5c7380198d812",
+    "compatibility_report": "/root/data/RSI_iclr2027/rsiH/runs/codex_api_compat_20260909_1645_autodl/compatibility.json",
+    "provider_order": [],
+    "allow_provider_fallback": false,
+    "harness_version": "seed",
+    "harness_root": "meta_harness",
+    "budget": {
+      "wall_time_seconds": 3600,
+      "max_requests": 64,
+      "max_output_tokens_per_request": 128000,
+      "max_total_output_tokens": 1024000,
+      "max_event_bytes": 512000000,
+      "max_workspace_bytes": 16000000,
+      "memory_bytes": 4294967296,
+      "max_processes": 128
+    },
+    "execution_location": "ssh_worker",
+    "compatibility_mode": "in_run",
+    "remote_worker_socket": "/tmp/rsi_meta_worker.sock",
+    "remote_relay_socket": "/tmp/rsi_meta_relay.sock",
+    "remote_worker_sha256": "f5db7c657c43914df70ec30e25a9bc58b692a586fa523cf90e262b054b5d7bd2",
+    "remote_bwrap_sha256": "52231e1caf55bcbc667b269f49c63599a6f7db4767ae6a039580d0ff853db712",
+    "response_delivery": "buffered_json",
+    "response_timeout_seconds": 900
+  },
+  "experiment_scope": "envscaler_validation",
+  "scope_train_limit": 15,
+  "scope_probe_limit": 3,
+  "task_replicas": [
+    {
+      "gpu": 0,
+      "base_url": "http://127.0.0.1:8071/v1"
+    },
+    {
+      "gpu": 2,
+      "base_url": "http://127.0.0.1:8072/v1"
+    },
+    {
+      "gpu": 3,
+      "base_url": "http://127.0.0.1:8073/v1"
+    }
+  ],
+  "initial_meta_bundle": "runs/meta_g_activation_20260909_2050/meta/harness_versions/v001_2d5a8047271c",
+  "initial_meta_bundle_hash": "2d5a8047271c5355ccdd355496ba0b5d0b7010ca9a533c6131aeb78a8da318cf"
+}

@@ -1,0 +1,65 @@
+===== EXECUTION STATUS =====
+SUCCESS: Target agent completed execution successfully.
+
+
+**EVALUATION RESULTS**:
+```json
+{
+  "accuracy": 0.8
+}
+```
+
+
+**Last 10 lines of output**:
+```
+processing q0
+processing q1
+done
+
+```
+
+Full logs available at: <GEN>/target_agent_stdout.log
+
+===== EXECUTION SECTION =====
+
+**MULTI-TRAJECTORY EXECUTION**:
+
+The agent executed 2 separate trajectories (e.g., different questions/samples).
+
+**Summary**:
+- Total trajectories: 2
+- Successful: 2
+- Failed: 0
+- Execution folder: <GEN>/agent_execution
+
+**Sample Trajectories** (first 3 shown, you can read others from the folder):
+
+### Trajectory 0
+```json
+[
+  {
+    "role": "user",
+    "content": "q0"
+  }
+]
+```
+
+### Trajectory 1
+```json
+[
+  {
+    "role": "user",
+    "content": "q1"
+  }
+]
+```
+
+
+**To analyze all trajectories**:
+- Read files from: <GEN>/agent_execution
+- Files named: execution_q0.json, execution_q1.json, ..., execution_q1.json
+
+**Analysis guidance**:
+- Look for common failure patterns across trajectories
+- Check if trajectories are properly isolated
+- Ensure consistent behavior across all samples

@@ -1,0 +1,9 @@
+{
+  "run": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918/runtime/runs/joint_346219_r3",
+  "pid": 404698,
+  "status": "stopped_by_user",
+  "log": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918/logs/joint_346219_r3.log",
+  "stopped_at": 1789719188.1461413,
+  "reason": "switch_to_train_internal_3600_three_round_protocol",
+  "audit": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/preflight/switch_from_full_cohort.json"
+}

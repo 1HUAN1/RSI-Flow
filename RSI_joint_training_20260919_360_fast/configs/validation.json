@@ -1,0 +1,34 @@
+{
+  "frequency": "after_each_committed_round",
+  "feedback_to_training_or_meta": false,
+  "benchmark_ids": [
+    "bfcl_v3",
+    "acebench",
+    "livecodebench",
+    "humaneval_plus",
+    "mbpp_plus",
+    "hotpotqa_dev",
+    "2wiki_dev"
+  ],
+  "official_specs": "/root/data/RSI_iclr2027/rsiH/runs/output_submission_20260916/runtime/configs/report-evaluators.json",
+  "tool_benchmarks": {
+    "bfcl_v3": {
+      "repository_root": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3",
+      "categories": "all_v3",
+      "version_prefix": "BFCL_v3",
+      "data_path": "/root/data/RSI_iclr2027/dataset/test/tool_use/bfcl_v3/test.jsonl",
+      "python_executable": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/.venv/bin/python"
+    },
+    "acebench": {
+      "repository_root": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench",
+      "language": "en",
+      "category": "test_all",
+      "user_model": "gpt-4o-2024-08-06",
+      "user_provider_model": "openai/gpt-4o-2024-08-06",
+      "user_api_key_env": "ACE_USER_API_KEY",
+      "user_base_url_env": "ACE_USER_BASE_URL",
+      "data_path": "/root/data/RSI_iclr2027/dataset/test/tool_use/acebench/test.jsonl",
+      "python_executable": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/.venv/bin/python"
+    }
+  }
+}

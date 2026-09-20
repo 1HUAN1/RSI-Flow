@@ -1,0 +1,166 @@
+{
+  "checked_at": 1789725797.9626117,
+  "launcher_alive": false,
+  "status": "stopped_by_user",
+  "free_disk_bytes": 2002392473600,
+  "joint_rounds_committed": 0,
+  "validation_rounds_completed": 0,
+  "rollouts": [],
+  "run": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/runtime/runs/joint_train_internal_3600_r3",
+  "phase": {
+    "phase": "infrastructure_or_contract_failure",
+    "error_type": "CalledProcessError",
+    "reason": "Command '['/root/data/conda/envs/sia/bin/python', '-u', '/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/validate.py', '--snapshot', '/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/validation/joint_train_internal_3600_r3/round_00/round_snapshot.json', '--pipeline-config', '/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/runtime/runs/joint_train_internal_3600_r3/effective_config.json', '--config', '/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/configs/validation.json', '--role', 'independent_validation', '--manifest', '/root/data/RSI_iclr2027/rsiH/evaluation_vault/train_internal_3600/validation/manifest.json', '--execute']' returned non-zero exit status 1."
+  },
+  "external_validation_in_progress": [
+    "round_00"
+  ],
+  "gpu": [
+    "0, 0, 0",
+    "1, 0, 0",
+    "2, 0, 0",
+    "3, 0, 0"
+  ],
+  "requires_attention": true,
+  "preflight": {
+    "status": "ready_for_explicit_start",
+    "details": {
+      "candidate_isolation": {
+        "available": true,
+        "landlock_abi": 1,
+        "libseccomp": "libseccomp.so.2",
+        "credential_drop_available": true,
+        "reason": null
+      },
+      "livecodebench": {
+        "count": 1055
+      },
+      "humaneval_plus": {
+        "count": 164
+      },
+      "mbpp_plus": {
+        "count": 378
+      },
+      "hotpotqa_dev": {
+        "count": 7405
+      },
+      "2wiki_dev": {
+        "count": 12576
+      },
+      "bfcl_v3": {
+        "count": 4441,
+        "categories": [
+          "irrelevance",
+          "java",
+          "javascript",
+          "live_irrelevance",
+          "live_multiple",
+          "live_parallel",
+          "live_parallel_multiple",
+          "live_relevance",
+          "live_simple",
+          "multi_turn_base",
+          "multi_turn_long_context",
+          "multi_turn_miss_func",
+          "multi_turn_miss_param",
+          "multiple",
+          "parallel",
+          "parallel_multiple",
+          "simple"
+        ],
+        "source": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard"
+      },
+      "acebench": {
+        "count": 1023,
+        "categories": [
+          "agent_multi_step",
+          "agent_multi_turn",
+          "normal_atom_bool",
+          "normal_atom_enum",
+          "normal_atom_list",
+          "normal_atom_number",
+          "normal_atom_object_deep",
+          "normal_atom_object_short",
+          "normal_multi_turn_user_adjust",
+          "normal_multi_turn_user_switch",
+          "normal_preference",
+          "normal_similar_api",
+          "normal_single_turn_parallel_function",
+          "normal_single_turn_single_function",
+          "special_error_param",
+          "special_incomplete",
+          "special_irrelevant"
+        ],
+        "source": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench"
+      },
+      "meta_worker": {
+        "healthy": true,
+        "isolation_and_version_verified": true
+      },
+      "round_data": {
+        "status": "dry_run_no_model_calls",
+        "rounds": [
+          {
+            "round": 1,
+            "allocated_tasks": 1200,
+            "meta_probe_tasks": 240,
+            "by_source": {
+              "envscaler": 400,
+              "deepcoder_taco": 400,
+              "nq_open": 100,
+              "hotpotqa": 150,
+              "2wiki": 150
+            },
+            "manifest_hash": "2311537a9c2c8789bf996fcd06bc8b9dc6b4c5adc52c26d9ff0d819e6e3de52c"
+          },
+          {
+            "round": 2,
+            "allocated_tasks": 1200,
+            "meta_probe_tasks": 240,
+            "by_source": {
+              "envscaler": 400,
+              "deepcoder_taco": 400,
+              "nq_open": 100,
+              "hotpotqa": 150,
+              "2wiki": 150
+            },
+            "manifest_hash": "82b84d5744560487032e261fcb8cdec5322d1d8752b3edc8de2489b4488de0f1"
+          },
+          {
+            "round": 3,
+            "allocated_tasks": 1200,
+            "meta_probe_tasks": 240,
+            "by_source": {
+              "envscaler": 400,
+              "deepcoder_taco": 400,
+              "nq_open": 100,
+              "hotpotqa": 150,
+              "2wiki": 150
+            },
+            "manifest_hash": "03ae89cb1ff45018d8d992bec0d5099f20ca95331c9e9c19987afee08b352ee7"
+          }
+        ],
+        "allocated_tasks": 3600,
+        "distinct_training_diagnostic_tasks": 720,
+        "paired_diagnostic_logical_evaluations": 1440,
+        "candidate_limit_per_round": 2,
+        "selected_lineages": 1,
+        "training_executions": "conditional_on_MODEL_and_cache; at most one B_r collection per round",
+        "candidate_evaluations": "additional, charged separately",
+        "sft_calls": "0..3, conditional on Meta MODEL and verified-success minimum",
+        "sft_epochs_per_call": 1,
+        "external_validation_checkpoints": [
+          "A0",
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "final_test": "separate explicit entry"
+      }
+    },
+    "model_calls": 0,
+    "allocated_tasks": 3600,
+    "rounds": 3,
+    "sft_epochs_per_update": 1
+  }
+}

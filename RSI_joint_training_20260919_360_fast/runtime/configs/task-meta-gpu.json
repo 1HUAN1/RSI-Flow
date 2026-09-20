@@ -1,0 +1,20 @@
+{
+  "batch_size": 2,
+  "rollouts_per_task": 8,
+  "temperature": 0.7,
+  "max_tokens": 512,
+  "seed": 42,
+  "primary_metric": "success_rate",
+  "primary_metric_mode": "max",
+  "meta_timeout": 240,
+  "meta_max_tokens": 12000,
+  "training_method": "positive_sft_lora",
+  "require_cuda_inference": true,
+  "trainer_timeout": 1800,
+  "trainer_command": [
+    "env", "CUDA_VISIBLE_DEVICES=1", "OMP_NUM_THREADS=4", "TOKENIZERS_PARALLELISM=false",
+    "/root/data/conda/envs/sia/bin/python",
+    "/root/data/RSI_iclr2027/rsiH/scripts/train_task_meta_sft.py",
+    "--request-dir", "{request_dir}", "--steps", "8"
+  ]
+}

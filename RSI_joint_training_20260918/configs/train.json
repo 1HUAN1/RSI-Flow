@@ -1,0 +1,29 @@
+{
+  "rounds": 3,
+  "seed": 42,
+  "runtime_source": "/root/data/RSI_iclr2027/rsiH/runs/output_submission_20260916/runtime",
+  "base_config": "configs/envscaler-256-direct-five-global-until-20260917-235900.json",
+  "dataset_root": "/root/data/RSI_iclr2027/dataset",
+  "expected_total": 346219,
+  "environment_files": ["train/tool_use/envscaler/train/environments.jsonl", "train/tool_use/envscaler/heldout/environments.jsonl"],
+  "datasets": [
+    {"name":"envscaler","domain":"tool_use","count":2550,"paths":["train/tool_use/envscaler/train/scenarios.jsonl","train/tool_use/envscaler/heldout/scenarios.jsonl"]},
+    {"name":"deepcoder_taco","domain":"code","count":6600,"paths":["train/code/deepcoder_taco/train.jsonl"]},
+    {"name":"nq_open","domain":"searchqa","count":79168,"paths":["train/searchqa/nq_open/train.jsonl"]},
+    {"name":"hotpotqa","domain":"searchqa","count":90447,"paths":["train/searchqa/hotpotqa/train.jsonl"]},
+    {"name":"2wiki","domain":"searchqa","count":167454,"paths":["train/searchqa/2wiki/train.jsonl"]}
+  ],
+  "dataset_passes_per_round": 1,
+  "sft_epochs_per_update": 1,
+  "sft_max_steps": -1,
+  "max_length": 16384,
+  "max_sft_samples": 10000000,
+  "training_timeout_seconds": 604800,
+  "max_wall_seconds": 2592000,
+  "training_probe_per_domain": 16,
+  "validation_config": "configs/validation.json",
+  "run_name": "joint_346219",
+  "meta_worker_socket": "/tmp/rsi_meta_joint_20260918_worker.sock",
+  "meta_relay_socket": "/tmp/rsi_meta_joint_20260918_relay.sock",
+  "ports": [8171,8172,8173,8174]
+}

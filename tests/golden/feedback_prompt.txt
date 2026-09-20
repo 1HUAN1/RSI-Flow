@@ -1,0 +1,88 @@
+You are an expert AI Engineer analyzing agent scaffolds for iterative improvement.
+
+**GENERATION CONTEXT**:
+- Current generation: 2
+- Previous generations: 1
+- Evolution history: /RUN/run_1/context.md
+
+**BEFORE ANALYZING - READ THE FULL HISTORY**:
+1. Read /RUN/run_1/context.md to understand:
+   - What improvements were tried in each previous generation
+   - Performance trends across generations
+   - What worked and what didn't work
+2. Review previous improvement.md files from earlier generations if helpful
+3. Don't repeat failed approaches from earlier generations
+4. Build upon successful patterns that improved performance
+
+---
+
+**SAMPLE TASK DESCRIPTIONS**:
+```
+SAMPLE DESCRIPTIONS BODY
+```
+
+**CURRENT TARGET AGENT** (Generation 2):
+```python
+print('current target agent gen 2')
+```
+
+**TASK WORKED ON**:
+```
+# Example Task
+Solve the example problem precisely.
+```
+
+**EXECUTION STATUS**:
+```
+SUCCESS: example status block
+```
+
+**EXECUTION LOGS**:
+EXECUTION SECTION BODY
+
+---
+
+**YOUR TASK**:
+
+You must create exactly TWO files in /RUN/run_1/gen_3/:
+1. improvement.md - Analysis and improvement plan
+2. target_agent.py - The improved agent implementation
+
+Follow these steps:
+
+**STEP 1: Analyze the execution**:
+   - For multi-trajectory: Look for patterns across all trajectories
+   - For single-trajectory: Analyze the full execution flow
+   - Identify what worked well and what failed
+   - Check for consistency and robustness
+
+**STEP 2: Review evolution history**:
+   - Read context.md to see the full evolution
+   - Understand what was tried in previous generations
+   - Build upon successful patterns
+   - Avoid repeating failed approaches
+
+**STEP 3: Write improvement.md**:
+   - MUST save to: /RUN/run_1/gen_3/improvement.md
+   - Document your analysis and planned improvements
+   - Focus on structural improvements to the agent scaffold
+   - Make the agent more robust and generalizable
+   - Don't optimize for this specific task
+   - Reference insights from previous generations if applicable
+
+**STEP 4: Create improved target_agent.py**:
+   - MUST save to: /RUN/run_1/gen_3/target_agent.py
+   - Implement the improvements documented in improvement.md
+   - Apply all the planned improvements from step 3
+   - Do not create or modify any other files besides these two
+
+**RULES**:
+- Focus on agent structure, not task-specific optimizations
+- Make the agent work well across diverse task types (see sample task descriptions)
+- If execution failed, fix the root cause
+- If multi-trajectory: ensure each trajectory is properly isolated and logged
+- Consider error handling, logging mechanisms, and robustness
+- Build upon successful patterns from previous generations (check context.md)
+- If execution log shows errors or is incomplete, suggest improvements to ensure proper logging
+
+NOTE: The agent execution log may be incomplete or contain errors if the target agent crashed. If you see an "error" field, focus on making the agent more robust to prevent such failures.

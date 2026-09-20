@@ -1,0 +1,250 @@
+{
+  "budget": {
+    "max_model_calls": 128,
+    "max_tool_calls": 50,
+    "max_tokens": 2048,
+    "temperature": 0.7
+  },
+  "initialization": {
+    "artifacts": [],
+    "shortterm_memory": [],
+    "historical_run_memory": "excluded",
+    "coldstart_rules_component": "HARNESS",
+    "coldstart_rules": {
+      "COLDSTART_STRATEGIC_MEMORIES": [
+        {
+          "content": "Execute directly rather than over-planning. Prioritize immediate action and concrete steps over extensive theoretical analysis.",
+          "tags": [
+            "execution",
+            "planning"
+          ]
+        },
+        {
+          "content": "Interpret task instructions literally and precisely. Pay close attention to output format requirements (units, separators, capitalization).",
+          "tags": [
+            "instruction",
+            "format"
+          ]
+        },
+        {
+          "content": "For numerical tasks, identify all units explicitly and track unit conversions through each step of calculation.",
+          "tags": [
+            "computation",
+            "units"
+          ]
+        },
+        {
+          "content": "When tasks present contradictory instructions that test the agent's internal logic or ability to follow specific directives, prioritize direct compliance with the explicit instruction over meta-analysis of the contradiction.",
+          "tags": [
+            "instruction",
+            "contradiction",
+            "compliance"
+          ]
+        },
+        {
+          "content": "If there is no direct or first-hand authoritative evidence, other sources or the most likely answer analyzed can also be provided when reporting the answer, as long as it is clearly labeled.",
+          "tags": [
+            "evidence",
+            "reporting",
+            "transparency"
+          ]
+        }
+      ],
+      "COLDSTART_OPERATIONAL_MEMORIES": [
+        {
+          "content": "When crawling web pages: Use specific queries for exact information, extract numbers with full context (units, date, conditions).",
+          "tags": [
+            "web_search",
+            "extraction"
+          ]
+        },
+        {
+          "content": "For multi-source information tasks: Navigate to exact source, extract verbatim values, write formula with units, apply formatting only at end.",
+          "tags": [
+            "procedure",
+            "information_retrieval"
+          ]
+        }
+      ]
+    },
+    "longterm_provision": false
+  },
+  "reference": {
+    "repository": "HarnessForge",
+    "commit": "05b3ecadb3c9a7a938f75129ea22b8f2b36cf289",
+    "entry": "harness_factory.base_harness.builder.build_agent_from_context",
+    "files_sha256": {
+      "references/harnessforge/builder.py": "77de46e639dfbead8f1660d5b35d604c32ed775a96db3aab9dc9b1c1734eab5d",
+      "references/harnessforge/planning_module/provider.py": "d12e30aff63304c2ecd6156fbdc6df4cad252caedd0a7bb67a175fa4ba7a3487",
+      "references/harnessforge/action_module/provider.py": "794e7ff734c649b7e8235f90f0dde1af3d709ff6611571e50f8c1efd2e4b835c",
+      "references/harnessforge/memory_module/provider.py": "8fa8efc45e07c3cdb07f80b07c871eb9d9246b287b5bd456bdabb1a1eb471d1b",
+      "references/harnessforge/planning_module/prompts/toolcalling_agent.yaml": "c74270aa0a59885789e2dbe61db4c801fd76eb9da494e5ec873a3e83a71e5917",
+      "references/harnessforge/action_module/prompts/toolcalling_agent.yaml": "a15551dec665acce7721190d71901fb7e9a2b241116256483a1e5d99f1863358",
+      "hf_runtime/Agents/agents.py": "e122e44d02ca99caf533ff88cb674bfe4d9b9a8b5b71a84719393d3fed347c4b",
+      "hf_runtime/Agents/memory.py": "0d018e6518c3942df2f58da2dc6eef13ea13a108d8a65949f2d8da0ca83fb990",
+      "references/harnessforge_root/run_infer.py": "74e6e95ab49b91ea2b063e19c1e784c3b569f1985fe4bfb0d07a2709d703b9b9"
+    }
+  },
+  "name": "rsi_multidomain_seed_v1",
+  "adaptations": [
+    "Three-domain environment.tools/step interfaces replace native benchmark tool loading; same protocol applies to future baseline copies.",
+    "summary_interval fixed to 8 instead of per-item random randint(7,9); plan/summary counter and exhaustion finalization retained.",
+    "One tool per action for all domains instead of native optional cap; calls execute serially to isolate mutable environment state.",
+    "Explicit 128 model calls / 50 tool calls / 2048 output tokens / temperature 0.7 are frozen external budgets; native CLI has no max_tokens default.",
+    "Strict JSON parsing with one bounded repair request replaces json_repair permissive normalization; native successful canonical JSON path is preserved.",
+    "All model roles use the registered Task callable; internal tool-response context is normalized to user as native run_infer transport does.",
+    "Native seven cold-start rules are recorded as Harness preloads with longterm provision disabled; A0 remains empty. Historical memory never imported.",
+    "Rollout short-term memory is isolated; generated notes become unverified current-window artifacts. Native cross-task database ingestion/backfill is replaced by RSI A_in/A_out lifecycle.",
+    "Infrastructure errors propagate as explicit incomplete trajectories instead of native memory-provider silent fallback; task parse/tool errors retain bounded diagnostics."
+  ],
+  "alignment_status": "ADAPTED_CANONICAL_METHOD_REPLAY_VALIDATED",
+  "schema_version": 2,
+  "interface_version": "task-harness-v2",
+  "parts": {
+    "input": {
+      "action_system": "You are a closed-set ReAct tool-using assistant. Solve the user's task with the advertised tools and observed evidence only.\n\nEvery non-final response must be exactly one strict JSON object, with no markdown or extra text:\n{\"think\":\"brief reasoning for the next action\",\"tools\":[{\"name\":\"actual_tool_name\",\"arguments\":{\"arg\":\"value\"}}]}\nUse exactly the advertised tool names and argument keys. Never invent tools, arguments, identifiers, observations, files, APIs, or results. Every non-final response has one valid tool call; use one tool per step by default. If no valid tool call is needed, use final_answer. Read each observation and adapt after errors; do not repeat an identical failed call without new evidence. Final answers must use observed evidence only and must not claim unsupported completion.\n\nBefore the first tool call, put a compact ledger in the think string covering EVERY requested operation, prerequisite, and required confirmation. Mark each item confirmed, pending, or blocked. At every later action, reconstruct that ledger from the original task and genuine tool-call/result history; a lookup does not confirm a mutation, and a successful operation confirms only the exact operation it reports. Advance one pending item or its prerequisite at a time. For mutation tasks, finalize only after every requested mutation is directly confirmed, or report observed blockers and the still-unconfirmed items without claiming success. For simple lookup or deterministic-answer tasks, finalize immediately when the answer is supported.\n\nFor existing entities, an ID field may contain only a canonical ID explicitly supplied in the task or genuinely returned by a tool observation. A name, display name, demographics, placeholder, or guessed ID is not a canonical ID. Resolve names with an advertised search/list tool using its exact schema, match the returned entity, and verify it before mutation. Handle one entity per lookup. If resolution is empty or not found, enumerate with an advertised list/search/all-records tool and retry with one observed entity at a time; never guess. For collection updates, first observe current entries and preserve them, appending new entries unless replacement is explicitly requested. Follow task-authorized creation and then use the genuine created ID. Keep pending work within the existing budgets; do not add tools, calls, fields, permissions, or other control flow.",
+      "task_template": "New task:\n{{task}}",
+      "action_step": "Continue the ReAct loop using the current task, plan, memory, and previous tool observations.\n\nMandatory pre-action identifier-resolution gate:\n- Before any call requiring an existing entity ID (including authorization checks), distinguish a canonical ID explicitly supplied as an ID from a display name, human name, or name plus demographics. A name appearing in task text is not an ID.\n- If only a name or demographics is available, first call an advertised list/search/enumeration tool using its exact schema. Match the returned entity against the task details, then use only its returned canonical ID in ID arguments. Never convert a name into an ID or send a display name or guessed ID to an entity-ID lookup.\n- If a canonical ID is explicitly supplied by the task or already resolved by a genuine tool observation, reuse it without unnecessary enumeration. Handle one entity per lookup; do not combine names or IDs in one argument.\n- Before each mutation of an existing entity, confirm from genuine tool observations that the canonical ID belongs to the intended entity and that it exists; obtain an individual lookup if this is not yet verified. An already sufficient observation need not be fetched again.\n- If resolution is empty or ambiguous, use an advertised search/list tool to resolve it; do not guess a match. If no valid resolution call exists, retain the unresolved limitation rather than inventing a tool, ID, or success.\n- This existing-entity gate does not prohibit task-authorized creation or uniqueness checks for an explicitly supplied new ID; follow the task and schema for creation, then use the observed created entity for later mutations.\n\nAvailable tool schemas:\n{{tool_functions_json}}\n\nOriginal task:\n{{task}}\n\nDecision rules:\n- **THINK** about the next missing fact, the next verification, or why the answer is already supported.\n- Select only tools from the available schemas above.\n- Use exact JSON argument objects that match the schema.\n- Read the tool schemas carefully before every call. Never substitute alternative argument names.\n- Prefer one tool call unless multiple calls are truly independent.\n- Never emit an empty tools list.\n- If you cannot justify a new valid tool call from the observations, call final_answer instead.\n- If the current evidence already supports the answer, call final_answer and no other tool.\n- If a tool failed because of arguments or schema mismatch, your next step should repair the arguments or choose a different valid tool.\n- Never repeat an identical failed call with identical arguments unless the observation explicitly justifies it.\n- If one or two retries of the same strategy already failed and no new evidence was gained, switch tools or finalize if possible.\n- Otherwise call at least one tool.\n- Use only identifiers (patient_id, product_id, device_id, location IDs, etc.) that appear in the task text or in prior tool observations; never invent or guess identifier values.\n- When a tool returns a \"not found\" or \"does not exist\" error, first enumerate the available entities with list/search/all-records tools to obtain the real identifier values and correct field names, then retry using those observed values.\n- Pass entity lookups with the schema argument names (e.g., the real product_id, not a display name) and verify the entity exists before mutating it.\n- **One entity per lookup**: never batch multiple entity names or IDs into a single lookup call argument. Issue one lookup per entity using the exact identifier from the task text or prior observations, and process each returned entity separately.\n- **Enumerate on empty or not-found lookup results**: if a lookup returns an empty result, \"not found\", or \"does not exist\", first enumerate the available entities with list/search/all-records tools to obtain real identifier values and field names, then retry with one observed entity at a time; do not repeat a batched or guessed argument.\n- **Additive collection updates**: when updating collection fields (e.g., symptoms, notes, tags), first observe the current values, preserve all existing entries, and append the new entries. Never replace an existing collection unless the task explicitly requires replacement.\n\nReturn strict JSON only:\n{\n  \"think\": \"brief ReAct thought for the next action\",\n  \"tools\": [\n    {\"name\": \"actual_tool_name\", \"arguments\": {\"arg\": \"value\"}}\n  ]\n}\n\nMandatory bounded multi-operation execution gate:\n- At each action, reconstruct a compact checklist of EVERY requested operation and its required confirmation from the original task and genuine tool-call/result history. Include all requested field changes, creations, associations and removals, with any ordering dependencies. Keep confirmed, pending and blocked items distinct; a lookup alone does not confirm a requested mutation.\n- After each observation, mark only the operations it directly confirms. A successful mutation response tied to its exact call can confirm that operation; it does not confirm unrelated fields or prerequisites. Reuse sufficient observations instead of requiring redundant read-back. Retain all unresolved items.\n- Before each mutation, apply the identifier-resolution gate and verify the intended entity and relevant current-state preconditions from genuine observations. Establish task-required prerequisites first; do not treat the desired state as evidence that a prerequisite occurred.\n- Never repeat an identical mutation after a successful observation unless a new observation supplies a concrete contradictory reason. For errors, preserve the schema-aware retry and adaptation rules above.\n- Choose the next useful tool for a pending item or its missing prerequisite, exactly one call at a time. Keep checklist status and the next action concise in the existing think string; add no JSON fields or separate planning calls. Reconstruct status on the next action because summaries and prior thoughts are not authoritative confirmation.\n- For mutation tasks, an answer is supported only when every requested operation is directly confirmed, or the final answer reports observed blockers and identifies the still-unconfirmed operations without claiming their completion. If no justified valid next call exists, report the observed limitation, not success. Do not stop at a partial lookup or a summary's completion assertion while justified work remains.\n- Finalize immediately once these conditions hold; retain immediate finalization for supported lookup or deterministic-answer tasks. Work within existing call/output budgets; do not add verification loops, tools or permissions, and never invent confirmation to force completion.\n",
+      "section_order": [
+        "history",
+        "guidance",
+        "action"
+      ]
+    },
+    "control": {
+      "planning": {
+        "enabled": false,
+        "summary_interval": 8,
+        "max_steps": 50
+      },
+      "prompts": {
+        "planning_initial": "Create the shortest executable plan for this task:\n1) identify the minimum missing information or action\n2) choose the next useful tool call or reasoning step\n3) finalize immediately once the answer is supported\n4) if a tool call later fails, prefer schema-aware argument repair or a new strategy instead of repeating the same failed call\nDo not output the final answer in this step.\nKeep the plan extremely short and avoid exploratory subgoals unless the task is genuinely unclear.",
+        "planning_task": "Task:\n{{task}}",
+        "summary_pre": "Summarize progress and determine the minimum next step.\nIf the current answer is already supported, recommend final_answer immediately.\nInclude the latest relevant error or result signal if any.\nCall out repeated failures and recommend a concrete argument fix or strategy change instead of a blind retry.",
+        "summary_post": "Provide very short status + next action guidance.\nOutput:\n- current_task_state\n- latest_error_or_result\n- retry_or_repair_guidance\n- next_step"
+      },
+      "graph": {
+        "entry": "prepare",
+        "nodes": [
+          {
+            "id": "prepare",
+            "kind": "prepare",
+            "next": "memory"
+          },
+          {
+            "id": "memory",
+            "kind": "memory",
+            "next": "act"
+          },
+          {
+            "id": "act",
+            "kind": "act",
+            "next": "tools"
+          },
+          {
+            "id": "tools",
+            "kind": "tools",
+            "next": "inspect"
+          },
+          {
+            "id": "inspect",
+            "kind": "inspect",
+            "next": "commit"
+          },
+          {
+            "id": "commit",
+            "kind": "commit",
+            "next": "branch"
+          },
+          {
+            "id": "branch",
+            "kind": "branch",
+            "next": [
+              {
+                "when": {
+                  "path": "state.has_final",
+                  "op": "eq",
+                  "value": true
+                },
+                "to": "stop"
+              },
+              {
+                "when": {
+                  "path": "state.can_continue",
+                  "op": "eq",
+                  "value": true
+                },
+                "to": "prepare"
+              },
+              {
+                "when": true,
+                "to": "finalize"
+              }
+            ]
+          },
+          {
+            "id": "finalize",
+            "kind": "finalize",
+            "next": "stop"
+          },
+          {
+            "id": "stop",
+            "kind": "stop",
+            "next": "stop"
+          }
+        ]
+      }
+    },
+    "tools": {
+      "action": {
+        "max_tools_per_step": 1,
+        "parse_retries": 1
+      },
+      "validate_arguments": false,
+      "recovery": {
+        "max_retries": 0,
+        "prompt": "Repair the failed tool arguments from the genuine error and original tool schema. Return strict JSON with an arguments object."
+      },
+      "roles": []
+    },
+    "memory": {
+      "context": {
+        "shortterm_enabled": false,
+        "shortterm_interval": 3,
+        "max_shortterm_items": 10,
+        "use_artifacts": false,
+        "artifact_char_limit": 12000,
+        "generate_artifacts": true
+      },
+      "prompts": {
+        "memory_extract": "You are analyzing the current step of task execution. Perform TWO tasks:\n\n1. Generate a brief observational summary of what happened in this step\n2. Extract key task-content information that should be remembered\n\n**Original Task:**\n{{task}}\n\n**Previous Steps Summary:**\n{{previous_steps}}\n\n**Current Working Memory (already remembered):**\n{{current_memory}}\n\n**New Information from Current Step:**\n{{context_delta}}\n\n**Output Format (JSON):**\n{\n  \"step_summary\": \"2-3 sentence summary of what agent did in this step\",\n  \"key_extracts\": [\"item1\", \"item2\", \"item3\"]\n}\n\n**Task 1 - Step Summary Requirements:**\nWrite 2-3 sentences that are STRICTLY OBSERVATIONAL:\n- Name the tool call(s) made in this step and the result(s) actually returned in the current step's context_delta (e.g., \"Called get_incident with INC1003; the result showed location LOC2 and status 'dispatched'\").\n- Report only what the current step's tool results directly show. Do not infer, assume, or narrate outcomes beyond the observed results.\n- NEVER assert that task requirements were fulfilled, that steps were executed successfully, that any update was applied, or that the task is complete.\n- If a required end state from the task (e.g., a status change, dispatch, cleanup, update) is not directly confirmed by a tool result in the current step, explicitly mark it as outstanding or pending.\n\n**Task 2 - Key Extraction Requirements (maximum 3 items):**\nExtract ONLY task-related information that is truly critical:\n\n**EXTRACT (Task-Related Information):**\n- Task-specific constraints or requirements discovered during execution (e.g., \"output must be in kilometers\", \"no commas allowed\", \"date format: YYYY-MM-DD\")\n- Key data values or numerical results from the task (e.g., \"Beijing coordinates: 39.9N, 116.4E\", \"total population: 21.5 million\")\n- Important discoveries or findings related to the task content (e.g., \"source A contradicts source B\", \"calculation requires unit conversion\")\n- Task-specific conditions or constraints (e.g., \"must use data from 2023\", \"exclude weekends\")\n- Observed tool results that carry task-content facts (e.g., \"INC1003 status is 'dispatched' at LOC2\")\n\n**DO NOT EXTRACT:**\n- Memory system guidance\n- Claims that task steps were executed, that requirements were fulfilled, that updates were applied, or that the task is complete\n- System instructions or format requirements (e.g., \"must include think section\", \"use tools array\", \"call final_answer when done\")\n- Tool usage specifications or API requirements\n- General execution guidelines or workflow rules\n- Agent behavior instructions or protocol requirements\n- Any meta-instructions about how to structure responses or use tools\n\n**Extraction Rules:**\n- Each item: ONE concise sentence (15-20 words max), prefer direct quotes or close paraphrasing from the context to preserve original meaning\n- ONLY extract information directly related to the TASK CONTENT, not execution mechanics\n- DO NOT extract information already in working memory\n- Prioritize: Task Constraints > Key Data Values > Important Discoveries\n- If nothing new/important related to the task, set \"key_extracts\" to empty array []\n- Preserve original meaning: quote or closely paraphrase the source text, don't rephrase unnecessarily\n\n**Critical Filters:**\nBefore extracting any item, ask: \"Is this about the TASK CONTENT (data, constraints, results) or about SYSTEM INSTRUCTIONS (format, tools, workflow)?\"\n- If about task content -> EXTRACT\n- If about system instructions -> SKIP\nBefore writing the step_summary, ask: \"Is every claim directly supported by a tool result in the current step's context_delta?\"\n- If a claim is not directly observed in this step's tool results, do not assert it; label the corresponding end state as outstanding/pending instead.\n\n**Your Response (JSON only):**",
+        "memory_prune": "You are managing a working memory for an AI agent solving a task. The memory is full and you must decide which items to keep.\n\n**Original Task:**\n{{task}}\n\n**Execution History (what agent has done):**\n{{previous_steps}}\n\n**Current Memory Items (newest at bottom):**\n{{memory_items}}\n\n**Task:**\nSelect exactly {{max_shortterm_items}} MOST IMPORTANT items to keep.\n\n**Use the Execution History to judge:**\n- What stage is the task at? (early exploration / data gathering / calculation / finalization)\n- What information is still needed based on what's been done?\n- Which memory items are critical for the NEXT steps?\n\n**Priority Guidelines:**\n\n**ALWAYS KEEP (regardless of task stage):**\n- Task constraints: units, format, output requirements\n- Key data values that will be used in final answer\n- Critical discoveries that changed the approach\n\n**CONSIDER TASK STAGE:**\n- Early stage (steps 1-10): Keep constraints and initial data\n- Mid stage (steps 11-25): Keep data being actively used, formulas\n- Late stage (steps 26+): Keep constraints, final results, discard superseded intermediate results\n\n**CAN DISCARD:**\n- Information superseded by newer, more accurate data\n- Intermediate steps no longer relevant\n- General actions that don't reveal constraints\n- Redundant information\n\n**CRITICAL REMINDER:** \nConstraints discovered early (like \"no commas\", \"kilometers only\") remain CRITICAL even in late stages because they determine final answer format. Do NOT discard them!\n\n**Output Format (JSON list of indices to KEEP):**\n[1, 3, 5, 7, ...]\n\nOnly provide the JSON array, nothing else.\n\n**Your Selection:**"
+      },
+      "history": {
+        "filter": true,
+        "max_messages": null,
+        "max_chars": null,
+        "required_roles": [
+          "system"
+        ]
+      },
+      "assets": {
+        "filter": true,
+        "max_items": 100000
+      }
+    },
+    "submission": {
+      "prompts": {
+        "final_pre": "You need to produce the final answer from the task, plan, memory, and observed tool results.",
+        "final_post": "Return strict JSON only:\n\n{\n  \"think\": \"brief reason why the answer is supported\",\n  \"answer\": \"the final answer\"\n}\n\nRules:\n- The answer field must contain only the requested final answer.\n- Do not call any non-final tool here.\n- Do not add markdown or extra commentary.\n- If the observed evidence already determines the answer, answer directly instead of hedging.\n- Base the answer on observations only; do not invent missing intermediate values.\n- For short-answer or multi-hop lookup tasks, return the raw short answer only.\n\nTask:\n{{task}}"
+      },
+      "strip_final_answer": false,
+      "checks": [],
+      "repair_prompt": "Repair the current candidate using only visible task information and the internal check errors.",
+      "answer_format": {
+        "mode": "identity",
+        "key": "answer"
+      }
+    }
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "state": "running",
+  "controller_pid": 623744,
+  "controller_alive": true,
+  "launcher_status": "running",
+  "complete_rounds": 0,
+  "rounds": [
+    {
+      "round": 1,
+      "meta_update_committed": false,
+      "parent_pre_update": {
+        "expected": 360,
+        "receipts": 360,
+        "scored": 360,
+        "success": 23,
+        "infra_error": 0,
+        "by_source": {
+          "nq_open": {
+            "scored": 30,
+            "success": 1,
+            "infra": 0,
+            "task_seconds": 1427.1406901655719,
+            "model_calls": 125
+          },
+          "hotpotqa": {
+            "scored": 45,
+            "success": 16,
+            "infra": 0,
+            "task_seconds": 1584.0934063224122,
+            "model_calls": 103
+          },
+          "2wiki": {
+            "scored": 45,
+            "success": 6,
+            "infra": 0,
+            "task_seconds": 1715.501487668138,
+            "model_calls": 120
+          },
+          "envscaler": {
+            "scored": 120,
+            "success": 0,
+            "infra": 0,
+            "task_seconds": 47200.90283612814,
+            "model_calls": 2483
+          },
+          "deepcoder_taco": {
+            "scored": 120,
+            "success": 0,
+            "infra": 0,
+            "task_seconds": 27236.706812464632,
+            "model_calls": 763
+          }
+        },
+        "phase_started_at": 1789812933.0
+      },
+      "child_post_update": {
+        "expected": 360,
+        "receipts": 360,
+        "scored": 360,
+        "success": 23,
+        "infra_error": 0,
+        "by_source": {
+          "nq_open": {
+            "scored": 30,
+            "success": 1,
+            "infra": 0,
+            "task_seconds": 1495.566062898375,
+            "model_calls": 127
+          },
+          "hotpotqa": {
+            "scored": 45,
+            "success": 16,
+            "infra": 0,
+            "task_seconds": 1498.7965690959245,
+            "model_calls": 103
+          },
+          "2wiki": {
+            "scored": 45,
+            "success": 6,
+            "infra": 0,
+            "task_seconds": 1552.304243760882,
+            "model_calls": 120
+          },
+          "envscaler": {
+            "scored": 120,
+            "success": 0,
+            "infra": 0,
+            "task_seconds": 46632.72197427042,
+            "model_calls": 2542
+          },
+          "deepcoder_taco": {
+            "scored": 120,
+            "success": 0,
+            "infra": 0,
+            "task_seconds": 27781.719874206232,
+            "model_calls": 645
+          }
+        },
+        "phase_started_at": 1789818666.0
+      },
+      "independent_eval_complete": false
+    },
+    {
+      "round": 2,
+      "meta_update_committed": false,
+      "parent_pre_update": {
+        "expected": 360,
+        "receipts": 0,
+        "scored": 0,
+        "success": 0,
+        "infra_error": 0,
+        "phase_started_at": null
+      },
+      "child_post_update": {
+        "expected": 360,
+        "receipts": 0,
+        "scored": 0,
+        "success": 0,
+        "infra_error": 0,
+        "phase_started_at": null
+      },
+      "independent_eval_complete": false
+    },
+    {
+      "round": 3,
+      "meta_update_committed": false,
+      "parent_pre_update": {
+        "expected": 360,
+        "receipts": 0,
+        "scored": 0,
+        "success": 0,
+        "infra_error": 0,
+        "phase_started_at": null
+      },
+      "child_post_update": {
+        "expected": 360,
+        "receipts": 0,
+        "scored": 0,
+        "success": 0,
+        "infra_error": 0,
+        "phase_started_at": null
+      },
+      "independent_eval_complete": false
+    }
+  ],
+  "run": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260919_360_fast/runtime/runs/joint_append_memory_1080_fast_r3",
+  "log": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260919_360_fast/logs/joint_append_memory_1080_fast_r3.log",
+  "automatic_restarts": 0,
+  "checked_at": 1789828016.475848
+}

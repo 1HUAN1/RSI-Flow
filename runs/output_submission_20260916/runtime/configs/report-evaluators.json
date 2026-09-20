@@ -1,0 +1,99 @@
+{
+  "evaluators": {
+    "hotpotqa_dev": {
+      "repository": "https://github.com/hotpotqa/hotpot",
+      "commit": "3635853403a8735609ee997664e1528f4480762a",
+      "entrypoint": "/root/data/RSI_iclr2027/rsiH/third_party/report_evaluators/hotpot/hotpot_evaluate_v1.py",
+      "entrypoint_sha256": "d35fc91a6db21d791dbdda11daf3856e9359f5701d54e3eefba20d88fecc02c0",
+      "python_executable": "/root/data/conda/envs/sia/bin/python",
+      "data_path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/hotpotqa_dev_official.json",
+      "data_sha256": "e32a6ef773c6999d1b8d7f9c47c934435e1ab1beb4cb48b9ed9b95d60fb72326",
+      "task_ids_path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/hotpotqa_dev_ids.json",
+      "task_ids_sha256": "147af16071320d2e1b07ce03a7022a5af9a918929791f2f6d2e2e037d92bfe44",
+      "protocol": "official_hotpot_fullwiki_v1",
+      "release_version": "v1",
+      "timeout_seconds": 86400,
+      "metadata": {
+        "native_source": "/root/data/RSI_iclr2027/dataset/test/searchqa/hotpotqa_dev/dev.jsonl",
+        "source_sha256": "f221b82faf35493585167afba6492e9e93c5c17aa7de2dd20bac1f9e1c084e80",
+        "answer_aliases": "original source has no answer_id/evidences_id; use corresponding official v1 evaluator"
+      }
+    },
+    "2wiki_dev": {
+      "repository": "https://github.com/Alab-NII/2wikimultihop",
+      "commit": "13800e5be57df1b4040b9b1588c6c811779e69e9",
+      "entrypoint": "/root/data/RSI_iclr2027/rsiH/third_party/report_evaluators/2wiki/2wikimultihop_evaluate.py",
+      "entrypoint_sha256": "854b03c487608286d6381379eb32e46d9b845493527d1fe1951d0bf4ec923a40",
+      "python_executable": "/root/data/conda/envs/sia/bin/python",
+      "data_path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/2wiki_dev_official.json",
+      "data_sha256": "d610a26e47b75981a10722cb7d46d77588987627094fdd8cbd3efc0c050fb6d0",
+      "task_ids_path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/2wiki_dev_ids.json",
+      "task_ids_sha256": "a8e4178c0c5ff5ae95d2ef2b35b7940a9a89a75674a032d198cd050915a77146",
+      "protocol": "official_2wiki_original_v1",
+      "release_version": "v1",
+      "timeout_seconds": 86400,
+      "metadata": {
+        "native_source": "/root/data/RSI_iclr2027/dataset/test/searchqa/2wiki_dev/dev.jsonl",
+        "source_sha256": "a9e72d47ccf25764370d57abd8ff58a2b54cbb6cf40d803b6d3ecf818cba4850",
+        "answer_aliases": "original source has no answer_id/evidences_id; use corresponding official v1 evaluator"
+      }
+    },
+    "humaneval_plus": {
+      "repository": "https://github.com/evalplus/evalplus",
+      "commit": "26d6d00bb1fd0fa37f39c99d5290da67891d1c5e",
+      "entrypoint": "/root/data/RSI_iclr2027/dataset/evaluators/evalplus/evalplus/evalplus/evaluate.py",
+      "entrypoint_sha256": "47f766df2dbb2280f7dd2c1040bfff0396c2b414a8d44b639424aa941bee7eab",
+      "python_executable": "/root/data/conda/envs/sia/bin/python",
+      "data_path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/native/HumanEvalPlus-v0.1.10.jsonl",
+      "data_sha256": "42526ec0e7d5f3ee0b06d6ced98f8c8bae3d76519151bfb3d36f79010645bd7f",
+      "task_ids_path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/humaneval_plus_ids.json",
+      "task_ids_sha256": "1e9abb2ec6b56a79cd60a9aadc01bd85c337fb30d521773357aeb059775c99e8",
+      "protocol": "official_evalplus_native_inputs_ipc",
+      "release_version": "v0.1.10",
+      "timeout_seconds": 86400,
+      "metadata": {}
+    },
+    "mbpp_plus": {
+      "repository": "https://github.com/evalplus/evalplus",
+      "commit": "26d6d00bb1fd0fa37f39c99d5290da67891d1c5e",
+      "entrypoint": "/root/data/RSI_iclr2027/dataset/evaluators/evalplus/evalplus/evalplus/evaluate.py",
+      "entrypoint_sha256": "47f766df2dbb2280f7dd2c1040bfff0396c2b414a8d44b639424aa941bee7eab",
+      "python_executable": "/root/data/conda/envs/sia/bin/python",
+      "data_path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/native/MbppPlus-v0.2.0.jsonl",
+      "data_sha256": "b54e762755248ca411b523c917fa9f93c07b5ff2966bf60b3917b853926a3dad",
+      "task_ids_path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/mbpp_plus_ids.json",
+      "task_ids_sha256": "f27a7c23e32b5729e480dccc80ac9635b1cb89fe9d5a713432c5b1e859b0af6c",
+      "protocol": "official_evalplus_native_inputs_ipc",
+      "release_version": "v0.2.0",
+      "timeout_seconds": 86400,
+      "metadata": {}
+    },
+    "livecodebench": {
+      "repository": "https://github.com/LiveCodeBench/LiveCodeBench",
+      "commit": "28fef95ea8c9f7a547c8329f2cd3d32b92c1fa24",
+      "entrypoint": "/root/data/RSI_iclr2027/dataset/evaluators/livecodebench/LiveCodeBench/lcb_runner/evaluation/testing_util.py",
+      "entrypoint_sha256": "b7cb6a8a69807bb868150a61742e25d7bb5328bbe01d514471b6ec43c9fa9ed2",
+      "python_executable": "/root/data/conda/envs/sia/bin/python",
+      "data_path": "/root/data/RSI_iclr2027/dataset/test/code/livecodebench_release_v6/test.jsonl",
+      "data_sha256": "cba1a96d60cf5af0fca536bc28b4120c24d07283ea815a3c740e2edfba45287e",
+      "task_ids_path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/livecodebench_ids.json",
+      "task_ids_sha256": "9fa03c0f4af0411e2d1a6a00e766bc3548090d2ef265ed19fe468ceb339b4529",
+      "protocol": "official_lcb_native_comparator_ipc",
+      "release_version": "release_v6",
+      "timeout_seconds": 86400,
+      "metadata": {
+        "coverage": "all cumulative release_v6; one final submission"
+      }
+    }
+  },
+  "blocked": {
+    "bfcl_v3": {
+      "status": "BLOCKED_REPORT_ADAPTER",
+      "reason": "Native multi-turn execution, official subset/output protocol not validated; no aggregate proxy score"
+    },
+    "acebench": {
+      "status": "BLOCKED_REPORT_ADAPTER",
+      "reason": "Native multi-turn execution, official subset/output protocol not validated; no aggregate proxy score"
+    }
+  }
+}

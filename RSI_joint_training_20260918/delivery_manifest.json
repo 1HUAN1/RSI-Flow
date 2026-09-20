@@ -1,0 +1,30 @@
+{
+  "files": {
+    "common.py": "f6bc42d19dff5eb540027e6fa171604fbeb76bd172c37510c6caa5caaba10f40",
+    "prepare_data.py": "a5ea126aeaf44d7b3d6cb64071f48d81c160f725612ddb573b5164d3ea3d4927",
+    "runtime_extensions.py": "023d84d417a5272cf848f0d9e6e7f965196898e55463419bf2e031bbab9c0fad",
+    "install_runtime.py": "f77f41264d360bcfadff9686b159984ea16c3ef396f1638197ce1add666081f6",
+    "round_validation.py": "a4bae3b4f9138bb3e20cdd577ec012bbfd9570495e9e592aacc788d2495a0215",
+    "train.py": "16bd4799b09e217e42d126170a1adceba7340757cbce542776bbd60fceee55bc",
+    "validate.py": "3a2adf8082f9c003fc2ba80ee52962038e33f0e62e74c8d27854f3e1630fee0e",
+    "harness_api.py": "aef3764f99acaca58302293d518c3cb5506afb5070f773889dbcbb843a36f29a",
+    "official_tool_entry.py": "b88d910b367bc8ee43498a304f8509d293f299c3d46402bbd57c6f7bad8fbfe3",
+    "tool_validation.py": "4c69643fd52d2a5a693df722eb2ac694aab0eeb66a83054d8efddb141d80f6d2",
+    "tool_sandbox.py": "e72dd146fd411067cd89880f791d10cfce24b602723bf7015827ef3332a3d539",
+    "validation_sources.py": "2ba726ae19be5a3a03f70d31c40c7e1fc73a80f31ec2d0d7d8c2d0fc568c7f20",
+    "launch.py": "5ecf98a37ad42812b9ceec26505286837beede86436879f4cb5962203fedd91d",
+    "status.py": "3f9a241d7a4fa5d19a5738cff019ce10e82af150150b789b76c74c57a8f4257c",
+    "start.sh": "8804b78080fb9f6a5763719981d765909e21ecdb3a05befd702c08c631a4a00f",
+    "requirements-eval.txt": "c87576382c71077710bc765048b46d39ca7b8d5e9541c4bf603a2e8eb335f696",
+    "README.md": "a187988f9c5298b9427f1c3a945f83b4d830497f814b05a38f5de2194e275a99",
+    "configs/train.json": "68b03e7b0d719d96654ce434925e63f998b169777bdb203c0e4c154a597cdc54",
+    "configs/validation.json": "c0442971e0223b768214f1f01f5a9dfb19219f0dd67c7548cc7ff9f6a984e8e2",
+    "tests/test_contracts.py": "48973819a90c0bd0dc0147005ad20a7337c2684ad52fd7d51724fa37bdb30eca",
+    "tests/server_cpu_checks.py": "0b28d72a435d3e1fad2ea6304f496fe60430557586df4c19b697b7ee9bb19eca",
+    "start_joint_346219.sh": "3986b42dd9ee9404f6000b0335bc61b8da590c81fdc15a997e0a24cb935814dd",
+    "tests/local_check.json": "94b9b719232c49f527b5e5ab85163b342dc1f6e5aef9cec06163cde5112b6a39",
+    "setup_environment.py": "dc35192cf22319d359c9255524779626e5bde9f4f644549ff6520f2150a92d73",
+    "monitor.py": "a600763a02de7072d2ed451feceeab141b93a9712c2feffb3ec677a581a0ae7a"
+  },
+  "training_started": false
+}

@@ -1,0 +1,7 @@
+{
+  "profile_id": "kimi-nebius-meta",
+  "name": "Kimi K2.6 on Nebius",
+  "agent_impl": "openhands",
+  "model": "moonshotai/Kimi-K2.6",
+  "provider_id": "nebius"
+}

@@ -1,0 +1,226 @@
+{
+  "training": {
+    "rounds": 3,
+    "seed": 42,
+    "runtime_source": "/root/data/RSI_iclr2027/rsiH/runs/output_submission_20260916/runtime",
+    "base_config": "configs/envscaler-256-direct-five-global-until-20260917-235900.json",
+    "dataset_root": "/root/data/RSI_iclr2027/dataset",
+    "environment_files": [
+      "train/tool_use/envscaler/train/environments.jsonl",
+      "train/tool_use/envscaler/heldout/environments.jsonl"
+    ],
+    "datasets": [
+      {
+        "name": "envscaler",
+        "domain": "tool_use",
+        "files": [
+          {
+            "path": "train/tool_use/envscaler/train/scenarios.jsonl",
+            "original_split": "train"
+          },
+          {
+            "path": "train/tool_use/envscaler/heldout/scenarios.jsonl",
+            "original_split": "heldout"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      },
+      {
+        "name": "deepcoder_taco",
+        "domain": "code",
+        "files": [
+          {
+            "path": "train/code/deepcoder_taco/train.jsonl",
+            "original_split": "train"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      },
+      {
+        "name": "nq_open",
+        "domain": "searchqa",
+        "files": [
+          {
+            "path": "train/searchqa/nq_open/train.jsonl",
+            "original_split": "train"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      },
+      {
+        "name": "hotpotqa",
+        "domain": "searchqa",
+        "files": [
+          {
+            "path": "train/searchqa/hotpotqa/train.jsonl",
+            "original_split": "train"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      },
+      {
+        "name": "2wiki",
+        "domain": "searchqa",
+        "files": [
+          {
+            "path": "train/searchqa/2wiki/train.jsonl",
+            "original_split": "train"
+          }
+        ],
+        "stratify": [
+          "difficulty",
+          "source",
+          "type",
+          "task_type"
+        ]
+      }
+    ],
+    "dataset_passes_per_round": 1,
+    "sft_epochs_per_update": 1,
+    "sft_max_steps": -1,
+    "max_length": 16384,
+    "max_sft_samples": 10000000,
+    "training_timeout_seconds": 604800,
+    "max_wall_seconds": 2592000,
+    "validation_config": "configs/validation.json",
+    "run_name": "joint_train_internal_3600",
+    "meta_worker_socket": "/tmp/rsi_meta_joint_20260918_worker.sock",
+    "meta_relay_socket": "/tmp/rsi_meta_joint_20260918_relay.sock",
+    "ports": [
+      8171,
+      8172,
+      8173,
+      8174
+    ],
+    "training_schedule": "round_disjoint",
+    "split_seed": 42,
+    "rollout_seed": 42,
+    "training_seed": 42,
+    "allocated_tasks": 3600,
+    "minimum_sft_samples": 1,
+    "train_quotas_per_round": {
+      "envscaler": 400,
+      "deepcoder_taco": 400,
+      "nq_open": 100,
+      "hotpotqa": 150,
+      "2wiki": 150
+    },
+    "meta_probe_quotas": {
+      "envscaler": 80,
+      "deepcoder_taco": 80,
+      "nq_open": 20,
+      "hotpotqa": 30,
+      "2wiki": 30
+    },
+    "grouping": {
+      "family_fields": [
+        "group_id",
+        "problem_id",
+        "conversation_id",
+        "dialogue_id",
+        "parent_id",
+        "original_id"
+      ],
+      "envscaler_environment_family": true,
+      "max_environment_fraction_per_round": 0.1
+    },
+    "exposure_ledger": null,
+    "validation_limits": {
+      "bfcl_v3": null,
+      "acebench": null,
+      "livecodebench": null,
+      "humaneval_plus": null,
+      "mbpp_plus": null,
+      "hotpotqa_dev": 1000,
+      "2wiki_dev": 1000
+    },
+    "final_test_limits": {
+      "bfcl_v3": null,
+      "acebench": null,
+      "livecodebench": null,
+      "humaneval_plus": null,
+      "mbpp_plus": null,
+      "hotpotqa_dev": 1000,
+      "2wiki_dev": 1000
+    },
+    "retrieval_index": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918/runtime/data/joint_full/search.sqlite",
+    "validation_vault": "/root/data/RSI_iclr2027/rsiH/evaluation_vault/train_internal_3600"
+  },
+  "validation": {
+    "frequency": "after_each_committed_round",
+    "feedback_to_training_or_meta": false,
+    "benchmark_ids": [
+      "bfcl_v3",
+      "acebench",
+      "livecodebench",
+      "humaneval_plus",
+      "mbpp_plus",
+      "hotpotqa_dev",
+      "2wiki_dev"
+    ],
+    "official_specs": "/root/data/RSI_iclr2027/rsiH/runs/output_submission_20260916/runtime/configs/report-evaluators.json",
+    "tool_benchmarks": {
+      "bfcl_v3": {
+        "repository_root": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3",
+        "categories": "all_v3",
+        "version_prefix": "BFCL_v3",
+        "data_path": "/root/data/RSI_iclr2027/dataset/test/tool_use/bfcl_v3/test.jsonl"
+      },
+      "acebench": {
+        "repository_root": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench",
+        "language": "en",
+        "category": "test_all",
+        "user_model": "gpt-4o-2024-08-06",
+        "user_provider_model": "openai/gpt-4o-2024-08-06",
+        "user_api_key_env": "ACE_USER_API_KEY",
+        "user_base_url_env": "ACE_USER_BASE_URL",
+        "data_path": "/root/data/RSI_iclr2027/dataset/test/tool_use/acebench/test.jsonl"
+      }
+    }
+  },
+  "validation_sources_sha256": "ffc9ca29588cc576c7fb0b3099c3ab5009a59414d5e79b7912b0e2fb45e094c2",
+  "script_hashes": {
+    "data_protocol.py": "6dd6ededb2b7421b3a560e0ccc697065f07e532e6273868db1a78a0258d9786c",
+    "status.py": "3f9a241d7a4fa5d19a5738cff019ce10e82af150150b789b76c74c57a8f4257c",
+    "tool_sandbox.py": "e72dd146fd411067cd89880f791d10cfce24b602723bf7015827ef3332a3d539",
+    "round_evolution.py": "c709dff35c7a255cb1eae40b75db20ae1b32d23deb4bd45eec09a01bf2224165",
+    "monitor.py": "01e4cab1dc8c02bfcc269687cabd84ee44cb69602eb27bc50f7f09b90bacb46e",
+    "harness_api.py": "6591c6bb1e4a841f60643912b5e065b915da071c2d7f3a1cdef72ac9560649fc",
+    "validate.py": "2e25bb93f37f06bc646d39ff8705e16ff2373e6d1ac56ac77b8eaea8fa4d95df",
+    "prepare_data.py": "4953c933256adfd54f9343d23b261e674f55b237fb779df9e43fb49887e1d6af",
+    "train.py": "16bd4799b09e217e42d126170a1adceba7340757cbce542776bbd60fceee55bc",
+    "protocol_patches.py": "f795269b5b69d2f331113ab5fc0ec6ddce1ef9cc28c66a2a0679ae1cf32c2eb1",
+    "official_tool_entry.py": "b88d910b367bc8ee43498a304f8509d293f299c3d46402bbd57c6f7bad8fbfe3",
+    "validation_sources.py": "2ba726ae19be5a3a03f70d31c40c7e1fc73a80f31ec2d0d7d8c2d0fc568c7f20",
+    "launch.py": "34ca680fac68c3702d86dae3ca9f20641d49706318a8380b7cf5ae430475aacd",
+    "setup_environment.py": "dc35192cf22319d359c9255524779626e5bde9f4f644549ff6520f2150a92d73",
+    "tool_validation.py": "3deb6111a8c2ad26c687c2590974ed26cb77178157b93e9327992f94b1908245",
+    "common.py": "f6bc42d19dff5eb540027e6fa171604fbeb76bd172c37510c6caa5caaba10f40",
+    "evaluation_manifest.py": "edfc31521386a6371d3aef9b717f4fab766e854cd129d2c1d5fcb2795167caaf",
+    "evolution_protocol.py": "1e99e30b12a8e0f2017910c61a62e19287eb778d1ebe2f0de1f6e4d5383e2109",
+    "install_runtime.py": "bce5791dbd1c5cb87b7e91261ed654df0c0f061deea7729bfaba38692328af60",
+    "runtime_extensions.py": "c2b8824931de038179d8f9fb3583f0a0dcedcd52d24e51656c5a29c1376b27f0",
+    "round_validation.py": "084c4442c0f260354b903db9a0971f75db87be106cf19596fcb46913caf2bca8"
+  },
+  "validation_never_used_for_selection": true
+}
