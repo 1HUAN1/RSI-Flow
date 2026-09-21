@@ -6,6 +6,27 @@ from sia.task_meta.evolution_protocol import read, freeze, fingerprint
 
 SEARCH_POLICY = 'single_candidate_strict_positive_gain'
 
+# Shared by effect preparation and every native summary/repair model call.
+MEMORY_ID_CONTRACT = (
+    'REQUIRED MEMORY FIELDS — GENERATION AND REPAIR: '
+    'APPEND ONLY, FOR BOTH SUCCESS AND FAILURE EXPERIENCES. '
+    'ADD component records with fresh IDs skill.<COMPONENT>.<unique_id> FIRST, '
+    'then ADD general records with fresh IDs principle.<unique_id>. '
+    'DO NOT OMIT THE LITERAL principle. PREFIX. EVERY NEW RECORD MUST HAVE '
+    'revision=1, active=true, evidence_state="tentative", EVEN FOR OBSERVED SUCCESS. '
+    'In five_stage.principle_operations, operation.principle_id MUST equal '
+    'operation.record.principle_id. EACH general principle operation.rationale MUST '
+    'literally include at least one FULL skill ID ADDED EARLIER IN THIS SAME UPDATE '
+    'and explain how that skill supports the principle; "the new skill" is NOT an ID. '
+    'Use the actual decision, experience and evidence IDs. '
+    'PRESERVE ALL COMMITTED RECORDS UNCHANGED; DO NOT OVERWRITE, REVISE, MERGE OR RETIRE THEM. '
+    'Repair only the uncommitted candidate summary; an ID reference alone does not prove a claim. '
+    'Summarize when to choose the component, what changed, measured effectiveness and applicability limits. '
+    'Cite evidence IDs mapped to task IDs, paths and hashes in the read-only evidence index; '
+    'DO NOT COPY RAW TRAJECTORIES OR WHOLE CHAT HISTORIES INTO MEMORY. '
+    'Full parent/child training trajectories remain optional read-only context via the evidence reader.'
+)
+
 
 def aligned_differences(pre, post, pair):
     """Exact semantic anchors, chronological occurrence matching, never step-number zipping.
@@ -136,7 +157,7 @@ def validate_recursive_memory(candidate, meta, attempts, experience_id, boundary
     required=set(decisions.values());skills={};principles=[]
     by_component={component:[a for a in attempts if a['action']==component] for component in required}
     new_skill_ids=[]
-    for op in review.principle_operations:
+    for index, op in enumerate(review.principle_operations):
         r=op.record
         if op.operation!='ADD' or r is None or op.principle_id in seen or r.revision!=1:
             raise ValueError('Preserve all earlier skills/principles; revisions append new IDs')
@@ -169,11 +190,16 @@ def validate_recursive_memory(candidate, meta, attempts, experience_id, boundary
             new_skill_ids.append(op.principle_id)
         elif op.principle_id.startswith('principle.') and skills:
             if not any(skill_id in op.rationale for skill_id in new_skill_ids):
-                raise ValueError('General principle rationale must derive from a newly appended component skill')
+                raise ValueError('General principle rationale must derive from a newly appended component skill: '
+                    f'five_stage.principle_operations[{index}].rationale must include a full ID from {new_skill_ids!r}')
             if experience_id not in r.source_experiences or not set(decisions) <= set(r.source_decisions):
                 raise ValueError('General principle must preserve this round decision and experience attribution')
             principles.append(r)
-        else: raise ValueError('General principles must follow and cite newly appended component skills')
+        else: raise ValueError('General principles must follow and cite newly appended component skills: '
+            f'five_stage.principle_operations[{index}] has ID {op.principle_id!r}. '
+            'Use skill.<COMPONENT>.<unique_id> for component records, then principle.<unique_id> '
+            'for general records; operation.principle_id and record.principle_id must match. '
+            f'General operation.rationale must cite one of the preceding new skill IDs: {new_skill_ids!r}')
     if set(skills.values())!=required or not principles:
         raise ValueError('Every attempted component, including failures, needs an attributed skill')
     if not attempts: raise ValueError('No intervention evidence for recursive memory')

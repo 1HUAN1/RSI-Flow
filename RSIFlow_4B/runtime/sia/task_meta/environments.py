@@ -308,7 +308,7 @@ class TACOAdapter:
 
 
 _ENV_WORKER = '''
-import contextlib, io, json, pathlib, random, sys
+import contextlib, hashlib, io, json, pathlib, random, sys
 official = {}
 exec(compile(pathlib.Path("env_util.py").read_text(), "official_env_util.py", "exec"), official)
 env = None
@@ -337,7 +337,16 @@ for line in sys.stdin:
             checks = []
             for check in request["checklist"]:
                 valid, result, error = official["run_check_function"](check["check_func"], initial, final)
-                checks.append({"valid": valid, "result": result, "error": error})
+                record = {"valid": valid, "result": result, "error": error}
+                # Four pinned env_154 checks assume dict profile_info although
+                # the environment accepts Any. A string profile violates these
+                # task requirements; preserve the original checker error.
+                if (not valid and error == "'str' object has no attribute 'get'"
+                        and hashlib.sha256(check["check_func"].encode()).hexdigest()
+                        in request.get("task_failure_check_hashes", [])):
+                    record.update(valid=True, result=False, original_valid=False,
+                                  classification="task_state_type_mismatch")
+                checks.append(record)
             response = {"checks": checks}
         else:
             raise ValueError("Invalid environment protocol transition")
@@ -428,7 +437,16 @@ class EnvScalerAdapter:
                     raise ValueError("Pinned EnvScaler minute arithmetic checker changed")
                 checklist = [dict(item) for item in checklist]
                 checklist[6]["check_func"] = "def check_func(final_state):\n    replacement = None\n    for appt in final_state.get('appointments', {}).values():\n        if appt.get('patient_id') == 'PAT1' and appt.get('provider_id') == 'PROV1' and (appt.get('appointment_type') == 'video') and (appt.get('appointment_status') == 'scheduled'):\n            replacement = appt\n            break\n    if replacement is None:\n        return False\n    from datetime import datetime\n    repl_start = datetime.fromisoformat(replacement['scheduled_time'])\n    repl_end = repl_start + __import__('datetime').timedelta(minutes=30)\n    for appt in final_state.get('appointments', {}).values():\n        if appt.get('appointment_id') == replacement.get('appointment_id'):\n            continue\n        if appt.get('patient_id') != 'PAT1':\n            continue\n        other_start = datetime.fromisoformat(appt['scheduled_time'])\n        other_end = other_start + __import__('datetime').timedelta(minutes=30)\n        if not (repl_end <= other_start or repl_start >= other_end):\n            return False\n    return True"
-            result = self.worker.request({"operation": "evaluate", "checklist": checklist})
+            task_failure_check_hashes = []
+            if self.task.task_id == "envscaler:env_154:env_154_rl-task_21":
+                task_failure_check_hashes = [
+                    "b257542702c5d2fdce4f55fed63b0b2ea585240c551d26b36b1d88d2fcc0c96c",
+                    "e11d9bcdcbb03cbc02887a6f2aa300f63932c9fafa594b6d9a7cc1a062edd3fe",
+                    "2e5e92da4c5239257bf7e1aefc8504f311b5420fa8dcf5a486cb7a3c60e9ed5a",
+                    "a03b270ceb70726cc5731520c222485a76f2718e2ee4257bf53b9f10bbab7756",
+                ]
+            result = self.worker.request({"operation": "evaluate", "checklist": checklist,
+                                          "task_failure_check_hashes": task_failure_check_hashes})
         except SandboxUnavailable:
             return AdapterResult.infrastructure_failure(self.verifier_id, "envscaler_worker_unavailable")
         checks = result["checks"]
@@ -438,7 +456,7 @@ class EnvScalerAdapter:
         success = all(check["result"] for check in checks) and not self.terminated
         return AdapterResult(float(success), {"task_success": float(success), "native_partial_score": native_score},
             {"status": "completed", "verifier_id": self.verifier_id, "success": success, "task_success": success,
-             "checks_completed": len(checks)}, None if success else "environment_runtime_error" if self.terminated else "task_incomplete",
+             "checks_completed": len(checks)}, None if success else "task_state_type_mismatch" if any(c.get("classification") == "task_state_type_mismatch" for c in checks) else "environment_runtime_error" if self.terminated else "task_incomplete",
             details={"official_check_results": checks, "native_partial_score": native_score})
 
     def close(self):

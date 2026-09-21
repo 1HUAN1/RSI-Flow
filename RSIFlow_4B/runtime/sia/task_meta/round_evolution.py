@@ -377,8 +377,13 @@ class RoundProtocol:
                 contract['consolidation_scope'] = (
                     'At the third domain, consolidate all three domain experiences in this same Meta update.'
                     if self.store.sequential_domains else
-                    'Use all paired results from the current full 360-task round, including all three domains, '
+                    'Use all paired results from the current complete mixed-domain round, including all three domains, '
                     'to derive conditional general principles in this one Meta update. Do not perform domain-level updates.')
+
+        # Apply after branch-specific instructions so neither branch drops the contract.
+        if self.append_memory:
+            from sia.task_meta.recursive_feedback import MEMORY_ID_CONTRACT
+            envelope['trusted_facts']['memory_update_contract']['instructions'] += '\n' + MEMORY_ID_CONTRACT
 
     @property
     def aligned_interventions(self):
@@ -417,10 +422,15 @@ class RoundProtocol:
         self.execution_scope=dict(role='train_evolution',purpose='evolution_train',round_id=self.store.round_id,
             allocation_round_id=self.store.current.get('allocation_round_id',self.store.round_id),
             stage_domain=self.store.current.get('domain','all'),manifest_hash=self.store.current['manifest_hash'],collection_stage=mode,model=state.checkpoint_manifest,
-            model_ref=state.model_ref,task_harness=file_hash(state.harness_path),meta_harness=asdict(self.meta),
-            active_experience=fingerprint(self.active_memory),artifacts=artifact_manifest(state.artifacts.directory),
+            model_ref=state.model_ref,task_harness=file_hash(state.harness_path),
+            artifacts=artifact_manifest(state.artifacts.directory),
             rollout_seed=self.config.seed,protocol_hash=file_hash(self.root/'protocol.json'),
             implementation=fingerprint(source_identity()))
+        # Parent rollout depends on the frozen Task, not the concurrently growing
+        # Meta library. Routing provenance remains in memory_input/decision snapshots.
+        if mode == 'child_post_update':
+            self.execution_scope.update(meta_harness=asdict(self.meta),
+                active_experience=fingerprint(self.active_memory))
         if self.positive_search and mode=='child_post_update':
             self.execution_scope['candidate_id']=self.current_candidate_id
         freeze(Path(directory)/'execution_scope.json',dict(scope=self.execution_scope,mode=mode,
@@ -641,9 +651,10 @@ def require_round_release(config):
     from sia.task_meta.pipeline import project_path
     root=project_path(config.data_dir)
     if not (root/'tasks.sqlite').is_file(): raise FileNotFoundError('Prepared round manifests required; no full-pool fallback')
-    from sia.task_meta.evolution_protocol import TRAIN_QUOTAS, assert_disjoint
+    from sia.task_meta.evolution_protocol import training_quotas, assert_disjoint
+    quotas = training_quotas(config.round_protocol or {})
     rounds=[manifest(root/f'B{r}/manifest.json','train_evolution',r) for r in (1,2,3)]
     assert_disjoint(rounds)
-    if any(Counter(t['source'] for t in m['tasks'])!=TRAIN_QUOTAS for m in rounds):
-        raise ValueError('Expected registered 360-task round manifests; no old/full-pool fallback')
+    if any(Counter(t['source'] for t in m['tasks'])!=quotas for m in rounds):
+        raise ValueError('Expected configured round manifests; no old/full-pool fallback')
     return {'status':'PREPARED_NOT_TRAINED','allocated_tasks':sum(len(m['tasks']) for m in rounds),'rounds':3,'model_calls':0}

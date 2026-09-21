@@ -19,6 +19,7 @@ from .seed import _BudgetExhausted, load_seed, run_seed
 from .storage import artifact_manifest, checkpoint_manifest, digest, save_json
 from .task_client import LocalTaskClient, TaskInfrastructureError
 from .types import UpdatePending
+from report_environment import ReportEnvironment, serializable_trajectory
 
 
 def public_final_task(identifier, row):
@@ -114,7 +115,8 @@ def _generate_report_predictions(config, frozen_path, specs_path, output_dir):
                         continue
                     if call_directory.exists() and any(call_directory.iterdir()):
                         raise UpdatePending('Final Task call receipts exist without a completed submission; reconcile before retrying')
-                    environment = SearchQAAdapter(index) if task.domain == 'searchqa' else TACOAdapter(LinuxSandbox())
+                    environment = ReportEnvironment(
+                        SearchQAAdapter(index) if task.domain == 'searchqa' else TACOAdapter(LinuxSandbox()))
                     seed = int(value_hash([config.seed, task.task_id, 'report_eval'])[:8], 16) % (2**31)
                     calls = []
                     def model(messages, *, tools=None, seed, max_tokens, temperature, calls=calls,
@@ -164,7 +166,8 @@ def _generate_report_predictions(config, frozen_path, specs_path, output_dir):
                                 answer = extract_python(answer)
                         record = {'task_id': task.task_id, 'split': 'report_eval', 'state_hash': frozen['state_hash'],
                             'final_submission_count': 1, 'final_answer': answer, 'infrastructure_error': False,
-                            'trajectory': result, 'transport_calls': calls, 'wall_seconds': time.monotonic() - started}
+                            'trajectory': serializable_trajectory(result), 'evaluation_status': 'pending_official',
+                            'transport_calls': calls, 'wall_seconds': time.monotonic() - started}
                         record['record_hash'] = value_hash(record)
                         save_json(path, record)
                     finally:

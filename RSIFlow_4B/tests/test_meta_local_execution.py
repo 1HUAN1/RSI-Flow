@@ -57,7 +57,7 @@ class LocalMetaExecution(unittest.TestCase):
         config = MetaBackendConfig(execution_location="local_chroot")
         identity = runtime_identity(config)
         self.assertEqual(set(identity["sources"]), {
-            "local_execution.py", "isolation_runtime.py", "isolation_launcher.py", "bridge.py"})
+            "local_execution.py", "isolation_runtime.py", "isolation_launcher.py", "bridge.py", "input_budget.py"})
         self.assertTrue(all(len(value) == 64 for value in identity["sources"].values()))
 
 

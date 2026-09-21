@@ -7,6 +7,7 @@ API secret outside a Linux namespace; tools see only declared evidence/candidate
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import shutil
@@ -286,6 +287,13 @@ class CodexOpenRouterBackend:
                 "status": "prepared_input_not_yet_model_consumed"})
         atomic_json(directory / "schema.json", output_schema)
         atomic_json(directory / "bundle_load.json", load)
+        if self.config.execution_location == 'local_chroot':
+            from .input_budget import attach_archives, inventory
+            attach_archives(work, self.journal.parent, self.config.input_budget)
+            totals, _ = inventory(work, self.config.input_budget, self.config.budget.max_workspace_bytes)
+            atomic_json(directory / 'input_inventory.json', {'limits': self.config.input_budget.model_dump(), 'bytes': totals})
+        elif (work / 'meta_input/trajectory_archives.json').exists():
+            raise BackendUnavailable('META_ARCHIVE_BACKEND_UNSUPPORTED', 'Read-only archive delivery requires the registered local_chroot backend')
         atomic_json(directory / "workspace_before.json", self._workspace_files(work))
         atomic_json(directory / "status.json", {"state": "PREPARED", "request_id": request.request_id})
         return PreparedOperation(request, directory, schema, bundle, operation_budget)
@@ -297,7 +305,8 @@ class CodexOpenRouterBackend:
             if path.is_symlink():
                 raise ValueError("Meta workspace symlinks are not permitted")
             if path.is_file():
-                files[path.relative_to(work).as_posix()] = sha256(path.read_bytes())
+                with path.open('rb') as stream:
+                    files[path.relative_to(work).as_posix()] = hashlib.file_digest(stream, 'sha256').hexdigest()
         return files
 
     def validate(self, prepared):
@@ -371,6 +380,7 @@ class CodexOpenRouterBackend:
     def compatibility_identity(self):
         c = self.config
         return {"backend": c.backend, "provider": c.provider, "base_url": c.base_url, "model": c.model, "codex_commit": c.codex_commit,
+                "input_budget": c.input_budget.model_dump(),
                 "response_delivery": c.response_delivery, "response_timeout_seconds": c.response_timeout_seconds,
                 "g_output_delivery": c.g_output_delivery,
                 "expected_response_model": c.expected_response_model,

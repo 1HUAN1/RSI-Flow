@@ -14,11 +14,12 @@ export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 NUMEXPR_NUM_TH
 export TOKENIZERS_PARALLELISM=false RAYON_NUM_THREADS=4 TOKIO_WORKER_THREADS=4
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd -P)"
+source "$SCRIPT_DIR/storage_env.sh"
 CONFIG_PATH="${RSIFLOW_CONFIG:-$SCRIPT_DIR/configs/train.json}"
 KEY_FILE="${RSIFLOW_API_KEY_FILE:-$SCRIPT_DIR/API_key.md}"
 PYTHON_BIN="${RSIFLOW_PYTHON:-/root/data/conda/envs/sia/bin/python}"
 META_WORKER_SCRIPT="$SCRIPT_DIR/start_meta_worker.sh"
-export RSI_REMOTE_WORKER_TOKEN_FILE="${RSI_REMOTE_WORKER_TOKEN_FILE:-/root/.config/RSIFlow_4B/meta_worker_token}"
+export RSI_REMOTE_WORKER_TOKEN_FILE="${RSI_REMOTE_WORKER_TOKEN_FILE:-/root/data/RSI_iclr2027/.state/RSIFlow_4B/meta_worker_token}"
 CURRENT_UID="$(id -u)"
 
 # The token file is authoritative. Do not let stale inherited credentials reach
@@ -102,6 +103,8 @@ read_labeled_secret() {
 
 [[ -x "$PYTHON_BIN" ]] || die "Python 不可执行：$PYTHON_BIN"
 [[ -f "$CONFIG_PATH" ]] || die "训练配置不存在：$CONFIG_PATH"
+SYSTEM_USED_BYTES="$(df -B1 --output=used / | tail -n 1)"
+(( SYSTEM_USED_BYTES + 4000000000 <= 20000000000 )) || die "系统盘容量检查未通过：已用 $SYSTEM_USED_BYTES 字节，需为运行时预留 4 GB，使用上限 20 GB。请先完成旧环境迁移。"
 
 OUTPUT_ROOT="$("$PYTHON_BIN" -c '
 import json
@@ -114,8 +117,8 @@ if config.get("rounds") != 3:
     raise SystemExit("配置必须固定为 3 轮")
 if config.get("pause_after_round") is not None:
     raise SystemExit("连续三轮启动不允许设置 pause_after_round")
-if config.get("training_tasks_per_pass") != 360:
-    raise SystemExit("每轮必须是三个领域混合的 360 条任务")
+if config.get("training_tasks_per_pass") not in (180, 360):
+    raise SystemExit("每轮必须是三个领域混合的 180 或 360 条任务")
 if config.get("candidate_policy") != "single_candidate_strict_positive_gain":
     raise SystemExit("候选接受策略必须是 single_candidate_strict_positive_gain")
 output = config.get("output_root")
@@ -181,4 +184,7 @@ printf '运行输出目录：%s\n' "$OUTPUT_ROOT"
 printf '进度：%s；训练日志：%s\n' "$OUTPUT_ROOT/active_run.json" "$OUTPUT_ROOT/logs/"
 printf '%s\n' "若进程中断，使用同一命令重跑本脚本即可从已有 receipts 恢复。"
 
+if [[ -n "${RSIFLOW_RESUME_DEPLOYED_RUN:-}" ]]; then
+  exec "$PYTHON_BIN" -u "$SCRIPT_DIR/resume_experiment.py" --run-dir "$RSIFLOW_RESUME_DEPLOYED_RUN"
+fi
 exec "$PYTHON_BIN" -u "$SCRIPT_DIR/launch.py" --config "$CONFIG_PATH" --execute

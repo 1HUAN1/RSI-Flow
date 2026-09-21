@@ -4,9 +4,21 @@ This repository preserves the current server-side source under the original `rsi
 
 ## Active entry point
 
-`RSIFlow_4B/start_3round_training.sh`, with `RSIFlow_4B/configs/train.json`, `configs/validation.json`, and `runtime/configs/base.json`.
+The current 180-task experiment uses `RSIFlow_4B/start_180_training.sh`, selecting `RSIFlow_4B/configs/train_180.json`; validation and runtime settings remain in `configs/validation.json` and `runtime/configs/base.json`. The original 360-task configuration is retained as historical source, not the current default experiment recommendation.
 
-The intended pipeline is three disjoint rounds, each containing 120 tool-use, 120 code, and 120 search tasks. A parent rollout is followed by one Meta component choice (HARNESS, MODEL, or ARTIFACTS), at most one candidate, paired evaluation, strict positive success-rate gain acceptance, experience/snapshot persistence, and 300 independent report-only validation tasks. Task inference uses four GPU replicas and 16 workers. Meta uses Codex with DeepSeek-V4.1-Flash. A MODEL update uses eligible verified-success parent trajectories for one-epoch four-GPU LoRA SFT. This source publication does not assert that all three rounds have completed successfully.
+See [the 180-task protocol](RSIFlow_4B/EXPERIMENT_180.md), [debug and recovery records](RSIFlow_4B/DEBUG_LOG.md), [Meta evidence storage](RSIFlow_4B/META_MEMORY.md), and [disk policy](RSIFlow_4B/STORAGE.md).
+
+The current pipeline is three disjoint rounds, each containing 60 tool-use, 60 code, and 60 search tasks (180 tasks per round). A parent rollout is followed by one Meta component choice (HARNESS, MODEL, or ARTIFACTS), at most one candidate, paired evaluation, strict positive success-rate gain acceptance, experience/snapshot persistence, and 300 independent report-only validation tasks. Task inference uses four GPU replicas and 16 workers. Meta uses Codex with DeepSeek-V4.1-Flash. A MODEL update uses eligible verified-success parent trajectories for one-epoch four-GPU LoRA SFT. This source publication does not assert that all three rounds have completed successfully.
+
+## Current evaluation repair and accepted experience
+
+See [the independent evaluation interface](RSIFlow_4B/EVALUATION.md),
+[the seven-benchmark audit](RSIFlow_4B/EVALUATION_AUDIT.md), and the
+[accepted Meta1 cumulative experience snapshot](RSIFlow_4B/experience_snapshots/meta1_20260921/README.md).
+The snapshot contains all 7 accepted experience records and the original append receipt,
+not raw rollout archives, model weights or credentials. It does not automatically
+replace the seed experience of a new run. The live 300-task validation stopped at
+BFCL before this fix; this release is not a claim of completed three-round results.
 
 ## External prerequisites: clone alone is not sufficient
 
@@ -18,7 +30,8 @@ The frozen server configs still contain absolute paths. Prepare the following de
 | Python/CUDA/ML environment | `/root/data/conda/envs/sia/bin/python` |
 | Dataset sources and official evaluators | `/root/data/RSI_iclr2027/dataset` |
 | Retrieval index | `RSI_joint_training_20260918/runtime/data/joint_full/search.sqlite` |
-| Frozen three-round task split | `RSI_joint_training_20260919_360_fast/runtime/data/rounds_1080` |
+| Current frozen three-round task split | `RSIFlow_4B/runtime/data/rounds_540` |
+| Original task pool used to prepare the subset | `RSI_joint_training_20260919_360_fast/runtime/data/rounds_1080` |
 | Validation manifests | `evaluation_vault/append_memory_1080_fast` |
 | Official evaluator configuration | `runs/output_submission_20260916/runtime/configs/report-evaluators.json` (included) |
 | BFCL/ACE Python environment | `RSI_joint_training_20260918_train_internal/.venv/bin/python` |
@@ -37,7 +50,7 @@ git clone https://github.com/1HUAN1/RSI-Flow.git
 cd RSI-Flow
 # Prepare the dependencies above and review all configured paths first.
 export RSIFLOW_PYTHON="$(command -v python)"
-bash RSIFlow_4B/start_3round_training.sh
+bash RSIFlow_4B/start_180_training.sh
 ```
 
 `RSIFLOW_CONFIG` and `RSIFLOW_API_KEY_FILE` can override the launcher config and private key-file paths. The configured output directory must be outside the source tree; the server uses `/root/data/RSI_iclr2027/rsiH/Rollout_logs`. Changing launch Python does not automatically change the trainer/evaluator Python paths in JSON configuration.

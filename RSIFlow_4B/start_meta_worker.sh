@@ -5,6 +5,7 @@ case "$-" in *x*) set +x ;; esac
 umask 077
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd -P)"
+source "$SCRIPT_DIR/storage_env.sh"
 PYTHON_BIN="${RSIFLOW_PYTHON:-/root/data/conda/envs/sia/bin/python}"
 PYTHON_BIN="$(readlink -f -- "$PYTHON_BIN")"
 BWRAP_BIN="${RSIFLOW_BWRAP:-/usr/bin/bwrap}"
@@ -16,7 +17,7 @@ WORKER_ROOT="${RSIFLOW_META_WORKER_ROOT:-$SCRIPT_DIR/runtime/meta_worker}"
 WORKER_PORT="${RSIFLOW_META_WORKER_PORT:-19071}"
 WORKER_SOCKET="${RSIFLOW_META_WORKER_SOCKET:-/tmp/rsi_meta_joint_20260918_worker.sock}"
 RELAY_SOCKET="${RSIFLOW_META_RELAY_SOCKET:-/tmp/rsi_meta_joint_20260918_relay.sock}"
-STATE_DIR="${RSIFLOW_META_WORKER_STATE:-/root/.config/RSIFlow_4B}"
+STATE_DIR="${RSIFLOW_META_WORKER_STATE:-/root/data/RSI_iclr2027/.state/RSIFlow_4B}"
 TOKEN_FILE="${RSI_REMOTE_WORKER_TOKEN_FILE:-$STATE_DIR/meta_worker_token}"
 WORKER_PID_FILE="$STATE_DIR/meta_worker.pid"
 PROXY_PID_FILE="$STATE_DIR/meta_worker_proxy.pid"

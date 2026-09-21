@@ -361,14 +361,19 @@ class IsolationRuntime:
             else:
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
+            protected = name.startswith('workspace/meta_input/') or name in {'workspace/AGENTS.md', 'codex_home/config.toml', 'schema.json'}
             for parent in target.parents:
                 if parent in {self.root, workspace, codex_home}:
                     break
-                os.chown(parent, uid, uid)
-                os.chmod(parent, 0o700)
-            with target.open("xb") as stream:
-                stream.write(data)
-            protected = name in {"workspace/AGENTS.md", "codex_home/config.toml", "schema.json"}
+                os.chown(parent, 0 if protected else uid, 0 if protected else uid)
+                os.chmod(parent, 0o755 if protected else 0o700)
+            with target.open('xb') as stream:
+                if isinstance(data, Path):
+                    source = checked_absolute(data)
+                    with source.open('rb') as incoming:
+                        shutil.copyfileobj(incoming, stream, length=1024**2)
+                else:
+                    stream.write(data)
             os.chown(target, 0 if protected else uid, 0 if protected else uid)
             os.chmod(target, 0o444 if protected else 0o600)
         for required in (workspace / "AGENTS.md", codex_home / "config.toml", self.root / "schema.json"):

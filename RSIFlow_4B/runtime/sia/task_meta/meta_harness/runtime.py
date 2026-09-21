@@ -442,6 +442,7 @@ def execute(bundle, operation, operation_input, schema, invoke_stage, audit_dir,
         if state["candidate"] is None:
             errors.extend(candidate_errors or ["No candidate has been proposed"])
         else:
+            typed = None
             try:
                 typed = schema.model_validate(state["candidate"])
                 available = envelope.get("trusted_facts", {}).get("available_actions")
@@ -481,13 +482,18 @@ def execute(bundle, operation, operation_input, schema, invoke_stage, audit_dir,
                         _, flags = five_stage.materialize(typed, files, allowed_evidence=allowed)
                         save_json(audit_dir / "five_stage_candidate.json", {"g": g, **flags,
                             "review": typed.five_stage.model_dump(mode="json"), "new_state_consumed": False})
-                if validate_candidate:
+            except (ValidationError, ValueError) as exc:
+                errors.append(str(exc))
+            # Both validators are read-only. A native materialization error must
+            # not hide the experiment-specific append contract from the repair.
+            if typed is not None and validate_candidate:
+                try:
                     verdict = validate_candidate(typed)
                     if verdict is False or (isinstance(verdict, dict) and verdict.get("passed") is False):
                         errors.extend(verdict.get("errors", ["Fixed interface checker rejected the candidate"]) if isinstance(verdict, dict)
                                       else ["Fixed interface checker rejected the candidate"])
-            except (ValidationError, ValueError) as exc:
-                errors.append(str(exc))
+                except (ValidationError, ValueError) as exc:
+                    errors.append(str(exc))
         state["candidate_valid"] = not errors
         state["checks"]["candidate_contract"] = {"passed": not errors, "errors": errors, "source": "fixed_schema_and_interface"}
         state["last_check_passed"] = not errors
@@ -568,6 +574,9 @@ def execute(bundle, operation, operation_input, schema, invoke_stage, audit_dir,
                 "no_change": "Fast policy: status UPDATED and actual Meta content change are required. Grounded Memory-only updates are valid; leave harness and other Bundle files unchanged when only Memory changes. Record facts, counterexamples or unresolved evidence without inventing principles. NO_CHANGE and revision-only changes fail. Use exact listed evidence IDs."}
             memory_contract = envelope.get("trusted_facts",{}).get("memory_update_contract")
             if memory_contract:
+                from sia.task_meta.recursive_feedback import MEMORY_ID_CONTRACT
+                # Shared by generation and repair; outside bounded JSON to avoid clipping.
+                instruction += "\n\n" + MEMORY_ID_CONTRACT
                 payload["principle_contract"].update(maintenance=memory_contract["instructions"],
                     id_contract="Only ADD new skill.<COMPONENT>.<id> followed by principle.<id>; preserve every existing ID and record.",
                     targets="Keep g_targets and harness_bindings empty; consume appended Memory in the next round.")
@@ -635,6 +644,10 @@ def execute(bundle, operation, operation_input, schema, invoke_stage, audit_dir,
             stage_files["meta_input/previous_native_candidate.json"] = _json(envelope["native_candidate_repair"])
         if five_identity:
             stage_files["meta_input/allowed_evidence_ids.json"] = _json(payload["principle_contract"]["evidence_ids"])
+        from .evidence_delivery import prepare_delivery
+        if envelope.get('trajectory_archives'):
+            stage_files['meta_input/trajectory_archives.json'] = _json(envelope['trajectory_archives'])
+        payload = prepare_delivery(payload, stage_files, library if five_identity else None)
         inline_payload = _bounded_inline(payload)
         inline_dependencies = inline_payload['dependencies']
         for index, dependency in enumerate(inline_dependencies if isinstance(inline_dependencies, list) else []):

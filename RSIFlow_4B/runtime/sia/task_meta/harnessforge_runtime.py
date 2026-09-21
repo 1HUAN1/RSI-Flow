@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Iterator, Mapping
 
 from sia.task_meta.harnessforge_manifest import HarnessBundleManifest
+from sia.task_meta.task_client import TaskContextBudgetExceeded
 
 
 _IMPORT_LOCK = threading.RLock()
@@ -253,10 +254,13 @@ class _ModelAdapter:
         self._max_model_calls = max_model_calls
         self.calls: list[dict[str, Any]] = []
         self.budget_exhausted = False
+        self.context_budget_exhausted = False
         self.model_id = "task_model_callable"
         self._last_counts = {"input_token_count": 0, "output_token_count": 0}
 
     def __call__(self, messages: list[dict[str, Any]], **_: Any) -> Any:
+        if self.context_budget_exhausted:
+            raise TaskContextBudgetExceeded('Task context budget already exhausted; no generation dispatched')
         if len(self.calls) >= self._max_model_calls:
             self.budget_exhausted = True
             raise HarnessForgeBudgetExceeded("Maximum Task model calls reached")
@@ -326,6 +330,11 @@ class _ModelAdapter:
                 tool_calls=normalized_calls or None,
                 raw=copy.deepcopy(raw_response),
             )
+        except TaskContextBudgetExceeded as exc:
+            self.context_budget_exhausted = True
+            record.update(status="rejected", error_type=type(exc).__name__,
+                          generation_dispatched=False, usage_complete=True)
+            raise
         except Exception as exc:
             record.update(status="failed", error_type=type(exc).__name__)
             raise
@@ -748,7 +757,7 @@ def _classify_error(exc: BaseException) -> tuple[str, str, bool]:
     if "TaskInfrastructureError" in names:
         return "infrastructure", str(exc), True
     if "TaskContextBudgetExceeded" in names:
-        return "context_budget_exhausted", str(exc), True
+        return "context_budget_exhausted", str(exc), False
     if any("JSON" in name or "Generation" in name for name in names):
         return "parse_error", str(exc), False
     return "candidate_error", f"{type(exc).__name__}: {exc}", False
@@ -922,6 +931,9 @@ def run_harnessforge(
                             transport_failure.get("error_type") or "Task model transport failed"
                         )
                         infrastructure_failure = True
+                    if model.context_budget_exhausted and not infrastructure_failure:
+                        error_type = 'context_budget_exhausted'
+                        error = 'Task exceeded the fixed context budget; rejected before generation'
                     if (model.budget_exhausted or recorder.budget_exhausted) and error_type is None:
                         error_type = "budget_exhausted"
                         error = "Maximum Task model/tool calls reached"
@@ -959,7 +971,29 @@ def run_harnessforge(
                                 )
                                 infrastructure_failure = True
 
-                    if memory is not None:
+                    pending_official = (getattr(evaluation, "verification", {}) or {}).get("status") == "pending_official"
+                    if error_type == "context_budget_exhausted" and not infrastructure_failure and not pending_official:
+                        from dataclasses import replace
+                        # A task exceeding its fixed budget is a completed failure,
+                        # never a reason to remove its denominator or train on it.
+                        metrics = dict(evaluation.metrics)
+                        for key in ("exact_match", "f1", "pass", "task_success"):
+                            if key in metrics:
+                                metrics[key] = 0.0
+                        evaluation = replace(evaluation, reward=0.0, metrics=metrics,
+                            verification={**evaluation.verification, "status": "completed",
+                                          "success": False, "termination_reason": error_type},
+                            error_type=error_type,
+                            details={**evaluation.details, "task_budget_exhausted": True})
+
+                    if memory is not None and pending_official:
+                        # Official scoring has not happened: never infer a success/
+                        # failure label or learn result-based memory from this turn.
+                        memory_receipt = {
+                            "status": "skipped",
+                            "reason": "pending_official_evaluation",
+                        }
+                    if memory is not None and not pending_official:
                         budget_before_ingest = model.budget_exhausted
                         calls_before_ingest = len(model.calls)
                         memory_receipt, memory_errors = _ingest_memory(

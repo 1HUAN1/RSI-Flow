@@ -341,7 +341,10 @@ def _run(config, run_dir, *, resume=False):
     protocol_path = run_dir / 'protocol.json'
     if protocol_path.exists():
         if json.loads(protocol_path.read_text()) != protocol:
-            raise ValueError('Resume refused: trusted code, data, model, seed or experiment configuration changed')
+            if not (run_dir / 'recovery/authorization.json').exists():
+                raise ValueError('Resume refused: trusted code, data, model, seed or experiment configuration changed')
+            from sia.task_meta.deployed_recovery import authorize_revision
+            authorize_revision(run_dir, protocol)
     else:
         save_json(protocol_path, protocol)
         initial_dir = run_dir / 'gen_0'
@@ -487,6 +490,9 @@ def _run(config, run_dir, *, resume=False):
         if config.training_schedule == 'round_disjoint':
             from sia.task_meta.round_evolution import RoundProtocol
             runner_options['round_protocol'] = RoundProtocol(config, run_dir, executor)
+            if not runner_options['round_protocol'].store.sequential_domains and config.max_generations > 1:
+                from sia.task_meta.early_rollout import EarlyRollout
+                runner_options['early_rollout'] = EarlyRollout(config, run_dir)
         if config.round_validation_config:
             from sia.task_meta.round_validation import validate_round
             runner_options['after_round'] = lambda number, record: validate_round(config, run_dir, number, record)

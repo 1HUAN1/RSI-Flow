@@ -211,7 +211,7 @@ class LinuxSandbox:
         if self.scratch_root:
             self.scratch_root.mkdir(parents=True, exist_ok=True)
         start = time.monotonic()
-        with tempfile.TemporaryDirectory(prefix="rsi-candidate-", dir=self.scratch_root) as directory:
+        with tempfile.TemporaryDirectory(prefix="rsi-candidate-", dir=self.scratch_root or '/tmp') as directory:
             scratch = Path(directory)
             (scratch / "candidate.py").write_text(code, encoding="utf-8")
             for name, text in (extra_files or {}).items():
@@ -253,7 +253,7 @@ class SandboxSession:
         self.stderr = None
         if runner.scratch_root:
             runner.scratch_root.mkdir(parents=True, exist_ok=True)
-        self.temp = tempfile.TemporaryDirectory(prefix="rsi-environment-", dir=runner.scratch_root)
+        self.temp = tempfile.TemporaryDirectory(prefix="rsi-environment-", dir=runner.scratch_root or '/tmp')
         self.scratch = Path(self.temp.name)
         try:
             (self.scratch / "candidate.py").write_text(code, encoding="utf-8")

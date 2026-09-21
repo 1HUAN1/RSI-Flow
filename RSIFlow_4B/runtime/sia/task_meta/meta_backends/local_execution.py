@@ -7,6 +7,7 @@ import math
 import os
 from pathlib import Path
 import signal
+import shutil
 import subprocess
 import tempfile
 import time
@@ -23,13 +24,14 @@ def runtime_identity(config):
     directory = Path(__file__).parent
     return {"backend": BACKEND, "sources": {
         name: regular_digest(directory / name) for name in
-        ("local_execution.py", "isolation_runtime.py", "isolation_launcher.py", "bridge.py")},
+        ("local_execution.py", "isolation_runtime.py", "isolation_launcher.py", "bridge.py", "input_budget.py")},
         "codex": config.codex_binary_sha256, "catalog": config.model_catalog_sha256}
 
 
 def runtime(config):
     directory = Path(__file__).parent.resolve()
     key = hashlib.sha256(json.dumps(runtime_identity(config), sort_keys=True).encode()).hexdigest()[:16]
+    # Lustre rejects isolated UIDs. Keep this bounded, transient runtime on the system disk.
     return IsolationRuntime("/tmp/rsiflow_meta_local_" + key,
         launcher=directory / "isolation_launcher.py", codex=config.codex_executable,
         catalog=config.model_catalog_json, bridge=directory / "bridge.py",
@@ -50,28 +52,39 @@ def validate_local(config):
                 "provider_credentials_in_child": False}
 
 
-def _stage_files(directory):
-    paths = [directory / "codex_home/config.toml", directory / "schema.json"]
-    paths.extend((directory / "workspace").rglob("*"))
+def _stage_files(directory, input_budget=None, output_limit=16000000):
+    from .input_budget import MetaInputBudget, inventory
+    _, workspace_paths = inventory(directory / 'workspace', input_budget or MetaInputBudget(), output_limit)
+    paths = [directory / "codex_home/config.toml", directory / "schema.json", *workspace_paths]
     result = {}
     for path in paths:
         if path.is_symlink():
             raise ValueError("Local Meta input cannot contain symlinks")
         if path.is_dir():
             continue
-        result[path.relative_to(directory).as_posix()] = regular_bytes(path, 16000000)
+        # Paths are streamed into the jail; never assemble a GB-sized bytes map.
+        if not path.is_file():
+            raise ValueError(f'Nonregular staged input: {path}')
+        result[path.relative_to(directory).as_posix()] = path
     return result
 
 
-def _return_workspace(source, directory, maximum):
-    _, paths = workspace_inventory(source, maximum)
+def _return_workspace(source, directory, maximum, input_budget=None):
+    from .input_budget import inventory, category
+    _, paths = inventory(source, input_budget, maximum) if input_budget else workspace_inventory(source, maximum)
     target = directory / "workspace.returned"
     target.mkdir()
     for path in paths:
         destination = target / path.relative_to(source)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        with destination.open("xb") as stream:
-            stream.write(regular_bytes(path, maximum))
+        original = directory / 'workspace' / path.relative_to(source)
+        if input_budget and category(path.relative_to(source)) != 'output':
+            file_limit = max(input_budget.evidence_file_bytes, input_budget.skill_bytes, input_budget.control_bytes)
+            if not original.is_file() or original.is_symlink() or regular_digest(original, file_limit) != regular_digest(path, file_limit):
+                raise ValueError(f'Read-only Meta input changed: {path.relative_to(source)}')
+            os.link(original, destination)
+        else:
+            shutil.copyfile(path, destination)
     (directory / "workspace").rename(directory / "workspace.input")
     target.rename(directory / "workspace")
 
@@ -83,6 +96,8 @@ def cpu_time_limit(budget):
 
 
 def run_local(backend, prepared, transport):
+    from sia.task_meta.storage_budget import check_system_disk, RUNTIME_RESERVE_BYTES
+    check_system_disk(RUNTIME_RESERVE_BYTES)
     directory = prepared.directory
     budget = backend.config.budget
     started = time.monotonic()
@@ -94,12 +109,13 @@ def run_local(backend, prepared, transport):
         relay_identity = None
         process = None
         staged = False
-        with tempfile.TemporaryDirectory(prefix="rsi_meta_local_relay_") as temporary:
+        with tempfile.TemporaryDirectory(prefix="rsi_meta_local_relay_", dir=instance.root.parent) as temporary:
             relay = Path(temporary) / "relay.sock"
             transport.start(relay)
             try:
+                staged_files = _stage_files(directory, backend.config.input_budget, budget.max_workspace_bytes)
+                instance.stage(staged_files, uid)
                 staged = True
-                instance.stage(_stage_files(directory), uid)
                 relay_identity = instance.link_relay(relay, uid)
                 inner = ["/usr/bin/python3", "/bridge.py", "/codex", "exec", "--json", "--strict-config",
                          "--skip-git-repo-check", "--ephemeral", "--output-schema", "/schema.json",
@@ -120,7 +136,10 @@ def run_local(backend, prepared, transport):
                         cwd="/tmp", env={"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8"}, start_new_session=True)
                     try:
                         while process.poll() is None:
-                            size, _ = workspace_inventory(instance.root / "workspace", budget.max_workspace_bytes)
+                            check_system_disk()
+                            from .input_budget import inventory
+                            sizes, _ = inventory(instance.root / 'workspace', backend.config.input_budget, budget.max_workspace_bytes)
+                            size = sizes['output']
                             if prepared.operation_budget:
                                 event_bytes = sum((directory / name).stat().st_size for name in ("events.jsonl", "stderr.txt"))
                                 prepared.operation_budget.check_files(prepared.request.stage_id, size, event_bytes)
@@ -148,7 +167,7 @@ def run_local(backend, prepared, transport):
             finally:
                 try:
                     if staged:
-                        _return_workspace(instance.root / "workspace", directory, budget.max_workspace_bytes)
+                        _return_workspace(instance.root / "workspace", directory, budget.max_workspace_bytes, backend.config.input_budget)
                 finally:
                     if relay_identity is not None:
                         instance.unlink_relay(relay_identity)

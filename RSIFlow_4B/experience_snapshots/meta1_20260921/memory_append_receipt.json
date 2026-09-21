@@ -1,0 +1,11 @@
+{
+  "added_ids": [
+    "skill.MODEL.sft_parent_successes_gen1",
+    "principle.positive_sft_signal_coverage_conditional"
+  ],
+  "after_hash": "55fcd45e80f3915408370a185a3fc7beb0e45f867d1700f9e57b0066cb495306",
+  "before_hash": "b5f8f8e32801c27a4e8de088451c09d1833b015451f80d2368fef1c8fa3d8878",
+  "effective_from_round": 2,
+  "final_round_archive_only": false,
+  "preserved_entries": 5
+}

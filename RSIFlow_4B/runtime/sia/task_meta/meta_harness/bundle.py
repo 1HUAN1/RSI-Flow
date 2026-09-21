@@ -97,9 +97,11 @@ def validate_files(files):
     schema = next((name for name, allowed in SCHEMA_FILES.items() if set(files) == allowed), None)
     if schema is None:
         raise ValueError("Bundle must have exactly the declared v1 or v2 editable files")
+    from .evidence_delivery import SKILL_LIBRARY_BYTES
     for name, content in files.items():
-        if not isinstance(content, str) or not content.strip() or len(content.encode()) > 128000:
-            raise ValueError(f"Invalid bounded Bundle file: {name}")
+        limit = SKILL_LIBRARY_BYTES if name == 'principles.json' else 128000
+        if not isinstance(content, str) or not content.strip() or len(content.encode()) > limit:
+            raise ValueError(f"Invalid bounded Bundle file: {name}; limit={limit}")
     context = ContextPolicy.model_validate(strict_json(files["context.json"]), strict=schema != "meta-bundle-v1")
     if context.selection not in {"head", "tail", "head_and_tail"}:
         raise ValueError("Unsupported context selection")

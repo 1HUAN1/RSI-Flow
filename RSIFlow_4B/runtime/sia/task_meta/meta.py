@@ -146,6 +146,9 @@ class MetaAgent:
                 if outcome["experience_id"] != latest.experience_id:
                     raise ValueError("Routing outcome does not match the latest evaluated experience")
                 envelope["outcome_review"] = outcome
+                if protocol and latest.feedback_root and self.run_directory:
+                    from sia.task_meta.meta_backends.input_budget import archive_descriptors
+                    envelope['trajectory_archives'] = archive_descriptors(self.run_directory, latest.feedback_root, latest.generation, latest.candidate_attempts)
             from sia.task_meta.types import EvidenceMetaDecision
             def check_route(candidate):
                 checked=validate_route_candidate(candidate, observation.available_actions)
@@ -181,6 +184,9 @@ class MetaAgent:
                 from sia.task_meta.meta_harness.five_stage import paired_outcome
                 root = self.run_directory or Path(current_task_state.harness_path).resolve().parent.parent
                 envelope["outcome_review"] = paired_outcome(root, experience)
+                if protocol and experience.feedback_root:
+                    from sia.task_meta.meta_backends.input_budget import archive_descriptors
+                    envelope['trajectory_archives'] = archive_descriptors(root, experience.feedback_root, experience.generation, experience.candidate_attempts)
             return self.client.complete(
                 "Use the evaluated experience for a grounded Meta content update. Memory-only updates are valid; do not invent conclusions or use NO_CHANGE.",
                 FiveStageMetaUpdate if self._five_stage(meta_state) else MetaHarnessUpdate, meta_state=meta_state, operation="learn",

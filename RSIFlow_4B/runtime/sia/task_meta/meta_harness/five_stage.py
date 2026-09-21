@@ -144,8 +144,10 @@ def identity(files):
 def validate_library(value):
     if set(value) != {'schema_version', 'records', 'revisions'} or value['schema_version'] != 1:
         raise ValueError('Invalid Meta principle library schema')
-    if len(value['records']) > 128 or len(value['revisions']) > 1024:
-        raise ValueError('Bounded principle library exceeded')
+    from .evidence_delivery import SKILL_LIBRARY_BYTES, SKILL_RECORDS, SKILL_REVISIONS
+    size = len(json.dumps(value, ensure_ascii=False).encode())
+    if size > SKILL_LIBRARY_BYTES or len(value['records']) > SKILL_RECORDS or len(value['revisions']) > SKILL_REVISIONS:
+        raise ValueError(f'Meta skill library budget exceeded: bytes={size}; limit={SKILL_LIBRARY_BYTES}; records={len(value["records"])}; revisions={len(value["revisions"])}; no history was deleted')
     seen = set()
     for row in value['records']:
         p = Principle.model_validate(row)

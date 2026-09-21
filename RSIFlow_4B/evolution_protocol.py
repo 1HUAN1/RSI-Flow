@@ -10,6 +10,20 @@ from pathlib import Path
 ROLES = {'train_evolution', 'independent_validation', 'final_test'}
 DOMAINS = ('tool_use', 'code', 'searchqa')
 TRAIN_QUOTAS = dict(envscaler=120, deepcoder_taco=120, nq_open=30, hotpotqa=45, **{'2wiki':45})
+SMALL_TRAIN_QUOTAS = dict(envscaler=60, deepcoder_taco=60, nq_open=15, hotpotqa=23, **{'2wiki':22})
+
+
+def training_quotas(config):
+    quotas = dict(config.get('train_quotas_per_round', TRAIN_QUOTAS))
+    if quotas not in (TRAIN_QUOTAS, SMALL_TRAIN_QUOTAS):
+        raise ValueError('Only registered balanced 360- or 180-task round quotas are supported')
+    total = sum(quotas.values())
+    if config.get('training_tasks_per_pass', total) != total:
+        raise ValueError('Training task count does not match source quotas')
+    if config.get('allocated_tasks', 3 * total) != 3 * total:
+        raise ValueError('Three disjoint rounds must match allocated_tasks')
+    return quotas
+
 VALIDATION_QUOTAS = dict(bfcl_v3=50, acebench=50, livecodebench=50,
     humaneval_plus=25, mbpp_plus=25, hotpotqa_dev=50, **{'2wiki_dev':50})
 SFT_PRESET = dict(finetuning_type='lora', num_train_epochs=1.0, max_steps=-1,

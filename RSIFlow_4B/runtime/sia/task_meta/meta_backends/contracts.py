@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
+from .input_budget import MetaInputBudget
 
 
 class BackendUnavailable(RuntimeError):
@@ -59,6 +60,7 @@ class MetaBackendConfig(BaseModel):
     harness_version: str = "seed"
     harness_root: str = "meta_harness"
     budget: MetaBudget = Field(default_factory=MetaBudget)
+    input_budget: MetaInputBudget = Field(default_factory=MetaInputBudget)
 
     @property
     def expected_response_model(self):

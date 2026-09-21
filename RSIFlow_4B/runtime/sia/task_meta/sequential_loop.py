@@ -257,7 +257,7 @@ def make_experience(round_number, parent, after, baseline, result, decision, upd
 def run_sequential_task_meta(run_dir, task_state, meta_state, executor, meta_agent, updaters,
                             max_generations=5, primary_metric_name='macro_success', primary_metric_mode='max',
                             max_wall_time=None, *, resume=False, meta_update_handler=None,
-                            before_evaluation=None, after_round=None, round_protocol=None):
+                            before_evaluation=None, after_round=None, round_protocol=None, early_rollout=None):
     if round_protocol and max_generations != round_protocol.total_stages: raise ValueError('Execution stages must match the frozen three-round schedule')
     if primary_metric_name != 'macro_success' or primary_metric_mode != 'max':
         raise ValueError('Sequential policy requires the fixed full-success metric')
@@ -279,6 +279,12 @@ def run_sequential_task_meta(run_dir, task_state, meta_state, executor, meta_age
     task, meta = copy.deepcopy(task_state), copy.deepcopy(meta_state)
     history, scores, rounds = [], [], []
     client = meta_agent.client
+    def advance_rollout(number, state):
+        if early_rollout and number + 1 < max_generations and pause_after_round != number + 1:
+            early_rollout.start(number + 1, state)
+    def finish_gpu_overlap():
+        if early_rollout:
+            early_rollout.wait()
     for number in range(max_generations):
         round_dir = root / f'round_{number}'; round_dir.mkdir(exist_ok=True)
         complete = round_dir / 'complete.json'
@@ -293,6 +299,9 @@ def run_sequential_task_meta(run_dir, task_state, meta_state, executor, meta_age
             commit_round_checkpoint(round_dir, number, task, meta)
             history.append(ImprovementExperience(**json.loads((round_dir / 'experience.json').read_text())))
             scores.append(record['score']); rounds.append(record)
+            if not (root / f'round_{number+1}/complete.json').exists():
+                advance_rollout(number, task)
+            finish_gpu_overlap()
             if pause_record and pause_record['pause_after_round'] == number + 1:
                 if (pause_record['task_content_hash'] != content_identity(task)
                         or pause_record['meta_bundle_hash'] != meta.bundle_hash):
@@ -306,6 +315,20 @@ def run_sequential_task_meta(run_dir, task_state, meta_state, executor, meta_age
                     'resume_starts_at_round': paused_at_round + 1}), flush=True)
                 break
             if after_round and not (pause_state == 'consumed' and pause_after_round == number + 1):
+                after_round(number, record)
+            continue
+        if resume and number == 0 and (root / 'recovery/authorization.json').exists():
+            if round_protocol is None:
+                raise ValueError('Deployed recovery requires the frozen round protocol')
+            from sia.task_meta.deployed_recovery import finish_deployed_round
+            task, meta, experience, record = finish_deployed_round(
+                root, number, task, meta, meta_agent, history, round_protocol, meta_update_handler, resume,
+                early_rollout=early_rollout)
+            history.append(experience); scores.append(record['score']); rounds.append(record)
+            finish_gpu_overlap()
+            if before_evaluation:
+                before_evaluation(task)
+            if after_round:
                 after_round(number, record)
             continue
         if budget.stop_after(number):
@@ -516,6 +539,7 @@ def run_sequential_task_meta(run_dir, task_state, meta_state, executor, meta_age
         if round_protocol:
             round_protocol.completed(None,round_dir,baseline,outcome_result)
             round_protocol.prepare_meta(meta_agent,experience,round_dir)
+        advance_rollout(number, after)
         learned = meta_agent.learn_from_experience(meta, experience, history, after)
         if round_protocol: round_protocol.validate_meta(learned,meta)
         meta = _accept_meta_update(root, meta, learned, [experience], round_dir / 'meta_self_update.json',
@@ -529,6 +553,7 @@ def run_sequential_task_meta(run_dir, task_state, meta_state, executor, meta_age
         from sia.task_meta.round_checkpoint import commit_round_checkpoint
         commit_round_checkpoint(round_dir, number, after, meta)
         scores.append(record['score']); rounds.append(record); task = after
+        finish_gpu_overlap()
         pause_intent = (_pause_intent(root, pause_after_round, complete, task, meta)
                         if pause_after_round == number + 1 else None)
         if after_round:

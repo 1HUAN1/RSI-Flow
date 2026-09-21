@@ -28,6 +28,11 @@ class StartThreeRoundTrainingScript(unittest.TestCase):
         output_root = Path(directory) / "Rollout_logs"
         script = project / SCRIPT.name
         shutil.copy2(SCRIPT, script)
+        shutil.copy2(ROOT / 'storage_env.sh', project / 'storage_env.sh')
+        tools = project / 'bin'
+        tools.mkdir()
+        (tools / 'df').write_text('#!/bin/sh\nprintf \"Used\\n%s\\n\" \"${TEST_SYSTEM_USED_BYTES:-1000000000}\"\n')
+        (tools / 'df').chmod(0o755)
 
         config_dir = project / "configs"
         config_dir.mkdir()
@@ -99,6 +104,7 @@ class StartThreeRoundTrainingScript(unittest.TestCase):
     def run_fixture(fixture):
         environment = os.environ.copy()
         environment.update({
+            "PATH": str(fixture["project"] / "bin") + os.pathsep + environment["PATH"],
             "RSIFLOW_CONFIG": str(fixture["config"]),
             "RSIFLOW_API_KEY_FILE": str(fixture["key_file"]),
             "RSIFLOW_PYTHON": sys.executable,
@@ -174,9 +180,19 @@ class StartThreeRoundTrainingScript(unittest.TestCase):
                 self.assertEqual(fixture["worker_call"].read_text(), "--ensure\n")
                 self.assertFalse(fixture["launch_record"].exists())
 
+    def test_full_system_disk_blocks_before_worker_or_api(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = self.make_fixture(directory)
+            (fixture['project'] / 'bin/df').write_text('#!/bin/sh\nprintf \"Used\\n19000000000\\n\"\n')
+            result = self.run_fixture(fixture)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn('20 GB', result.stderr)
+            self.assertFalse(fixture['worker_call'].exists())
+            self.assertFalse(fixture['launch_record'].exists())
+
     def test_default_token_file_is_private_state_path(self):
         self.assertIn(
-            "${RSI_REMOTE_WORKER_TOKEN_FILE:-/root/.config/RSIFlow_4B/meta_worker_token}",
+            "${RSI_REMOTE_WORKER_TOKEN_FILE:-/root/data/RSI_iclr2027/.state/RSIFlow_4B/meta_worker_token}",
             SCRIPT.read_text(),
         )
 

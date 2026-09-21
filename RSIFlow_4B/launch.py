@@ -28,6 +28,8 @@ def make_pipeline(config, runtime):
              round_validation_config=str((ROOT/config['validation_config']).resolve()),
              trainer_python=sys.executable,task_base_url=f"http://127.0.0.1:{config['ports'][0]}/v1")
     p['meta']['run_mode']='full'
+    from sia.task_meta.meta_backends.input_budget import MetaInputBudget
+    p['meta']['input_budget']=MetaInputBudget(**config.get('meta_input_budget',{})).model_dump()
     p['seed_harness']=str((ROOT/'seed_harness/harnessforge_base_manifest.json').resolve())
     p['meta']['remote_worker_socket']=config['meta_worker_socket']
     p['meta']['remote_relay_socket']=config['meta_relay_socket']
@@ -36,13 +38,16 @@ def make_pipeline(config, runtime):
     for name in ['codex_source','codex_executable','provenance_file','model_catalog_json','compatibility_report','harness_root']:
         value=p['meta'].get(name)
         if value and not Path(value).is_absolute():p['meta'][name]=str(source/value)
-    p['probe_per_domain']=dict.fromkeys(['tool_use','code','searchqa'],120)
-    p['window_quotas']=dict.fromkeys(['tool_use','code','searchqa'],120)
+    from evolution_protocol import training_quotas
+    quotas = training_quotas(config)
+    per_domain = sum(quotas.values()) // 3
+    p['probe_per_domain']=dict.fromkeys(['tool_use','code','searchqa'],per_domain)
+    p['window_quotas']=dict.fromkeys(['tool_use','code','searchqa'],per_domain)
     p['task_replicas']=[{'gpu':i,'base_url':f'http://127.0.0.1:{port}/v1'} for i,port in enumerate(config['ports'])]
     p['training'].update(num_train_epochs=1,max_steps=-1,max_length=config['max_length'],max_samples=config['max_sft_samples'])
     from evolution_protocol import SFT_PRESET
     p['training'].update(SFT_PRESET,seed=config['training_seed'])
-    p['round_protocol']={'data_dir':p['data_dir'],'evaluate_initial_system':config.get('evaluate_initial_system',False),'minimum_sft_samples':config['minimum_sft_samples'],
+    p['round_protocol']={'train_quotas_per_round':quotas,'data_dir':p['data_dir'],'evaluate_initial_system':config.get('evaluate_initial_system',False),'minimum_sft_samples':config['minimum_sft_samples'],
         'memory_policy':config['memory_policy'], 'single_decision_per_round':True,
         'candidate_policy':config.get('candidate_policy','single_candidate_strict_positive_gain'),
         'sequential_domains':config.get('sequential_domains',False),
@@ -58,9 +63,8 @@ def make_pipeline(config, runtime):
 def dry_run(config, runtime):
     from evolution_protocol import manifest, assert_disjoint
     from collections import Counter
-    from evolution_protocol import TRAIN_QUOTAS
-    if config['train_quotas_per_round'] != TRAIN_QUOTAS or config['allocated_tasks'] != 3*sum(TRAIN_QUOTAS.values()):
-        raise ValueError('Expected three disjoint 360-task rounds with registered source quotas')
+    from evolution_protocol import training_quotas
+    quotas = training_quotas(config)
     data_root=Path(config.get('frozen_data_dir') or Path(runtime)/'data'/config.get('data_release','rounds'))
     rounds=[manifest(data_root/f'B{r}/manifest.json','train_evolution',r) for r in (1,2,3)]
     assert_disjoint(rounds)
@@ -89,7 +93,7 @@ def dry_run(config, runtime):
     external=900+300*initial
     result=dict(status='dry_run_no_model_calls',rounds=details,allocated_tasks=allocated,
         harness_initialization='upstream_harnessforge_bundle',
-        training_tasks_per_round=sum(TRAIN_QUOTAS.values()),training_passes_per_round={'min':1,'max':2},
+        training_tasks_per_round=sum(quotas.values()),training_passes_per_round={'min':1,'max':2},
         training_executions={'min':allocated,'max':2*allocated},
         meta_memory_policy=config['memory_policy'],
         candidate_limit_per_stage=limit,candidate_limit_per_round=limit*(3 if sequential else 1),

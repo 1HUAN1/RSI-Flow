@@ -1,0 +1,10 @@
+{
+  "source_run": "rsiflow_4b_ds41_180_fresh_v1_r3",
+  "accepted_meta_version": "v001_043bc63ff8d4",
+  "effective_from_round": 2,
+  "record_count": 7,
+  "source_principles_sha256": "55fcd45e80f3915408370a185a3fc7beb0e45f867d1700f9e57b0066cb495306",
+  "receipt_sha256": "0e0ed4ca5d62b2b445161d7bf6f7f0cc04e39fc63f1fa3f28f324da0db14be27",
+  "purpose": "accepted cumulative experience snapshot; not a new training default",
+  "raw_evidence_uploaded": false
+}

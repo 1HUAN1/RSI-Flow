@@ -13,9 +13,7 @@ import time
 from pathlib import Path
 from common import read, write
 
-class OfficialTurn:
-    def tools(self): return []
-    def step(self,name,args):raise ValueError('Tool execution belongs to the official outer evaluator')
+from official_evaluation import OfficialTurn
 
 class HarnessAPI:
     def __init__(self, config, frozen, directory, user_spec):
@@ -49,7 +47,7 @@ class HarnessAPI:
                 return previous['response']
             is_user=body['model']==self.user_spec['user_model']
             write(path,{'status':'dispatching','identity':identity,'usage_unknown':True})
-            calls=[];client=None
+            calls=[];client=None;result=None
             try:
                 if is_user:
                     from openai import OpenAI
@@ -84,7 +82,8 @@ class HarnessAPI:
                         'Do not claim that tools have run. Preserve all official response-format instructions.\n'
                         +json.dumps({'messages':body['messages'],'tools':body.get('tools')},ensure_ascii=False))
                     result=run_seed(self.spec,model,OfficialTurn(),prompt,'',self.config.seed)
-                    if result.get('infrastructure_failure'):raise RuntimeError('Task infrastructure failure')
+                    if result.get('infrastructure_failure'):
+                        raise RuntimeError('Task infrastructure failure: '+str(result.get('error') or result.get('error_type')))
                     answer=result.get('final_answer') or ''
                     if not isinstance(answer,str):answer=json.dumps(answer,ensure_ascii=False)
                     usage={k:sum(u for c in calls if type(u := (c.get('usage') or {}).get(k)) is int and u >= 0) for k in ['prompt_tokens','completion_tokens']}
@@ -93,10 +92,14 @@ class HarnessAPI:
                 response={'id':'chatcmpl-'+key,'object':'chat.completion','created':int(time.time()),'model':body['model'],
                     'choices':[{'index':0,'message':{'role':'assistant','content':answer},'finish_reason':'stop'}], 'usage':usage}
                 write(path,{'status':'completed','identity':identity,'response':response,'calls':calls,
-                            'user_simulator':is_user,'usage_unknown':usage_unknown})
+                            'user_simulator':is_user,'usage_unknown':usage_unknown,
+                            'evaluation_status':None if is_user else 'pending_official'})
                 return response
             except BaseException as exc:
-                write(path,{'status':'requires_audit','identity':identity,'error_type':type(exc).__name__,'calls':calls,'usage_unknown':True})
+                write(path,{'status':'requires_audit','identity':identity,'error_type':type(exc).__name__,
+                            'error':str(exc),'calls':calls,'usage_unknown':True,
+                            'harness_failure':None if result is None else {
+                                k:result.get(k) for k in ('error_type','error','infrastructure_failure')}})
                 raise
             finally:
                 if client is not None:self.clients.put(client)
