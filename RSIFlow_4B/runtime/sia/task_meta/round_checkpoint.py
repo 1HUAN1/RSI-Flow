@@ -172,6 +172,56 @@ def _load_snapshot(checkpoint: Path) -> tuple[TaskAgentState, MetaAgentState, di
     return TaskAgentState(**task_value), MetaAgentState(**meta_value), manifest
 
 
+def load_round_checkpoint(round_dir: str | Path, round_index: int) -> tuple[TaskAgentState, MetaAgentState]:
+    """Load independent Task and Meta copies from a committed round boundary."""
+
+    root = Path(round_dir)
+    checkpoint = root / DIRECTORY
+    task, meta, manifest = _load_snapshot(checkpoint)
+    task_record = manifest["task"]
+    meta_record = manifest["meta"]
+    expected = _expected_manifest(root, round_index, task, meta, task_record, meta_record)
+    if manifest != expected:
+        raise ValueError("Round checkpoint no longer matches committed round evidence")
+    if (content_identity(task) != task_record["content_hash"]
+            or digest(Path(task.harness_path)) != task_record["harness_manifest_sha256"]
+            or task.checkpoint_path != task_record["model_checkpoint_path"]
+            or task.checkpoint_manifest != task_record["model_checkpoint_manifest"]):
+        raise ValueError("Round checkpoint Task snapshot failed integrity verification")
+    harness = load_manifest(task.harness_path)
+    if harness.bundle_sha256 != task_record["harness_bundle_sha256"]:
+        raise ValueError("Round checkpoint Harness bundle identity changed")
+    materialized = Path(task.harness_path).parent / "harness_bundle"
+    if harness.files != type(harness).from_directory(
+            materialized, harness_name=harness.harness_name).files:
+        raise ValueError("Round checkpoint materialized Harness bundle changed")
+    if artifact_manifest(task.artifacts.directory) != task_record["artifact_manifest"]:
+        raise ValueError("Round checkpoint Task artifacts changed")
+    bundle_record = meta_record["bundle"]
+    skills_record = meta_record["skills"]
+    if bundle_record:
+        bundle_path = Path(meta.bundle_path)
+        bundle = MetaHarnessBundle(
+            bundle_path, strict_json((bundle_path / "manifest.json").read_text(encoding="utf-8"))
+        ).verify()
+        if bundle.hash != meta.bundle_hash or bundle.hash != bundle_record["bundle_hash"]:
+            raise ValueError("Round checkpoint Meta Bundle identity changed")
+        principles = bundle_path / "principles.json"
+        if skills_record["path"]:
+            skills = checkpoint / skills_record["path"]
+            if (not _regular(skills, directory=False) or digest(skills) != skills_record["sha256"]
+                    or strict_json(skills.read_text(encoding="utf-8")) != strict_json(principles.read_text(encoding="utf-8"))):
+                raise ValueError("Round checkpoint Meta skill library changed")
+        elif principles.exists():
+            raise ValueError("Round checkpoint omitted the Meta skill library")
+    elif not _regular(Path(meta.harness_path), directory=False):
+        raise ValueError("Round checkpoint legacy Meta harness is missing")
+    context_record = meta_record.get("context")
+    if context_record and digest(checkpoint / context_record["path"]) != context_record["sha256"]:
+        raise ValueError("Round checkpoint Meta context changed")
+    return task, meta
+
+
 def verify_round_checkpoint(round_dir: str | Path, round_index: int,
                             task: TaskAgentState, meta: MetaAgentState) -> dict:
     """Verify a committed snapshot against the live round boundary."""
@@ -229,6 +279,9 @@ def verify_round_checkpoint(round_dir: str | Path, round_index: int,
             raise ValueError("Round checkpoint omitted the Meta skill library")
     elif saved_meta.bundle_path is not None or saved_meta.harness_path is None:
         raise ValueError("Round checkpoint legacy Meta snapshot is invalid")
+    context_record = meta_record.get("context")
+    if context_record and digest(checkpoint / context_record["path"]) != context_record["sha256"]:
+        raise ValueError("Round checkpoint Meta context changed")
     return manifest
 
 
@@ -245,6 +298,12 @@ def commit_round_checkpoint(round_dir: str | Path, round_index: int,
     try:
         _, task_record = _copy_task(staging, checkpoint, task)
         _, meta_record = _copy_meta(staging, checkpoint, meta)
+        source_context = root / "meta_context.json"
+        if source_context.is_file():
+            saved_context = staging / "meta/context.json"
+            shutil.copy2(source_context, saved_context)
+            meta_record["context"] = {
+                "path": "meta/context.json", "sha256": digest(saved_context)}
         manifest = _expected_manifest(root, round_index, task, meta, task_record, meta_record)
         save_json(staging / "manifest.json", manifest)
         os.replace(staging, checkpoint)
@@ -254,4 +313,4 @@ def commit_round_checkpoint(round_dir: str | Path, round_index: int,
             shutil.rmtree(staging)
 
 
-__all__ = ["SCHEMA", "commit_round_checkpoint", "verify_round_checkpoint"]
+__all__ = ["SCHEMA", "commit_round_checkpoint", "load_round_checkpoint", "verify_round_checkpoint"]

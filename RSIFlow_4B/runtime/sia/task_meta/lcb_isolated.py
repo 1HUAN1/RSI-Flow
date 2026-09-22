@@ -10,9 +10,10 @@ import importlib.util
 import json
 import math
 import subprocess
+import sys
 import time
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 
 from .evalplus_isolated import CandidateProxy, EvalPlusInfrastructureError
 from .sandbox import LinuxSandbox, SandboxLimits
@@ -105,7 +106,10 @@ def evaluate_lcb_isolated(spec, predictions_path, output_dir):
     problem_source = root / 'lcb_runner/benchmarks/code_generation.py'
     tree = ast.parse(problem_source.read_text())
     tree.body = [n for n in tree.body if not (isinstance(n, ast.ImportFrom) and n.module == 'datasets')]
-    namespace = {'__name__': '_trusted_lcb_problems'}
+    problem_module = ModuleType('_trusted_lcb_problems')
+    problem_module.__file__ = str(problem_source)
+    sys.modules[problem_module.__name__] = problem_module
+    namespace = vars(problem_module)
     exec(compile(tree, str(problem_source), 'exec'), namespace)
     problems = {}
     with Path(spec.data_path).open() as stream:

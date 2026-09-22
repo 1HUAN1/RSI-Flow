@@ -30,6 +30,13 @@ from .transport import ResponsesTransport
 
 COMPATIBILITY_CHECKS = {"provider_identity", "tool_roundtrip", "patch_and_test", "streaming", "schema", "bundle_reload", "error_boundaries", "model_metadata"}
 OPERATIONS = {"route": "routing", "learn": "meta_self_update"}
+CANDIDATE_FILENAME = ".meta_candidate.json"
+
+
+def local_stage_never_dispatched(receipt, call_dir, location):
+    return (location == "local_chroot" and receipt.get("state") == "pending"
+            and receipt.get("dispatch_protocol") == "local_dispatch_v1"
+            and not (Path(call_dir) / "local_dispatch.json").exists())
 
 
 def recovery_for_operation(path, context, operation, decision_id, bundle_hash):
@@ -67,21 +74,15 @@ def invalid_candidate_for_repair(prepared, raw_output):
         return {"unparsed_response": raw_output}
 
 
-def validate_candidate_delivery(raw_output, candidate_path, request_id):
-    try:
-        ack = json.loads(raw_output)
-        valid = (isinstance(ack, dict) and set(ack) == {"request_id", "candidate_file", "candidate_sha256"}
-                 and ack["request_id"] == request_id and ack["candidate_file"] == ".meta_candidate.json"
-                 and isinstance(ack["candidate_sha256"], str) and re.fullmatch(r"[a-f0-9]{64}", ack["candidate_sha256"])
-                 and candidate_path.is_file() and not candidate_path.is_symlink()
-                 and sha256(candidate_path.read_bytes()) == ack["candidate_sha256"])
-    except (ValueError, TypeError):
-        valid = False
-    if not valid:
-        raise ValidationError.from_exception_data("NativeCandidateDelivery", [{
-            "type": "value_error", "loc": ("candidate_delivery",), "input": raw_output,
-            "ctx": {"error": ValueError("Candidate file is absent, or its receipt identity/hash does not match. candidate_file must equal the relative string .meta_candidate.json, not /workspace/.meta_candidate.json. Use python3 (python is unavailable) to write the complete .meta_candidate.json, verify the command succeeded, compute its actual byte hash, and return the matching receipt. No candidate has been accepted.")}}])
-    return ack
+def candidate_file_delivery(candidate_path):
+    """Use the generated file as the candidate, independent of final prose."""
+    if not candidate_path.is_file() or candidate_path.is_symlink():
+        raise ValueError("Candidate file is absent or not a regular workspace file")
+    content = candidate_path.read_bytes()
+    return content, {"candidate_file": CANDIDATE_FILENAME,
+                     "candidate_sha256": sha256(content),
+                     "source": "isolated_codex_workspace_file",
+                     "final_message_used": False}
 
 
 def redact(text):
@@ -225,10 +226,8 @@ class CodexOpenRouterBackend:
             atomic_json(candidate_schema_path, output_schema)
             output_schema = {
                 "type": "object", "additionalProperties": False,
-                "properties": {"request_id": {"type": "string", "const": request.request_id},
-                    "candidate_file": {"type": "string", "const": ".meta_candidate.json"},
-                    "candidate_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
-                "required": ["request_id", "candidate_file", "candidate_sha256"]}
+                "properties": {"done": {"type": "boolean", "const": True}},
+                "required": ["done"]}
             contract = (
                 "Use native Codex tools to write the COMPLETE candidate JSON envelope into "
                 "/workspace/.meta_candidate.json using json.dump, with this exact identity and your typed result: "
@@ -238,11 +237,10 @@ class CodexOpenRouterBackend:
                 "and validate the written file. For G files, harness is complete instructions.md text; "
                 "omit duplicate instructions.md from bundle_files; serialize any JSON file contents with json.dumps. "
                 "Only .meta_candidate.json is additionally writable; do not change input snapshots. "
-                "After any failed tool call, correct it and verify success before finalizing. Never report a candidate that was not written. Compute SHA-256 from the actual candidate file bytes. Your FINAL message must contain ONLY "
-                "the small JSON receipt matching /schema.json: request_id, candidate_file, candidate_sha256. "
-                '"candidate_file" MUST be the literal relative string ".meta_candidate.json", never "/workspace/.meta_candidate.json". Read /schema.json and validate the receipt itself before returning it. '
-                "Do NOT repeat or summarize the candidate in your final message. The controller will validate "
-                "the file, hash, original full schema, G rules, and identity before committing anything.")
+                "After any failed tool call, correct it and verify success before finalizing. "
+                'Your FINAL message is only {"done":true}; it is not the candidate. '
+                "Do NOT repeat or summarize the candidate in your final message. The controller will read "
+                "the file and validate its typed content before committing anything.")
         if "self_update_protocol.md" in bundle.read_files():
             # Single authoritative file; the protected contract cannot be cropped by G.
             contract = bundle.read_files()["self_update_protocol.md"] + "\n" + contract
@@ -542,16 +540,13 @@ class CodexOpenRouterBackend:
                                     "event_sha256": sha256(canonical(event))})
         atomic_json(prepared.directory / "tool_events.json", {"source": "pinned_codex_exec_jsonl",
                     "decision_source": self.decision_source, "events": tool_events})
-        raw_output = output_path.read_text(encoding="utf-8")
+        raw_output = output_path.read_text(encoding="utf-8") if output_path.is_file() else ""
         if self._candidate_file_operation(request.operation):
             candidate_path = prepared.directory / "workspace/.meta_candidate.json"
-            acknowledgement = validate_candidate_delivery(raw_output, candidate_path, request.request_id)
-            if not any(e["event_type"] == "item.completed" for e in tool_events):
-                raise ValueError("G candidate file requires completed native Codex tool evidence")
+            content, acknowledgement = candidate_file_delivery(candidate_path)
             atomic_json(prepared.directory / "candidate_delivery.json", {
-                **acknowledgement, "source": "native_codex_tool_written_artifact",
-                "full_schema": "workspace/meta_input/result_schema.json"})
-            raw_output = candidate_path.read_text(encoding="utf-8")
+                **acknowledgement, "full_schema": "workspace/meta_input/result_schema.json"})
+            raw_output = content.decode("utf-8")
         try:
             envelope = json.loads(raw_output)
         except json.JSONDecodeError as exc:
@@ -562,10 +557,11 @@ class CodexOpenRouterBackend:
                 "type": "json_invalid", "loc": (), "input": raw_output,
                 "ctx": {"error": "Final response must be raw JSON without Markdown or prose: " + str(exc)},
             }]) from exc
-        identity = request.identity()
-        if not isinstance(envelope, dict) or set(envelope) != {*identity, "result"} or any(type(envelope.get(k)) is not type(v) or envelope.get(k) != v for k, v in identity.items()):
-            raise ValueError("Meta response identity/schema mismatch")
-        output = prepared.schema.model_validate(envelope["result"])
+        # Request identity is controller-owned and recorded below. The model only
+        # needs to produce a result; a stale echoed generation must not discard it.
+        if not isinstance(envelope, dict):
+            raise ValueError("Meta response must be a JSON object")
+        output = prepared.schema.model_validate(envelope.get("result", envelope))
         if hasattr(output, "decision_source"):
             output.decision_source = self.decision_source
         if hasattr(output, "decision_id"):
@@ -767,20 +763,23 @@ class CodexOpenRouterBackend:
                             and not (call_dir / "remote_dispatch.json").exists()
                             and call_status.get("state") == "META_OPERATION_PENDING"
                         )
-                        if not undispatched_remote_stage:
+                        undispatched_local_stage = local_stage_never_dispatched(
+                            receipt, call_dir, self.config.execution_location)
+                        if not (undispatched_remote_stage or undispatched_local_stage):
                             raise BackendUnavailable(
                                 "META_OPERATION_PENDING",
                                 "A Codex stage may have called the API; reconcile its existing evidence before any retry",
                             )
-                        # remote_dispatch.json is durably written before the worker POST thread starts.
-                        # Its absence proves this prepared request never left the controller.
+                        # Both dispatch markers are durable before the worker or Codex starts.
+                        recovery_reason = ("undispatched_local_stage" if undispatched_local_stage
+                                           else "undispatched_remote_stage")
                         receipt.pop("error_type", None)
                         receipt.pop("error_status", None)
-                        receipt.update(state="prepared", recovered_from="undispatched_remote_stage",
+                        receipt.update(state="prepared", recovered_from=recovery_reason,
                                        recovered_at=time.time())
                         atomic_json(receipt_path, receipt)
                         atomic_json(call_dir / "stage_recovery.json", {
-                            "reason": "undispatched_remote_stage", "recovered_at": receipt["recovered_at"]})
+                            "reason": recovery_reason, "recovered_at": receipt["recovered_at"]})
                     call_dir = Path(receipt["directory"])
                     if not call_dir.resolve().is_relative_to((self.journal / "calls").resolve()):
                         raise ValueError("Workflow stage receipt has an external call directory")
@@ -799,6 +798,8 @@ class CodexOpenRouterBackend:
                     receipt = {"input_hash": stage_hash, "state": "prepared", "directory": str(prepared.directory.resolve()),
                                "request_id": prepared.request.request_id, "stage_id": stage_id,
                                "meta_harness_hash": bundle.hash, "workflow_operation_id": operation_id}
+                    if self.config.execution_location == "local_chroot":
+                        receipt["dispatch_protocol"] = "local_dispatch_v1"
                     atomic_json(receipt_path, receipt)
                 # Validate before marking possible side effects; missing credentials or
                 # isolation retain the same prepared request for explicit resumption.

@@ -446,7 +446,7 @@ def _run(config, run_dir, *, resume=False):
                     training_gpu=config.training_gpu if config.gpu_execution == 'dedicated' else None)}
     if config.artifact_evaluation == 'direct_submission':
         from sia.task_meta.submissions import SubmissionUpdater
-        updaters[TaskUpdateAction.ARTIFACTS] = SubmissionUpdater(client)
+        updaters[TaskUpdateAction.ARTIFACTS] = SubmissionUpdater(client, config.model_call_limit)
     updaters = {action: DurableUpdater(updater, journal) for action, updater in updaters.items()
                 if action.value in config.allowed_task_components}
 

@@ -433,6 +433,8 @@ class RoundProtocol:
                 active_experience=fingerprint(self.active_memory))
         if self.positive_search and mode=='child_post_update':
             self.execution_scope['candidate_id']=self.current_candidate_id
+        from sia.task_meta.completed_rollout_reuse import authorized_scope
+        self.execution_scope = authorized_scope(self.root, directory, self.execution_scope)
         freeze(Path(directory)/'execution_scope.json',dict(scope=self.execution_scope,mode=mode,
             selected_manifest=self.store.current['manifest_hash']))
         freeze((Path(directory) if self.positive_search else self.root/f'round_{self.store.round_id-1}')/f'{mode}_binding.json',self.execution_scope)
@@ -542,12 +544,15 @@ class RoundProtocol:
     def decision(self, decision, directory):
         self.guard()
         if self.aligned_interventions:
-            from sia.task_meta.intervention_evidence import validate_plan, citation_audit
+            from sia.task_meta.intervention_evidence import citation_audit
             evidence=dict(report=read(Path(directory)/'01_fault_report.json'),retrieval=read(Path(directory)/'02_skill_retrieval.json'))
-            plan=validate_plan(decision,evidence)
-            freeze(Path(directory)/'citation_audit.json',citation_audit(decision,evidence))
-            freeze(Path(directory)/'03_blueprint.json',dict(decision_id=decision.decision_id,component=decision.action.value,
-                plan=plan.model_dump(mode='json'),library_hash=evidence['retrieval']['library_hash']))
+            # Routing already gave the model a bounded repair chance. The plan is
+            # diagnostic evidence here; requested_changes drives the actual updater.
+            plan=decision.intervention_plan
+            if plan is not None:
+                freeze(Path(directory)/'citation_audit.json',citation_audit(decision,evidence))
+                freeze(Path(directory)/'03_blueprint.json',dict(decision_id=decision.decision_id,component=decision.action.value,
+                    plan=plan.model_dump(mode='json'),library_hash=evidence['retrieval']['library_hash']))
         freeze(Path(directory)/'decision_protocol.json',dict(decision_id=decision.decision_id,
             round_id=self.store.round_id,evidence_ids=decision.evidence,input_evidence_allowlist=list(self.registry),update_model=decision.action.value=='MODEL',
             update_targets=decision.target_components,reason=decision.rationale,

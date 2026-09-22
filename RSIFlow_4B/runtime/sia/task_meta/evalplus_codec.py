@@ -1,8 +1,8 @@
 """Bounded, non-executable wire values for isolated function calls.
 
 Only exact built-in values are supported. No pickle, imports, constructors,
-arbitrary object hooks, cycles or shared-container aliases. IEEE non-finite
-floats use explicit string tags; the interned empty tuple is preserved.
+arbitrary object hooks or cycles. Shared-container aliases retain identity. IEEE non-finite
+floats use explicit string tags.
 """
 
 import base64
@@ -18,7 +18,7 @@ class UnsupportedWireValue(ValueError):
 
 
 def encode(value):
-    seen, count = set(), [0]
+    seen, active, count = {}, set(), [0]
 
     def visit(value, depth):
         count[0] += 1
@@ -47,20 +47,24 @@ def encode(value):
             return {"t": "bytes", "v": base64.b64encode(value).decode("ascii")}
         if kind not in {list, tuple, dict, set, frozenset}:
             raise UnsupportedWireValue("non-builtin return/input value unsupported")
-        if kind is tuple and not value:
-            return {'t': 'tuple', 'v': []}  # CPython's shared immutable singleton.
+        if id(value) in active:
+            raise UnsupportedWireValue("cycles unsupported")
         if id(value) in seen:
-            raise UnsupportedWireValue("cycles/shared container aliases unsupported")
-        seen.add(id(value))
+            return {"t": "ref", "v": seen[id(value)]}
+        seen[id(value)] = len(seen)
+        active.add(id(value))
         if kind is dict:
-            return {"t": "dict", "v": [[visit(k, depth + 1), visit(v, depth + 1)] for k, v in value.items()]}
-        return {"t": kind.__name__, "v": [visit(x, depth + 1) for x in value]}
+            payload = [[visit(k, depth + 1), visit(v, depth + 1)] for k, v in value.items()]
+        else:
+            payload = [visit(x, depth + 1) for x in value]
+        active.remove(id(value))
+        return {"t": kind.__name__, "v": payload}
 
     return visit(value, 0)
 
 
 def decode(value):
-    count = [0]
+    count, memo, active = [0], [], set()
 
     def visit(value, depth):
         count[0] += 1
@@ -75,6 +79,10 @@ def decode(value):
         if type(value) is not dict or set(value) != {"t", "v"}:
             raise UnsupportedWireValue("invalid tagged wire value")
         kind, payload = value["t"], value["v"]
+        if kind == "ref":
+            if type(payload) is not int or payload < 0 or payload >= len(memo) or payload in active:
+                raise UnsupportedWireValue("invalid or cyclic container reference")
+            return memo[payload]
         if kind == 'special_float':
             if type(payload) is not str or payload not in {'nan', 'inf', '-inf'}:
                 raise UnsupportedWireValue('invalid IEEE special value')
@@ -97,6 +105,9 @@ def decode(value):
             return output
         if kind not in {"list", "tuple", "set", "frozenset", "dict"} or type(payload) is not list:
             raise UnsupportedWireValue("invalid container payload")
+        slot = len(memo)
+        memo.append(None)
+        active.add(slot)
         if kind == "dict":
             result = {}
             for pair in payload:
@@ -109,11 +120,14 @@ def decode(value):
                     result[key] = item
                 except TypeError as exc:
                     raise UnsupportedWireValue("unhashable dictionary key") from exc
-            return result
-        result = [visit(x, depth + 1) for x in payload]
-        try:
-            return {"list": list, "tuple": tuple, "set": set, "frozenset": frozenset}[kind](result)
-        except TypeError as exc:
-            raise UnsupportedWireValue("unhashable set item") from exc
+        else:
+            items = [visit(x, depth + 1) for x in payload]
+            try:
+                result = {"list": list, "tuple": tuple, "set": set, "frozenset": frozenset}[kind](items)
+            except TypeError as exc:
+                raise UnsupportedWireValue("unhashable set item") from exc
+        memo[slot] = result
+        active.remove(slot)
+        return result
 
     return visit(value, 0)

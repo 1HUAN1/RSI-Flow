@@ -114,8 +114,9 @@ def validate_submission(value, row, max_tools):
 
 
 class SubmissionUpdater:
-    def __init__(self, client):
+    def __init__(self, client, max_tool_calls):
         self.client = client
+        self.max_tool_calls = max_tool_calls
 
     def apply(self, task_state, decision, context):
         from sia.task_meta.meta import evolution_kwargs
@@ -127,7 +128,7 @@ class SubmissionUpdater:
         requested_rows=[rows.get(c.target) for c in requested]
         if any(row is None or row.get('infrastructure_error') or row.get('verification',{}).get('status')!='completed' for row in requested_rows):
             raise DecisionConstraintError('Submission unavailable: baseline is missing or unscored')
-        max_tools = json.loads(Path(task_state.harness_path).read_text())['budget']['max_tool_calls']
+        max_tools = self.max_tool_calls
         for change in requested:
             if change.operation != 'write_asset' or change.target not in rows:
                 raise DecisionConstraintError('Only exact existing task submissions may be replaced')
@@ -192,7 +193,7 @@ class SubmissionEvaluator:
         source = baseline_outputs(self.baseline_dir)
         if not self.targets or not self.targets <= source.keys():
             raise ValueError('Direct evaluation requires declared baseline submission targets')
-        spec = json.loads(Path(state.harness_path).read_text())
+        max_tools = self.executor.model_call_limit
         window = json.loads((self.baseline_dir / 'window.json').read_text())
         tasks, _ = self.executor.store.window(window['cursor'], self.executor.quotas)
         tasks = {t.task_id: t for t in [*tasks, *self.executor.store.probe()]}
@@ -224,7 +225,7 @@ class SubmissionEvaluator:
                     record = json.loads((Path(state.artifacts.directory) / name).read_text())
                     if record['baseline_sha256'] != value_hash(old):
                         raise ValueError('Submission is bound to another baseline')
-                    value = validate_submission(record['payload'], old, spec['budget']['max_tool_calls'])
+                    value = validate_submission(record['payload'], old, max_tools)
                     env = self.executor.adapter_factory(old['domain'])
                     started = time.monotonic()
                     save_json(receipt, {'binding': binding, 'status': 'started'})

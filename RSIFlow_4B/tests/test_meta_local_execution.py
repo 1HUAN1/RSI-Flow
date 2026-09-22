@@ -1,11 +1,15 @@
 """Local Meta input/output boundary tests, without model requests."""
 import json
+import os
 from pathlib import Path
+import stat
 import tempfile
 import unittest
 
 from sia.task_meta.meta_backends.local_execution import _stage_files, _return_workspace, runtime_identity
+from sia.task_meta.meta_backends.codex_openrouter import local_stage_never_dispatched
 from sia.task_meta.meta_backends.contracts import MetaBackendConfig
+from sia.task_meta.meta_backends.isolation_runtime import IsolationRuntime
 
 
 class LocalMetaExecution(unittest.TestCase):
@@ -59,6 +63,33 @@ class LocalMetaExecution(unittest.TestCase):
         self.assertEqual(set(identity["sources"]), {
             "local_execution.py", "isolation_runtime.py", "isolation_launcher.py", "bridge.py", "input_budget.py"})
         self.assertTrue(all(len(value) == 64 for value in identity["sources"].values()))
+
+    def test_static_runtime_directories_are_traversable_with_restrictive_umask(self):
+        jail = self.root / "jail"
+        original_umask = os.umask(0o077)
+        try:
+            for name in ("usr/bin", "usr/lib/x86_64-linux-gnu", "etc/ssl", "dev", "proc/self",
+                         "workspace", "codex_home", "tmp", "home/meta"):
+                (jail / name).mkdir(parents=True, exist_ok=True)
+        finally:
+            os.umask(original_umask)
+        (jail / "bin").symlink_to("usr/bin")
+        self.assertEqual(stat.S_IMODE((jail / "usr").stat().st_mode), 0o700)
+        IsolationRuntime._normalize_static_directory_modes(jail)
+        for name in ("usr", "usr/bin", "usr/lib", "usr/lib/x86_64-linux-gnu",
+                     "etc", "etc/ssl", "dev", "proc", "proc/self"):
+            self.assertEqual(stat.S_IMODE((jail / name).stat().st_mode), 0o755, name)
+        self.assertEqual(stat.S_IMODE((jail / "workspace").stat().st_mode), 0o700)
+        self.assertEqual(stat.S_IMODE((jail / "home/meta").stat().st_mode), 0o700)
+        self.assertTrue((jail / "bin").is_dir())
+
+    def test_only_new_undispatched_local_stage_is_retryable(self):
+        receipt = {"state": "pending", "dispatch_protocol": "local_dispatch_v1"}
+        self.assertTrue(local_stage_never_dispatched(receipt, self.call, "local_chroot"))
+        self.assertFalse(local_stage_never_dispatched(receipt, self.call, "ssh_worker"))
+        self.assertFalse(local_stage_never_dispatched({"state": "pending"}, self.call, "local_chroot"))
+        (self.call / "local_dispatch.json").write_text("{}")
+        self.assertFalse(local_stage_never_dispatched(receipt, self.call, "local_chroot"))
 
 
 if __name__ == "__main__":

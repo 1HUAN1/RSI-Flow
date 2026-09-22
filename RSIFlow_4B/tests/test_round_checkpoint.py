@@ -7,7 +7,7 @@ from pathlib import Path
 
 from sia.task_meta.harnessforge_production import initialize_base_manifest
 from sia.task_meta.meta_harness.bundle import MetaHarnessStore
-from sia.task_meta.round_checkpoint import commit_round_checkpoint, verify_round_checkpoint
+from sia.task_meta.round_checkpoint import commit_round_checkpoint, load_round_checkpoint, verify_round_checkpoint
 from sia.task_meta.storage import artifact_manifest, save_json
 from sia.task_meta.types import ArtifactState, MetaAgentState, TaskAgentState
 
@@ -33,6 +33,7 @@ class RoundCheckpoint(unittest.TestCase):
         self.round_dir.mkdir()
         for name in ("complete.json", "experience.json", "deployment.json"):
             save_json(self.round_dir / name, {"round": 0, "name": name})
+        save_json(self.round_dir / "meta_context.json", {"previous_round": 0})
 
     def test_full_task_bundle_meta_bundle_and_skill_library_are_independently_saved(self):
         asset = self.root / "assets"
@@ -51,6 +52,30 @@ class RoundCheckpoint(unittest.TestCase):
             (checkpoint / "meta/skills/principles.json").read_text())["records"]))
         self.assertEqual((checkpoint / "meta/skills/principles.json").read_bytes(),
                          (checkpoint / "meta/bundle/principles.json").read_bytes())
+        self.assertEqual(json.loads((checkpoint / "meta/context.json").read_text()),
+                         {"previous_round": 0})
+
+    def test_next_round_restores_copied_task_and_meta_not_mutable_source(self):
+        asset = self.root / "assets"
+        asset.mkdir()
+        (asset / "skill.txt").write_text("Task artifact", encoding="utf-8")
+        self.task.artifacts = ArtifactState(str(asset), artifact_manifest(asset))
+        commit_round_checkpoint(self.round_dir, 0, self.task, self.meta)
+        Path(self.task.harness_path).write_text("source changed", encoding="utf-8")
+        (asset / "skill.txt").write_text("source changed", encoding="utf-8")
+        task, meta = load_round_checkpoint(self.round_dir, 0)
+        checkpoint = self.round_dir / "checkpoint"
+        self.assertTrue(Path(task.harness_path).is_relative_to(checkpoint))
+        self.assertTrue(Path(task.artifacts.directory).is_relative_to(checkpoint))
+        self.assertTrue(Path(meta.bundle_path).is_relative_to(checkpoint))
+        self.assertEqual(task.checkpoint_path, "model-weights")
+        self.assertEqual((Path(task.artifacts.directory) / "skill.txt").read_text(), "Task artifact")
+        next_round = self.root / "round_1"
+        next_round.mkdir()
+        for name in ("complete.json", "experience.json", "deployment.json"):
+            save_json(next_round / name, {"round": 1, "name": name})
+        commit_round_checkpoint(next_round, 1, task, meta)
+        self.assertEqual(load_round_checkpoint(next_round, 1)[1].bundle_hash, self.meta.bundle_hash)
 
     def test_resume_detects_changed_skill_or_round_evidence(self):
         commit_round_checkpoint(self.round_dir, 0, self.task, self.meta)

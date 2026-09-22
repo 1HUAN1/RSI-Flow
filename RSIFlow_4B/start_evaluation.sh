@@ -9,4 +9,4 @@ export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 NUMEXPR_NUM_TH
 export TOKENIZERS_PARALLELISM=false
 export PYTHONPATH="$SCRIPT_DIR/runtime:$SCRIPT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 cd "$SCRIPT_DIR"
-exec "${RSIFLOW_PYTHON:-python}" -u "$SCRIPT_DIR/validate.py" "$@"
+exec "${RSIFLOW_PYTHON:-/root/data/conda/envs/sia/bin/python}" -u "$SCRIPT_DIR/validate.py" "$@"

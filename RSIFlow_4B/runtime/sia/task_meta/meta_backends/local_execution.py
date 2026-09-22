@@ -132,6 +132,10 @@ def run_local(backend, prepared, transport):
                 with (directory / "prompt.txt").open("rb") as stdin, \
                      (directory / "events.jsonl").open("wb") as stdout, \
                      (directory / "stderr.txt").open("wb") as stderr:
+                    atomic_json(directory / "local_dispatch.json", {
+                        "protocol": "local_dispatch_v1",
+                        "request_id": prepared.request.request_id,
+                        "started_at": time.time()})
                     process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr,
                         cwd="/tmp", env={"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8"}, start_new_session=True)
                     try:

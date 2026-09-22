@@ -50,6 +50,7 @@ def make_pipeline(config, runtime):
     p['round_protocol']={'train_quotas_per_round':quotas,'data_dir':p['data_dir'],'evaluate_initial_system':config.get('evaluate_initial_system',False),'minimum_sft_samples':config['minimum_sft_samples'],
         'memory_policy':config['memory_policy'], 'single_decision_per_round':True,
         'candidate_policy':config.get('candidate_policy','single_candidate_strict_positive_gain'),
+        'skip_acebench':config.get('skip_acebench',False),
         'sequential_domains':config.get('sequential_domains',False),
         'evidence_bound_interventions':config.get('evidence_bound_interventions',True),
         'validation_manifest':str(Path(config['validation_vault'])/'validation/manifest.json'),
@@ -90,6 +91,8 @@ def dry_run(config, runtime):
     if config.get('candidate_policy','single_candidate_strict_positive_gain')!='single_candidate_strict_positive_gain':
         raise ValueError('Only the single-candidate strict-positive policy is executable')
     limit=1
+    validation_scored_per_round=250 if config.get('skip_acebench',False) else 300
+    validation_scored_total=validation_scored_per_round*(3+int(initial))
     external=900+300*initial
     result=dict(status='dry_run_no_model_calls',rounds=details,allocated_tasks=allocated,
         harness_initialization='upstream_harnessforge_bundle',
@@ -102,6 +105,9 @@ def dry_run(config, runtime):
         candidate_evaluations='one child pass per domain stage' if sequential else 'one child pass included per round',external_validation_tasks_per_checkpoint=300,sft_calls=('0..9' if sequential else '0..3')+', conditional on Meta MODEL and verified-success minimum',
         sft_epochs_per_call=1,external_validation_checkpoints=(['A0'] if initial else [])+['A1','A2','A3'],
         validation_manifest_hash=validation['manifest_hash'],validation_quotas=VALIDATION_QUOTAS,
+        validation_scored_tasks_per_checkpoint=validation_scored_per_round,
+        validation_scored_tasks_total=validation_scored_total,
+        acebench_status='skipped_unscored' if config.get('skip_acebench',False) else 'scored',
         external_validation_executions=external,
         base_task_executions={'min':allocated+external,'max':2*allocated+external},
         inference_gpus=4,sft_gpus=4,queues_are_global_not_per_gpu=True,final_test='separate explicit entry')
@@ -134,6 +140,7 @@ def check(config, runtime, *, external_readiness=False):
         for name in ['livecodebench','humaneval_plus','mbpp_plus','hotpotqa_dev','2wiki_dev']:
             details[name]={'count':len(OfficialEvaluatorSpec(**{**official[name],'benchmark':name}).validate())}
         for name,spec in settings['tool_benchmarks'].items():
+            if name=='acebench' and config.get('skip_acebench',False):continue
             repo,native,ids,paths=native_layout(name,spec)
             details[name]={'count':sum(map(len,ids.values())),'categories':list(ids),'source':str(repo)}
             from tool_validation import check_native
@@ -141,9 +148,10 @@ def check(config, runtime, *, external_readiness=False):
     except Exception as exc:errors.append('Official evaluation preflight: '+str(exc))
     pipeline=make_pipeline(config,runtime)
     native_config=PipelineConfig.model_validate(pipeline).checked()
-    required_env = [pipeline['meta']['api_key_env'],
-                    settings['tool_benchmarks']['acebench']['user_api_key_env'],
-                    settings['tool_benchmarks']['acebench']['user_base_url_env']]
+    required_env = [pipeline['meta']['api_key_env']]
+    if not config.get('skip_acebench',False):
+        required_env += [settings['tool_benchmarks']['acebench']['user_api_key_env'],
+                         settings['tool_benchmarks']['acebench']['user_base_url_env']]
     if pipeline['meta'].get('execution_location', 'ssh_worker') == 'ssh_worker':
         required_env.append(pipeline['meta']['remote_worker_token_env'])
     for name in required_env:

@@ -59,14 +59,26 @@ class DurableUpdater:
             cached = json.loads(receipt.read_text(encoding='utf-8'))
             if cached['input_hash'] != fingerprint:
                 raise ValueError('Intervention receipt belongs to different inputs')
-            if cached['status'] != 'committed':
-                raise UpdatePending('Uncertain intervention must be reconciled from its training/checkpoint evidence; refusing duplicate execution')
-            successor = load_task(cached['successor'])
-            if task_hash(successor) != cached['successor_hash']:
-                raise ValueError('Committed successor was modified after receipt')
-            update = dict(cached['update'])
-            update['action'] = TaskUpdateAction(update['action'])
-            return successor, TaskUpdate(**update)
+            if cached['status'] == 'started':
+                proof = getattr(self.updater, 'retry_safe_before_effect', None)
+                if proof is None or not proof(task, decision, context):
+                    raise UpdatePending('Uncertain intervention must be reconciled from its training/checkpoint evidence; refusing duplicate execution')
+                index = 1
+                while (base / f'intervention_receipt.pre_effect_retry_{index:03d}.json').exists():
+                    index += 1
+                archive = base / f'intervention_receipt.pre_effect_retry_{index:03d}.json'
+                receipt.replace(archive)
+                self.journal.mark('pre_effect_retry', generation=task.generation,
+                                  action=decision.action.value, archived_receipt=str(archive))
+            elif cached['status'] != 'committed':
+                raise UpdatePending('Unknown intervention status; refusing duplicate execution')
+            else:
+                successor = load_task(cached['successor'])
+                if task_hash(successor) != cached['successor_hash']:
+                    raise ValueError('Committed successor was modified after receipt')
+                update = dict(cached['update'])
+                update['action'] = TaskUpdateAction(update['action'])
+                return successor, TaskUpdate(**update)
         self.journal.mark('updating', generation=task.generation, action=decision.action.value)
         save_json(receipt, {'status': 'started', 'input_hash': fingerprint, 'binding': binding})
         try:

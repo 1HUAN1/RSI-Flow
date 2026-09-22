@@ -15,7 +15,7 @@ export TOKENIZERS_PARALLELISM=false RAYON_NUM_THREADS=4 TOKIO_WORKER_THREADS=4
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd -P)"
 source "$SCRIPT_DIR/storage_env.sh"
-CONFIG_PATH="${RSIFLOW_CONFIG:-$SCRIPT_DIR/configs/train.json}"
+CONFIG_PATH="${RSIFLOW_CONFIG:-$SCRIPT_DIR/configs/train_180_a0_v1.json}"
 KEY_FILE="${RSIFLOW_API_KEY_FILE:-$SCRIPT_DIR/API_key.md}"
 PYTHON_BIN="${RSIFLOW_PYTHON:-/root/data/conda/envs/sia/bin/python}"
 META_WORKER_SCRIPT="$SCRIPT_DIR/start_meta_worker.sh"

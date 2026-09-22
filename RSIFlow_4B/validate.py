@@ -6,14 +6,17 @@ import sys
 from pathlib import Path
 from common import ROOT, read, write, sha, immutable
 
-def validate(snapshot_path,pipeline_path,validation_path, *, role=None, manifest_path=None, full_benchmark=False):
+def validate(snapshot_path,pipeline_path,validation_path, *, role=None, manifest_path=None, full_benchmark=False, skip_ace=False):
     sys.path.insert(0,str(ROOT/'runtime'))
+    if skip_ace and (role!='independent_validation' or full_benchmark):
+        raise ValueError('ACE skip is only permitted for partial independent validation')
     from sia.task_meta.pipeline import load_config
     from sia.task_meta.durable import load_task,task_hash
     from sia.task_meta.harnessforge_manifest import load_manifest
     from sia.task_meta.storage import checkpoint_manifest
     from sia.task_meta.gpu_phases import ensure_services, verify_services
     from parallel_predictions import generate_parallel
+    from dynamic_predictions import generate_dynamic
     from sia.task_meta.reporting import OfficialEvaluatorSpec,evaluate_official,BENCHMARK_IDS
     from tool_validation import evaluate_tool
     snapshot=read(snapshot_path);config=load_config(pipeline_path);settings=read(validation_path)
@@ -61,6 +64,8 @@ def validate(snapshot_path,pipeline_path,validation_path, *, role=None, manifest
         # A benchmark-level exception must not turn unattempted tasks into failures.
         publish(selected_manifest,snapshot,binding,results,out)
     for identifier in settings['benchmark_ids']:
+        if skip_ace and identifier=='acebench':
+            continue
         result_path=out/'scores'/identifier/'result.json'
         if result_path.exists() and read(result_path).get('status')=='completed':
             result=read(result_path)
@@ -76,7 +81,8 @@ def validate(snapshot_path,pipeline_path,validation_path, *, role=None, manifest
             single=out/(identifier+'.spec.json')
             immutable(single,{'evaluators':{identifier:specs[identifier]}})
             predictions=out/'predictions'
-            generate_parallel(config,out/'frozen_task.json',single,predictions/identifier)
+            generator=generate_dynamic if skip_ace else generate_parallel
+            generator(config,out/'frozen_task.json',single,predictions/identifier)
             rows=[json.loads(line) for line in (predictions/identifier/(identifier+'.jsonl')).read_text().splitlines() if line.strip()]
             result=evaluate_official(OfficialEvaluatorSpec(**{**specs[identifier],'benchmark':identifier}),rows,binding,result_path.parent)
             from evaluation_results import official_task_scores
@@ -95,6 +101,18 @@ def validate(snapshot_path,pipeline_path,validation_path, *, role=None, manifest
             from evaluation_results import publish
             metrics=publish(selected_manifest,snapshot,binding,results,out)
         if result.get('status')!='completed':raise RuntimeError('Validation incomplete: '+identifier)
+    if skip_ace:
+        expected=['bfcl_v3','livecodebench','humaneval_plus','mbpp_plus','hotpotqa_dev','2wiki_dev']
+        if ([row['benchmark_id'] for row in results]!=expected or metrics['overall']['n_scored']!=250
+                or metrics['overall']['complete'] or (out/'scores/acebench/result.json').exists()):
+            raise RuntimeError('ACE-skipped validation must score exactly 250/300 without ACE')
+        partial={'status':'code_search_completed_ace_pending','source_role':role,
+                 'feedback_to_meta':False,'task_state_hash':binding['state_hash'],
+                 'benchmarks_completed':expected,'acebench_status':'incomplete_requires_audit',
+                 'officially_scored':250,'expected_total':300,
+                 'metrics_sha256':sha(out/'task_metrics.json')}
+        immutable(out/'code_search_partial_complete.json',partial)
+        return partial
     done={'status':'completed','round':snapshot['round'],'state_hash':binding['state_hash'],
           'benchmarks_completed':len(results),'feedback_to_meta':False,
           'result_files':{str(p.relative_to(out)):sha(p) for p in out.glob('scores/*/result.json')}}
@@ -133,11 +151,12 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('--snapshot',required=True);p.add_argument('--pipeline-config',required=True);p.add_argument('--config',required=True)
     p.add_argument('--role',required=True,choices=['independent_validation','final_test']);p.add_argument('--manifest',required=True)
     p.add_argument('--execute',action='store_true')
+    p.add_argument('--skip-ace',action='store_true',help='Explicit partial independent validation; never a complete 300-task report')
     p.add_argument('--full-benchmark',action='store_true',help='Explicit reporting-only full manifest; never a round-loop default')
     a=p.parse_args()
     from evaluation_manifest import evaluation_budget
     print(evaluation_budget(a.manifest,a.role),flush=True)
-    if a.execute:print(validate(a.snapshot,a.pipeline_config,a.config,role=a.role,manifest_path=a.manifest,full_benchmark=a.full_benchmark))
+    if a.execute:print(validate(a.snapshot,a.pipeline_config,a.config,role=a.role,manifest_path=a.manifest,full_benchmark=a.full_benchmark,skip_ace=a.skip_ace))
 
 if __name__=='__main__':main()
 

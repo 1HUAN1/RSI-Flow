@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from sia.task_meta.storage import save_json
+from sia.task_meta.storage import digest, save_json
 
 def validate_round(config, run_dir, number, record):
     bundle=Path(config.round_validation_config).resolve().parents[1]
@@ -34,6 +34,47 @@ def validate_round(config, run_dir, number, record):
     path=out/'round_snapshot.json'
     if path.exists() and json.loads(path.read_text())!=binding:raise ValueError('Validation round snapshot changed')
     save_json(path,binding)
+    authorization_path=Path(run_dir)/'recovery/ace_skip_authorization.json'
+    configured_skip=bool((getattr(config,'round_protocol',None) or {}).get('skip_acebench',False))
+    partial_mode=configured_skip or authorization_path.exists()
+    if partial_mode:
+        from sia.task_meta.durable import load_task, task_hash
+        authorization=json.loads(authorization_path.read_text()) if authorization_path.exists() else None
+        manifest=Path(config.round_protocol['validation_manifest'])
+        if authorization is not None and (authorization.get('schema_version')!='ace-skipped-round-validation-v1'
+                or authorization.get('run_name')!=Path(run_dir).name
+                or authorization.get('manifest_sha256')!=digest(manifest)
+                or authorization.get('validation_config_sha256')!=digest(Path(config.round_validation_config))
+                or authorization.get('expected_total')!=300
+                or authorization.get('scored_total')!=250):
+            raise ValueError('ACE-skipped validation is not authorized for this run and manifest')
+        def verify_partial():
+            partial=out/'code_search_partial_complete.json'
+            if not partial.exists():return False
+            value=json.loads(partial.read_text())
+            expected=['bfcl_v3','livecodebench','humaneval_plus','mbpp_plus','hotpotqa_dev','2wiki_dev']
+            state_hash=task_hash(load_task(record['task_after']))
+            metrics_path=out/'task_metrics.json'
+            metrics=json.loads(metrics_path.read_text())
+            if (value.get('status')!='code_search_completed_ace_pending'
+                    or value.get('source_role')!='independent_validation'
+                    or value.get('feedback_to_meta') is not False
+                    or value.get('task_state_hash')!=state_hash
+                    or value.get('benchmarks_completed')!=expected
+                    or value.get('officially_scored')!=250 or value.get('expected_total')!=300
+                    or value.get('metrics_sha256')!=digest(metrics_path)
+                    or metrics['overall']['n_scored']!=250 or metrics['overall']['complete']
+                    or (out/'complete.json').exists()
+                    or (out/'scores/acebench/result.json').exists()
+                    or (authorization is not None and outer_number==1 and digest(partial)!=authorization.get('initial_partial_sha256'))):
+                raise ValueError('ACE-skipped validation receipt is not the authorized 250/300 report')
+            for name in expected:
+                score=json.loads((out/'scores'/name/'result.json').read_text())
+                if (score.get('status')!='completed' or score.get('state_hash')!=state_hash
+                        or score.get('feedback_to_meta') is not False):
+                    raise ValueError('ACE-skipped validation has a missing or mismatched official score')
+            return True
+        if verify_partial():return
     env={k:v for k,v in os.environ.items() if k not in {'AUTODL_API_KEY','OPENROUTER_API_KEY','RSI_REMOTE_WORKER_TOKEN'}}
     env['PYTHONPATH']=str(Path(__file__).resolve().parents[2])+os.pathsep+str(bundle)
     command=[sys.executable,'-u',str(bundle/'validate.py'),'--snapshot',str(path),
@@ -41,7 +82,11 @@ def validate_round(config, run_dir, number, record):
              '--config',config.round_validation_config]
     if getattr(config,'round_protocol',None):
         command+=['--role','independent_validation','--manifest',config.round_protocol['validation_manifest'],'--execute']
+    if partial_mode:command+=['--skip-ace']
     subprocess.run(command,env=env,cwd=bundle,check=True)
+    if partial_mode:
+        if not verify_partial():raise RuntimeError('ACE-skipped independent validation is incomplete')
+        return
     done=json.loads((out/'complete.json').read_text())
     if done['benchmarks_completed']!=7 or done['feedback_to_meta'] is not False:
         raise RuntimeError('Round validation is incomplete')

@@ -155,6 +155,17 @@ class IsolationRuntime:
         return binaries
 
     @staticmethod
+    def _normalize_static_directory_modes(base: Path) -> None:
+        # Directory creation inherits the controller's umask. The namespace
+        # root is a non-root host UID and must be able to traverse every
+        # root-owned runtime directory after entering the chroot.
+        for parent, directories, _ in os.walk(base, followlinks=False):
+            if Path(parent) == base:
+                directories[:] = [name for name in directories if name not in MUTABLE_TOP_LEVEL]
+            else:
+                os.chmod(parent, 0o755)
+
+    @staticmethod
     def _ldd_paths(path: Path) -> set[Path]:
         result = subprocess.run(["/usr/bin/ldd", str(path)], stdin=subprocess.DEVNULL,
                                 capture_output=True, timeout=20, check=False,
@@ -239,6 +250,7 @@ class IsolationRuntime:
             os.chmod(dev / name, 0o666)
         for path in (base / "workspace", base / "codex_home", base / "tmp", base / "home/meta"):
             path.mkdir(parents=True, exist_ok=True)
+        self._normalize_static_directory_modes(base)
         os.chmod(base, 0o711)
 
     @staticmethod

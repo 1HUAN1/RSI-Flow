@@ -337,6 +337,19 @@ class HarnessForgeProductionUpdater:
     def __init__(self, client):
         self.client = client
 
+    def retry_safe_before_effect(self, task_state, decision, context):
+        """Only incomplete text stages may be retried; no bundle may exist."""
+        from sia.task_meta.types import TaskUpdateAction
+
+        directory = Path(context.directory)
+        candidate_name = _candidate_name(
+            context.generation, decision.decision_id or f"generation-{context.generation}")
+        candidate = (directory / "harnessforge_production" / "validation_project"
+                     / "generated_harnesses" / "rounds"
+                     / f"round_rsi_{context.generation:04d}" / candidate_name)
+        return (decision.action == TaskUpdateAction.HARNESS and not candidate.exists()
+                and not (directory / Path(task_state.harness_path).name).exists())
+
     @staticmethod
     def _validate_request(decision: Any) -> None:
         from sia.task_meta.types import DecisionConstraintError, TaskUpdateAction

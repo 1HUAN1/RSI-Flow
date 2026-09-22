@@ -149,6 +149,13 @@ def artifact_path(root: Path, name: str) -> Path:
 class ArtifactUpdater:
     def __init__(self, client):
         self.client = client
+    def retry_safe_before_effect(self, task_state, decision, context):
+        """No cloned Task or asset tree means the Meta proposal had no Task effect."""
+        directory = Path(context.directory)
+        return (decision.action == TaskUpdateAction.ARTIFACTS
+                and not (directory / Path(task_state.harness_path).name).exists()
+                and not (directory / "artifacts").exists())
+
 
     def apply(self, task_state, decision, context):
         started = time.monotonic()
@@ -269,6 +276,17 @@ class ModelUpdater:
         self.timeout = timeout
         self.sft_profile, self.supervision, self.training = sft_profile, supervision, training or {}
         self.training_gpu = training_gpu
+
+    def retry_safe_before_effect(self, task_state, decision, context):
+        """The trainer cannot start before model_update is created."""
+        directory = Path(context.directory)
+        checkpoint = Path(task_state.checkpoint_path or task_state.model_ref).resolve()
+        return (decision.action == TaskUpdateAction.MODEL
+                and not (directory / "model_update").exists()
+                and not (directory / Path(task_state.harness_path).name).exists()
+                and not (directory / "artifacts").exists()
+                and checkpoint.is_dir()
+                and checkpoint_manifest(checkpoint) == task_state.checkpoint_manifest)
 
     def apply(self, task_state, decision, context):
         if self.training_gpu is not None:

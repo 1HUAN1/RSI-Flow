@@ -34,6 +34,11 @@ class EarlyRollout:
         directory.mkdir(parents=True, exist_ok=True)
         request = {'number': number, 'task': asdict(state), 'task_hash': task_hash(state),
                    'protocol_sha256': digest(self.root / 'protocol.json')}
+        from .completed_rollout_reuse import completed_request_reusable
+        if completed_request_reusable(self.root, self.root / f'round_{number}/before/gen_{number}', request['task_hash']):
+            self.number = number
+            print(f'[early-rollout] round={number + 1}: authorized completed baseline retained', flush=True)
+            return
         freeze(directory / 'request.json', request)
         self.number = number
         with exclusive_lock(directory / 'launch.lock'):

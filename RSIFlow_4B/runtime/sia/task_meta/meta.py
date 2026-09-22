@@ -179,6 +179,15 @@ class MetaAgent:
         if protocol: protocol.guard()
         if getattr(self.client, "supports_evolution", False):
             envelope = experience_input(experience, history, current_task_state, run_directory=self.run_directory)
+            envelope["trusted_facts"]["candidate_execution_supervision"] = [
+                {"component": attempt.get("action"), "status": attempt.get("status"),
+                 "candidate_executed": attempt.get("candidate_executed", False),
+                 "post_trajectory": attempt.get("trajectory_after"),
+                 "paired_evidence_complete": (attempt.get("paired_outcome") or {}).get("paired_evidence_complete", False),
+                 "accepted_for_deployment": attempt.get("accepted_for_deployment", False),
+                 "outcome_class": attempt.get("outcome_class")}
+                for attempt in experience.candidate_attempts
+            ]
             if getattr(self,"round_protocol",None): self.round_protocol.enrich_effect(envelope)
             if self._five_stage(meta_state):
                 from sia.task_meta.meta_harness.five_stage import paired_outcome
@@ -188,7 +197,7 @@ class MetaAgent:
                     from sia.task_meta.meta_backends.input_budget import archive_descriptors
                     envelope['trajectory_archives'] = archive_descriptors(root, experience.feedback_root, experience.generation, experience.candidate_attempts)
             return self.client.complete(
-                "Use the evaluated experience for a grounded Meta content update. Memory-only updates are valid; do not invent conclusions or use NO_CHANGE.",
+                "Use the evaluated experience for a grounded Meta content update. Before ending, supervise whether the single Task modification was written and the modified Task actually ran its post-rollout. Diagnose a missing or failed execution as such; never claim deployment or improvement from code generation alone. Record the observed paired outcome and a concrete next-round debugging lesson in the component experience and, when supported, a general principle. Do not launch another candidate or change Task after paired evaluation. Memory-only updates are valid; do not invent conclusions or use NO_CHANGE.",
                 FiveStageMetaUpdate if self._five_stage(meta_state) else MetaHarnessUpdate, meta_state=meta_state, operation="learn",
                 decision_id=experience.decision.get("decision_id"),
                 experience_id=experience.experience_id or f"experience_g{experience.generation}",

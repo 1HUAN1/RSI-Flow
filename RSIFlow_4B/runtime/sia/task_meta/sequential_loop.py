@@ -40,15 +40,45 @@ def positive_gain(outcome):
     return type(delta) in (int, float) and delta > 0
 
 
+def _authorized_protocol_successor(source, target, left, right):
+    """Accept only the recorded protocol successor for the Meta delivery repair."""
+    if left.name != 'protocol.json' or not right.is_file() or right.is_symlink():
+        return False
+    root = source.resolve()
+    if left.resolve() != (root / 'protocol.json').resolve():
+        return False
+    try:
+        archive = root / 'recovery/meta_delivery_hotfix'
+        later = sorted(p for p in archive.glob('revision_*.json')
+                       if p.stem.removeprefix('revision_').isdigit())
+        revision_path = later[-1] if later else archive / 'revision_final.json'
+        prior_path = root / 'recovery/meta_delivery_hotfix/protocol_before.json'
+        revision = json.loads(revision_path.read_text())
+        old_hash = revision['old_protocol_sha256']
+        new_hash = revision['new_protocol_sha256']
+    except (KeyError, OSError, TypeError, ValueError):
+        return False
+    return (
+        revision.get('status') == 'authorized_meta_delivery_controller_revision'
+        and revision.get('run') == str(root)
+        and revision.get('task2_parent_rollout_reused') is True
+        and revision.get('model_training_started') is False
+        and right.resolve().is_relative_to(root)
+        and digest(prior_path) == old_hash
+        and digest(right) == old_hash
+        and digest(left) == new_hash
+    )
+
+
 def link_evidence(source, target, names):
-    """Link immutable evidence only; never link mutable state or acceptance receipts."""
+    """Link immutable evidence only; allow one explicitly authorized protocol successor."""
     target.mkdir(parents=True, exist_ok=True)
     for name in names:
         left, right = source / name, target / name
         if not left.is_file():
             raise ValueError('Missing paired source: ' + str(left))
         if right.exists():
-            if digest(left) != digest(right):
+            if digest(left) != digest(right) and not _authorized_protocol_successor(source, target, left, right):
                 raise ValueError('Paired evidence changed during resume')
         else:
             os.link(left, right)

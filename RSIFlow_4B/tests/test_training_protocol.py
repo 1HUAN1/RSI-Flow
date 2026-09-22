@@ -365,7 +365,9 @@ class NativeRolloutReuse(unittest.TestCase):
                     self.assertEqual(len(collected.trajectories),6);self.assertEqual(collected.cost['physical_rollout_attempts'],6)
                     self.assertTrue(all(r['purpose']=='evolution_train' and r['collection_stage']=='child_post_update' and not r['notes'] for r in collected.trajectories))
                     protocol.meta.version=1
-                    with self.assertRaises(ValueError):protocol.bind_execution(state,before)
+                    protocol.bind_execution(state,before)
+                    durable.execute(state,before)
+                    self.assertEqual(len(calls),12)
                     pack.write_text('{}\n')
                     protocol.begin(0,meta,[])
                     with self.assertRaisesRegex(ValueError,'differs from frozen manifest'):store.probe()
