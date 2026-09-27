@@ -3,6 +3,22 @@
 Current experiment: **[RSIFlow_8B](RSIFlow_8B/)** (Qwen3-4B Task, persistent Codex Meta, five-round skill evolution). See **[source release and external dependencies](RSIFlow_8B/SOURCE_RELEASE.md)** and **[debug log](RSIFlow_8B/DEBUG_LOG.md)** before launching. The earlier [RSIFlow_4B](RSIFlow_4B/) implementation remains available. Credentials, datasets, model weights and runtime logs are excluded; cloning alone does not recreate the server environment.
 
 ---
+Update logs：
+9.27 目前这一版已经有效果了，但是meta更新自己的方式是迭代skills。
+从架构上说，是的：目前 Meta 的进化主要发生在 skill／记忆层。 没有训练 Meta 的模型参数，也没有自动改写 Meta 的 Workflow、Planning 或 Codex 执行程序。
+现在设计的是：
+Task 前后差异 → 总结有适用条件的改法 → 维护技能库 → 下一轮检索相关技能 → 辅助组件选择和候选设计
+技能维护支持：
+- 新增：建立尚未覆盖的具体修改方法。
+- 补证：给已有方法添加支持或反例。
+- 修订：改变适用条件、操作步骤，形成关联版本。
+- 归并／停用：减少重复或失效技能，原记录仍保留。
+  本次实际已经执行的是“新增”和“补证”：B1 建立了“代码提交格式保护”的操作型 skill；B2 对已有运行异常经验补充了证据。暂未看到实际执行修订、归并或停用。
+现在是常驻 Meta 进程负责推进整个五轮实验，不是每次输出一个操作就退出。
+  并且已经发现了meta的深层次的原因：关于深层问题，有些不是“多加几条经验和skill”就能自然解决的，Meta 持续存活，闭环在推进，但其规划、机制归因和经验输入边界仍有漏洞。 这些是项目中的 Meta 行为与接线问题，目前不能据此断言 Codex 底座本身有错误，也不是简单归因于权限太大或沙箱不足。
+  在另一版git的代码仓库中开始新增如果skill维系的经验或者skill没有被满足或者是记录的解决方案依旧解决不了当下的meta问题时，则总结meta的漏洞着手修改meta的harness。
+  <img width="859" height="388" alt="image" src="https://github.com/user-attachments/assets/c43c6e4d-b598-4942-833b-1c1b2bd1d8dd" />
+
 9.21 目前这一版的问题是meta在总结经验的时候超过了工作区上下文限制，单次达到了36MB，超过了单次最大上下文限制16MB。
 # RSI-Flow
 
