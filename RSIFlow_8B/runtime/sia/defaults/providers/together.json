@@ -1,0 +1,7 @@
+{
+  "provider_id": "together",
+  "name": "Together AI",
+  "client_kind": "openai",
+  "base_url": "https://api.together.ai/v1",
+  "api_key_env": "TOGETHER_API_KEY"
+}

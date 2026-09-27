@@ -1,6 +1,6 @@
 # RSI-Flow
 
-Current experiment: **[RSIFlow_4B](RSIFlow_4B/)**. See **[experiment setup and external dependencies](EXPERIMENT_RELEASE.md)** before launching. This repository contains the cleaned server-side source snapshot; credentials, datasets, model weights and runtime logs are excluded. Cloning alone does not recreate the server environment.
+Current experiment: **[RSIFlow_8B](RSIFlow_8B/)** (Qwen3-4B Task, persistent Codex Meta, five-round skill evolution). See **[source release and external dependencies](RSIFlow_8B/SOURCE_RELEASE.md)** and **[debug log](RSIFlow_8B/DEBUG_LOG.md)** before launching. The earlier [RSIFlow_4B](RSIFlow_4B/) implementation remains available. Credentials, datasets, model weights and runtime logs are excluded; cloning alone does not recreate the server environment.
 
 ---
 9.21 目前这一版的问题是meta在总结经验的时候超过了工作区上下文限制，单次达到了36MB，超过了单次最大上下文限制16MB。

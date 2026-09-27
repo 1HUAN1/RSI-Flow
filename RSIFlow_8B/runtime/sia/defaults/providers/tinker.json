@@ -1,0 +1,7 @@
+{
+  "provider_id": "tinker",
+  "name": "Tinker API",
+  "client_kind": "openai",
+  "base_url": "https://tinker.thinkingmachines.dev/services/tinker-prod/oai/api/v1",
+  "api_key_env": "TINKER_API_KEY"
+}

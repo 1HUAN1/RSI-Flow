@@ -1,0 +1,26 @@
+# Source release only; server inputs and outputs are external.
+runtime/data/
+Meta_logs/
+Rollout_logs/
+**/__pycache__/
+**/.pytest_cache/
+**/.codex/
+API_key.md
+.env
+.env.*
+auth.json
+credentials.json
+*.sqlite
+*.sqlite-*
+*.safetensors
+*.pt
+*.pth
+*.log
+*.lock
+upstream/HarnessForge_4B/mixeddata/
+# Root legacy rules must not hide these Python source modules.
+!runtime/meta_worker/
+!runtime/meta_worker/**
+!runtime/local_baseline/
+!runtime/local_baseline/**
+

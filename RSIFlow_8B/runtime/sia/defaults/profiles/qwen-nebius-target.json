@@ -1,0 +1,7 @@
+{
+  "profile_id": "qwen-nebius-target",
+  "name": "Qwen 80B on Nebius",
+  "model": "Qwen/Qwen3-Next-80B-A3B-Thinking-fast",
+  "provider_id": "nebius",
+  "agent_reference": "default"
+}

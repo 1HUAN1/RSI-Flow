@@ -1,0 +1,39 @@
+model = "DeepSeek-V4.1-Flash"
+model_provider = "autodl"
+model_reasoning_effort = "low"
+model_catalog_json = "__MODEL_CATALOG_JSON__"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+web_search = "disabled"
+
+[agents]
+enabled = false
+
+[features]
+shell_tool = true
+use_legacy_landlock = true
+multi_agent = false
+multi_agent_v2 = false
+
+[sandbox_workspace_write]
+network_access = true
+exclude_slash_tmp = true
+exclude_tmpdir_env_var = true
+
+[model_providers.autodl]
+name = "autodl"
+base_url = "https://www.autodl.art/api/v1"
+wire_api = "responses"
+env_key = "AUTODL_API_KEY"
+requires_openai_auth = false
+supports_websockets = false
+request_max_retries = 0
+stream_max_retries = 0
+stream_idle_timeout_ms = 600000
+
+[shell_environment_policy]
+inherit = "none"
+include_only = ["PATH", "HOME", "LANG", "TMPDIR", "PYTHONDONTWRITEBYTECODE"]
+
+[shell_environment_policy.set]
+PYTHONDONTWRITEBYTECODE = "1"

@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SIA Runs Visualizer</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1d212b; --border: #272c38;
+    --text: #e6e9ef; --muted: #8b93a7; --accent: #6ea8fe; --good: #4ade80;
+    --bad: #f87171; --warn: #fbbf24; --code-bg: #11141a;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+    font-size: 14px; line-height: 1.5; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+  .sidebar { border-right: 1px solid var(--border); background: var(--panel);
+    overflow-y: auto; display: flex; flex-direction: column; }
+  .brand { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex;
+    align-items: center; gap: 10px; }
+  .brand h1 { font-size: 15px; margin: 0; letter-spacing: .5px; }
+  .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--good);
+    box-shadow: 0 0 8px var(--good); }
+  .runlist { padding: 8px; }
+  .run-item { display: block; padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    border: 1px solid transparent; margin-bottom: 4px; }
+  .run-item:hover { background: var(--panel-2); }
+  .run-item.active { background: var(--panel-2); border-color: var(--accent); }
+  .run-item .top { display: flex; justify-content: space-between; align-items: center; }
+  .run-item .name { font-weight: 600; }
+  .run-item .sub { color: var(--muted); font-size: 12px; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .main { overflow-y: auto; padding: 24px 28px; }
+  .badge { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    background: var(--panel-2); border: 1px solid var(--border); }
+  .badge.good { color: var(--good); border-color: #2c5; }
+  .badge.bad { color: var(--bad); }
+  .badge.warn { color: var(--warn); }
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+    gap: 10px; margin: 12px 0 20px; }
+  .meta-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 12px; }
+  .meta-card .k { color: var(--muted); font-size: 11px; text-transform: uppercase;
+    letter-spacing: .6px; }
+  .meta-card .v { margin-top: 4px; font-family: var(--mono); font-size: 13px; word-break: break-word; }
+  /* Profile chips: 3 compact summary chips (meta / target / task), each with a
+     hover/focus tooltip carrying the full detail so the run header stays tiny. */
+  .chip-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 20px; }
+  .pchip { position: relative; flex: 1 1 0; min-width: 200px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; cursor: help;
+    display: flex; align-items: center; gap: 12px; }
+  .pchip:hover, .pchip:focus-within { border-color: var(--accent); outline: none; }
+  .pchip-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .pchip .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .6px; }
+  .pchip-val { font-family: var(--mono); font-size: 13px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
+  .pchip-tip { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+    min-width: 420px; max-width: min(760px, 92vw); background: var(--panel-2);
+    border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.5); opacity: 0; visibility: hidden;
+    transform: translateY(-4px); transition: opacity .12s ease, transform .12s ease;
+    pointer-events: none; }
+  .pchip-tip--right { left: auto; right: 0; }
+  .pchip:hover .pchip-tip, .pchip:focus-within .pchip-tip {
+    opacity: 1; visibility: visible; transform: translateY(0); }
+  .kv { display: flex; gap: 10px; align-items: baseline; margin-bottom: 5px; }
+  .kv:last-child { margin-bottom: 0; }
+  .kv-k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+    min-width: 76px; flex-shrink: 0; }
+  .kv-v { font-family: var(--mono); font-size: 12.5px; word-break: break-word; }
+  h2 { font-size: 18px; margin: 24px 0 8px; }
+  h3 { font-size: 15px; margin: 18px 0 8px; color: var(--muted); }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 8px 0 16px;
+    flex-wrap: wrap; }
+  .tab { padding: 8px 14px; cursor: pointer; border-radius: 8px 8px 0 0; color: var(--muted);
+    border: 1px solid transparent; border-bottom: none; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); background: var(--panel); border-color: var(--border); }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px;
+    line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  pre.nowrap { white-space: pre; word-break: normal; }
+  .t-c { color: #6b7280; font-style: italic; }  /* comment */
+  .t-s { color: #a5d6a7; }                       /* string  */
+  .t-n { color: #f0a868; }                       /* number  */
+  .t-k { color: #c792ea; }                       /* keyword */
+  .t-b { color: #82aaff; }                       /* builtin */
+  .t-d { color: #ffcb6b; }                       /* decorator */
+  .t-f { color: #82aaff; }                       /* def/class name */
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--bg); }
+  td.mono, th.mono { font-family: var(--mono); }
+  .ok { color: var(--good); } .no { color: var(--bad); }
+  .gen-chart { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin: 8px 0 20px; }
+  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .pill { padding: 6px 12px; border-radius: 999px; cursor: pointer; background: var(--panel);
+    border: 1px solid var(--border); color: var(--muted); }
+  .pill.active { color: var(--text); border-color: var(--accent); }
+  .bar { height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: var(--accent); }
+  .muted { color: var(--muted); }
+  .turn { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px;
+    overflow: hidden; }
+  .turn .role { padding: 6px 12px; font-family: var(--mono); font-size: 12px;
+    text-transform: uppercase; letter-spacing: .5px; }
+  .turn.system .role { background: #2a2440; color: #c4b5fd; }
+  .turn.user .role { background: #1e2a3a; color: #93c5fd; }
+  .turn.assistant .role { background: #1e3329; color: #86efac; }
+  .turn.tool .role, .turn.unknown .role { background: var(--panel-2); color: var(--muted); }
+  .turn .body { padding: 10px 14px; white-space: pre-wrap; font-family: var(--mono);
+    font-size: 12.5px; }
+  .empty { color: var(--muted); padding: 40px; text-align: center; }
+  .md h1,.md h2,.md h3 { color: var(--text); }
+  .md code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); }
+  .md ul { padding-left: 22px; }
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  select, input { background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px; font-family: var(--sans); font-size: 13px; }
+  .crumbs { color: var(--muted); margin-bottom: 6px; font-size: 13px; }
+  .spinner { color: var(--muted); padding: 30px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span><h1>SIA RUNS</h1></div>
+    <div class="runlist" id="runlist"><div class="spinner">Loading…</div></div>
+  </aside>
+  <main class="main" id="main"><div class="empty">Select a run from the left.</div></main>
+</div>
+
+<script>
+const $ = (sel, el=document) => el.querySelector(sel);
+const h = (tag, attrs={}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) {
+    if (k === "class") el.className = v;
+    else if (k === "html") el.innerHTML = v;
+    else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid == null) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(kid));
+  }
+  return el;
+};
+const api = async (path) => {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(`${r.status} ${path}`);
+  const ct = r.headers.get("content-type") || "";
+  return ct.includes("application/json") ? r.json() : r.text();
+};
+const fmtPct = (p) => p == null ? "—" : p.toFixed(1) + "%";
+const pctClass = (p) => p == null ? "" : p >= 50 ? "good" : p >= 25 ? "warn" : "bad";
+const esc = (s) => (s ?? "").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// Minimal, safe markdown (headings, bold, inline code, lists, hr, code fences).
+function md(src) {
+  const lines = (src || "").split("\n");
+  let out = "", inUl = false, inCode = false;
+  const closeUl = () => { if (inUl) { out += "</ul>"; inUl = false; } };
+  for (let raw of lines) {
+    if (raw.trim().startsWith("```")) {
+      if (inCode) { out += "</code></pre>"; inCode = false; }
+      else { closeUl(); out += "<pre><code>"; inCode = true; }
+      continue;
+    }
+    if (inCode) { out += esc(raw) + "\n"; continue; }
+    let line = esc(raw);
+    line = line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+               .replace(/`([^`]+?)`/g, "<code>$1</code>")
+               .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    let m;
+    if (/^\s*---+\s*$/.test(raw)) { closeUl(); out += "<hr>"; }
+    else if ((m = line.match(/^(#{1,4})\s+(.*)$/))) { closeUl(); const n = m[1].length; out += `<h${n}>${m[2]}</h${n}>`; }
+    else if ((m = line.match(/^\s*[-*]\s+(.*)$/))) { if (!inUl) { out += "<ul>"; inUl = true; } out += `<li>${m[1]}</li>`; }
+    else if (line.trim() === "") { closeUl(); }
+    else { closeUl(); out += `<p>${line}</p>`; }
+  }
+  closeUl(); if (inCode) out += "</code></pre>";
+  return out;
+}
+
+// Minimal, dependency-free Python highlighter. Tokenizes with a single sticky
+// regex (priority order: comment, triple/quoted string, decorator, number,
+// identifier) so spans never overlap or break HTML escaping.
+const PY_KW = new Set(("False None True and as assert async await break class continue def del " +
+  "elif else except finally for from global if import in is lambda nonlocal not or pass raise " +
+  "return try while with yield match case self cls").split(" "));
+const PY_BUILTIN = new Set(("print len range int float str list dict set tuple bool bytes open " +
+  "enumerate zip map filter sum min max abs round sorted reversed type isinstance issubclass " +
+  "hasattr getattr setattr delattr super object property staticmethod classmethod repr format " +
+  "any all next iter input vars dir id hash hex oct bin chr ord Exception BaseException " +
+  "ValueError KeyError TypeError IndexError RuntimeError StopIteration FileNotFoundError " +
+  "NotImplementedError OSError IOError AttributeError ImportError True False None").split(" "));
+const PY_TOKEN = new RegExp(
+  "(#[^\\n]*)" +                                                            // 1 comment
+  "|([rbfuRBFU]{0,3}(?:'''[\\s\\S]*?'''|\"\"\"[\\s\\S]*?\"\"\"))" +          // 2 triple string
+  "|([rbfuRBFU]{0,3}(?:\"(?:\\\\.|[^\"\\\\\\n])*\"|'(?:\\\\.|[^'\\\\\\n])*'))" + // 3 string
+  "|(@[A-Za-z_][\\w.]*)" +                                                  // 4 decorator
+  "|(\\b\\d[\\w.]*\\b)" +                                                   // 5 number
+  "|([A-Za-z_]\\w*)" +                                                      // 6 identifier
+  "|(\\s+)" +                                                              // 7 whitespace
+  "|([^\\s])", "y");                                                        // 8 other
+
+function highlightPython(code) {
+  let out = "", pos = 0, afterDef = false;
+  const span = (cls, t) => `<span class="t-${cls}">${esc(t)}</span>`;
+  while (pos < code.length) {
+    PY_TOKEN.lastIndex = pos;
+    const m = PY_TOKEN.exec(code);
+    if (!m) { out += esc(code[pos]); pos++; continue; }
+    const [full, comment, tstr, str, dec, num, ident, ws] = m;
+    if (comment != null) { out += span("c", full); afterDef = false; }
+    else if (tstr != null || str != null) { out += span("s", full); afterDef = false; }
+    else if (dec != null) { out += span("d", full); afterDef = false; }
+    else if (num != null) { out += span("n", full); afterDef = false; }
+    else if (ident != null) {
+      if (PY_KW.has(full)) { out += span("k", full); afterDef = (full === "def" || full === "class"); }
+      else if (afterDef) { out += span("f", full); afterDef = false; }
+      else if (PY_BUILTIN.has(full)) { out += span("b", full); }
+      else { out += esc(full); }
+    }
+    else if (ws != null) { out += esc(ws); }   // whitespace preserves afterDef
+    else { out += esc(full); afterDef = false; }
+    pos = PY_TOKEN.lastIndex;
+  }
+  return out;
+}
+
+// ---- Routing (hash) ---------------------------------------------------------
+let RUNS = [];
+async function boot() {
+  try {
+    RUNS = await api("/api/runs");
+  } catch (e) { $("#runlist").innerHTML = `<div class="empty">Failed to load runs.<br>${esc(e.message)}</div>`; return; }
+  renderSidebar();
+  window.addEventListener("hashchange", route);
+  route();
+}
+
+function renderSidebar() {
+  const list = $("#runlist");
+  list.innerHTML = "";
+  if (!RUNS.length) { list.innerHTML = `<div class="empty">No runs found.</div>`; return; }
+  for (const r of RUNS) {
+    const p = r.best_accuracy_percent;
+    list.append(h("a", { class: "run-item", href: `#/${r.name}`, "data-run": r.name },
+      h("div", { class: "top" },
+        h("span", { class: "name" }, r.name),
+        h("span", { class: "badge " + pctClass(p) }, fmtPct(p))),
+      h("div", { class: "sub" }, `${r.agent_impl || "?"} · ${r.task_model || r.meta_model || "?"} · ${r.num_generations} gen`)));
+  }
+  syncSidebarActive();
+}
+
+function syncSidebarActive() {
+  const active = currentRoute().run;
+  for (const item of document.querySelectorAll(".run-item"))
+    item.classList.toggle("active", item.getAttribute("data-run") === active);
+}
+
+function currentRoute() {
+  const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  return { run: parts[0], gen: parts[1], tab: parts[2] };
+}
+
+// Cache run details and track what's currently mounted so navigation only
+// re-renders the part that actually changed (no full-page flicker on tab clicks).
+const RUN_CACHE = {};
+const VIEW = { pillsRow: null, genHost: null, tabsBar: null, genBody: null };
+let MOUNTED = { run: null, gen: null, tab: null };
+
+async function route() {
+  const { run } = currentRoute();
+  syncSidebarActive();
+  if (!run) {
+    MOUNTED = { run: null, gen: null, tab: null };
+    $("#main").innerHTML = `<div class="empty">Select a run from the left.</div>`;
+    return;
+  }
+
+  let detail = RUN_CACHE[run];
+  if (!detail) {
+    if (MOUNTED.run !== run) $("#main").innerHTML = `<div class="spinner">Loading ${esc(run)}…</div>`;
+    try {
+      detail = RUN_CACHE[run] = await api(`/api/runs/${run}`);
+    } catch (e) {
+      MOUNTED = { run: null, gen: null, tab: null };
+      $("#main").innerHTML = `<div class="empty">Failed to load ${esc(run)}.<br>${esc(e.message)}</div>`;
+      return;
+    }
+  }
+
+  if (MOUNTED.run !== run) { renderRun(detail); MOUNTED = { run, gen: null, tab: null }; }
+  mountGen(detail);
+}
+
+// Flatten a (possibly nested) object into [dotted-key, value] rows, skipping
+// null/empty so the whole profile JSON renders generically — new profile fields
+// appear automatically without touching this code.
+function flattenRows(obj, prefix = "") {
+  const rows = [];
+  for (const [k, v] of Object.entries(obj || {})) {
+    if (v == null || v === "") continue;
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (typeof v === "object" && !Array.isArray(v)) rows.push(...flattenRows(v, key));
+    else rows.push([key, Array.isArray(v) ? v.join(", ") : String(v)]);
+  }
+  return rows;
+}
+
+// Three compact profile chips (meta / target / task). Each shows a label + key
+// value inline, with a hover/focus tooltip rendering the full profile JSON so the
+// run header stays tiny. Falls back to context.md fields for pre-profiles.json runs.
+function profileChips(run) {
+  const p = run.profiles || {};
+  const defs = [
+    { label: "Meta agent", value: p.meta?.model || p.meta?.name || run.meta_model,
+      obj: p.meta || (run.meta_model ? { model: run.meta_model, agent_impl: run.agent_impl } : null) },
+    { label: "Target agent", value: p.target?.model || p.target?.name || run.task_model,
+      obj: p.target || (run.task_model ? { model: run.task_model } : null) },
+    { label: "Task", value: run.task,
+      obj: { task: run.task, max_generations: run.max_generations } },
+  ].filter(d => d.value != null && d.value !== "");
+
+  const row = h("div", { class: "chip-row" });
+  defs.forEach((d, i) => {
+    const rows = flattenRows(d.obj);
+    const tipClass = "pchip-tip" + (i === defs.length - 1 ? " pchip-tip--right" : "");
+    const tip = h("div", { class: tipClass }, rows.length
+      ? rows.map(([k, v]) => h("div", { class: "kv" },
+          h("span", { class: "kv-k" }, k), h("span", { class: "kv-v" }, v)))
+      : h("div", { class: "muted" }, "No profile detail"));
+    row.append(h("div", { class: "pchip", tabindex: "0" },
+      h("div", { class: "pchip-col" },
+        h("div", { class: "k" }, d.label),
+        h("div", { class: "pchip-val" }, String(d.value))),
+      tip));
+  });
+  return row;
+}
+
+// ---- Run view (static chrome: built once per run) ---------------------------
+function renderRun(run) {
+  const main = $("#main");
+  main.innerHTML = "";
+  main.append(h("div", { class: "crumbs" }, "runs / " + run.name));
+  main.append(h("h2", { style: "margin-bottom:2px" }, run.name));
+  if (run.started) main.append(h("div", { class: "muted", style: "font-size:12px;margin-bottom:8px" }, "Started " + run.started));
+
+  main.append(profileChips(run));
+
+  main.append(genChart(run.generations));
+
+  VIEW.pillsRow = h("div", { class: "pill-row" });
+  VIEW.genHost = h("div", {});
+  main.append(VIEW.pillsRow, VIEW.genHost);
+}
+
+// ---- Generation mount: only re-render the bits that changed ------------------
+function mountGen(detail) {
+  const gens = detail.generations;
+  if (!gens.length) { VIEW.genHost.innerHTML = `<div class="empty">No generations yet.</div>`; return; }
+  const { gen, tab } = currentRoute();
+  const activeGen = gens.find(g => g.name === gen) || gens[gens.length - 1];
+  const activeTab = tab || "overview";
+
+  // Pills: cheap synchronous rebuild (preserves the active tab when switching gen).
+  VIEW.pillsRow.innerHTML = "";
+  for (const g of gens) {
+    VIEW.pillsRow.append(h("a", {
+      class: "pill" + (g.name === activeGen.name ? " active" : ""),
+      href: `#/${detail.name}/${g.name}/${activeTab}`,
+    }, `${g.name} · ${fmtPct(g.eval?.accuracy_percent)}`));
+  }
+
+  if (MOUNTED.gen !== activeGen.name) {
+    buildGenScaffold(detail, activeGen);
+    MOUNTED.gen = activeGen.name;
+    MOUNTED.tab = null;
+  }
+  if (MOUNTED.tab !== activeTab) {
+    showTab(detail, activeGen, activeTab);
+    MOUNTED.tab = activeTab;
+  }
+}
+
+function genChart(gens) {
+  const wrap = h("div", { class: "gen-chart" }, h("div", { class: "k muted" }, "ACCURACY ACROSS GENERATIONS"));
+  const pts = gens.map(g => ({ x: g.index, y: g.eval?.accuracy_percent }));
+  const W = 640, H = 160, pad = 28;
+  const maxY = Math.max(50, ...pts.map(p => p.y || 0));
+  const sx = (i) => pad + (gens.length <= 1 ? 0 : i * (W - 2*pad) / (gens.length - 1));
+  const sy = (y) => H - pad - (y || 0) / maxY * (H - 2*pad);
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", "100%"); svg.style.maxWidth = W+"px";
+  // axis
+  const axis = document.createElementNS(ns, "line");
+  axis.setAttribute("x1", pad); axis.setAttribute("y1", H-pad); axis.setAttribute("x2", W-pad); axis.setAttribute("y2", H-pad);
+  axis.setAttribute("stroke", "#272c38"); svg.append(axis);
+  const valid = pts.filter(p => p.y != null);
+  if (valid.length >= 2) {
+    const poly = document.createElementNS(ns, "polyline");
+    poly.setAttribute("fill", "none"); poly.setAttribute("stroke", "#6ea8fe"); poly.setAttribute("stroke-width", "2");
+    poly.setAttribute("points", valid.map((p,i) => `${sx(gens.findIndex(g=>g.index===p.x))},${sy(p.y)}`).join(" "));
+    svg.append(poly);
+  }
+  pts.forEach((p, i) => {
+    if (p.y == null) return;
+    const c = document.createElementNS(ns, "circle");
+    c.setAttribute("cx", sx(i)); c.setAttribute("cy", sy(p.y)); c.setAttribute("r", 4); c.setAttribute("fill", "#6ea8fe");
+    svg.append(c);
+    const t = document.createElementNS(ns, "text");
+    t.setAttribute("x", sx(i)); t.setAttribute("y", sy(p.y) - 9); t.setAttribute("fill", "#e6e9ef");
+    t.setAttribute("font-size", "11"); t.setAttribute("text-anchor", "middle"); t.textContent = p.y.toFixed(1) + "%";
+    svg.append(t);
+    const lbl = document.createElementNS(ns, "text");
+    lbl.setAttribute("x", sx(i)); lbl.setAttribute("y", H-pad+16); lbl.setAttribute("fill", "#8b93a7");
+    lbl.setAttribute("font-size", "11"); lbl.setAttribute("text-anchor", "middle"); lbl.textContent = "gen " + p.x;
+    svg.append(lbl);
+  });
+  wrap.append(svg);
+  return wrap;
+}
+
+// ---- Generation view --------------------------------------------------------
+const GEN_TABS = [
+  ["overview", "Overview"], ["code", "Agent code"], ["prompt", "Prompt"],
+  ["improvement", "Improvement"], ["trajectories", "Trajectories"], ["logs", "Logs"],
+];
+
+// Build the tabs bar + empty body container once per generation. The tabs bar
+// persists across tab clicks so only the body swaps (no flicker of the chrome).
+function buildGenScaffold(run, gen) {
+  VIEW.genHost.innerHTML = "";
+  VIEW.tabsBar = h("div", { class: "tabs" }, GEN_TABS.map(([id, label]) =>
+    h("a", { class: "tab", "data-tab": id, href: `#/${run.name}/${gen.name}/${id}` }, label)));
+  VIEW.genBody = h("div", {});
+  VIEW.genHost.append(VIEW.tabsBar, VIEW.genBody);
+}
+
+const TAB_RENDERERS = {
+  overview: tabOverview, code: tabCode, prompt: tabPrompt,
+  improvement: tabImprovement, trajectories: tabTrajectories, logs: tabLogs,
+};
+
+function showTab(run, gen, tab) {
+  for (const el of VIEW.tabsBar.children)
+    el.classList.toggle("active", el.getAttribute("data-tab") === tab);
+  VIEW.genBody.innerHTML = "";
+  (TAB_RENDERERS[tab] || tabOverview)({ run, gen, body: VIEW.genBody });
+}
+
+function tabOverview({ gen, body }) {
+  const ev = gen.eval;
+  if (ev) {
+    body.append(h("div", { class: "meta-grid" },
+      [["Accuracy", fmtPct(ev.accuracy_percent)], ["Correct", ev.correct], ["Incorrect", ev.incorrect],
+       ["Total", ev.total], ["Missing", ev.missing], ["Invalid", ev.invalid]]
+      .filter(([,v]) => v != null).map(([k,v]) =>
+        h("div", { class: "meta-card" }, h("div", { class: "k" }, k), h("div", { class: "v" }, String(v))))));
+  } else {
+    body.append(h("div", { class: "muted" }, "No evaluation results for this generation."));
+  }
+  if (gen.domains?.length) {
+    body.append(h("h3", {}, "By domain"));
+    const t = h("table", {}, h("thead", {}, h("tr", {},
+      h("th", {}, "Domain"), h("th", {}, "Accuracy"), h("th", {}, "Correct / Total"), h("th", { style:"width:30%" }, ""))));
+    const tb = h("tbody", {});
+    for (const d of gen.domains) {
+      tb.append(h("tr", {},
+        h("td", {}, d.domain),
+        h("td", { class: "mono " + (d.accuracy_percent>=50?"ok":d.accuracy_percent>=25?"":"no") }, fmtPct(d.accuracy_percent)),
+        h("td", { class: "mono" }, `${d.correct} / ${d.total}`),
+        h("td", {}, h("div", { class: "bar" }, h("span", { style: `width:${d.accuracy_percent}%` })))));
+    }
+    t.append(tb); body.append(t);
+  }
+}
+
+async function tabCode({ run, gen, body }) {
+  if (!gen.artifacts.includes("target_agent")) { body.append(h("div", { class:"muted" }, "No target_agent.py.")); return; }
+  body.append(h("div", { class: "spinner" }, "Loading code…"));
+  const code = await api(`/api/runs/${run.name}/gens/${gen.name}/artifact/target_agent`);
+  body.innerHTML = "";
+  body.append(h("div", { class:"toolbar" }, h("span", { class:"muted" }, "target_agent.py")));
+  body.append(h("pre", { class: "nowrap", html: highlightPython(code) }));
+}
+
+async function tabPrompt({ run, gen, body }) {
+  const label = gen.artifacts.includes("meta_prompt") ? "meta_prompt"
+              : gen.artifacts.includes("feedback_prompt") ? "feedback_prompt" : null;
+  if (!label) { body.append(h("div", { class:"muted" }, "No prompt file.")); return; }
+  body.append(h("div", { class: "spinner" }, "Loading…"));
+  const text = await api(`/api/runs/${run.name}/gens/${gen.name}/artifact/${label}`);
+  body.innerHTML = "";
+  body.append(h("div", { class:"toolbar" }, h("span", { class:"muted" }, label === "meta_prompt" ? "meta_agent_prompt.txt" : "feedback_agent_prompt.txt")));
+  body.append(h("div", { class: "md", html: md(text) }));
+}
+
+async function tabImprovement({ run, gen, body }) {
+  if (!gen.artifacts.includes("improvement")) { body.append(h("div", { class:"muted" }, "No improvement.md (typically gen ≥ 2).")); return; }
+  body.append(h("div", { class: "spinner" }, "Loading…"));
+  const text = await api(`/api/runs/${run.name}/gens/${gen.name}/artifact/improvement`);
+  body.innerHTML = "";
+  body.append(h("div", { class: "md", html: md(text) }));
+}
+
+async function tabLogs({ run, gen, body }) {
+  const which = h("select", {},
+    h("option", { value: "stdout_log" }, "target_agent_stdout.log"),
+    h("option", { value: "eval_log" }, "evaluation.log"));
+  const pre = h("pre", {}, "");
+  const load = async () => {
+    pre.textContent = "Loading…";
+    try { pre.textContent = await api(`/api/runs/${run.name}/gens/${gen.name}/artifact/${which.value}`); }
+    catch { pre.textContent = "(not available)"; }
+  };
+  which.addEventListener("change", load);
+  body.append(h("div", { class: "toolbar" }, which));
+  body.append(pre);
+  load();
+}
+
+async function tabTrajectories({ run, gen, body }) {
+  if (!gen.trajectories?.length) { body.append(h("div", { class:"muted" }, "No per-question trajectories.")); return; }
+  const sel = h("select", {}, gen.trajectories.map(q => h("option", { value: q }, "Question q" + q)));
+  const filter = h("input", { type: "search", placeholder: "filter q… e.g. 42", style:"width:120px" });
+  const host = h("div", {});
+  const load = async () => {
+    host.innerHTML = `<div class="spinner">Loading trajectory…</div>`;
+    try {
+      const turns = await api(`/api/runs/${run.name}/gens/${gen.name}/trajectory/${sel.value}`);
+      host.innerHTML = "";
+      for (const t of turns) {
+        const cls = ["system","user","assistant"].includes(t.role) ? t.role : "tool";
+        host.append(h("div", { class: "turn " + cls },
+          h("div", { class: "role" }, t.role),
+          h("div", { class: "body" }, t.text || "(empty)")));
+      }
+      if (!turns.length) host.append(h("div", { class:"muted" }, "Empty trajectory."));
+    } catch (e) { host.innerHTML = `<div class="empty">Failed: ${esc(e.message)}</div>`; }
+  };
+  filter.addEventListener("input", () => {
+    const v = filter.value.trim();
+    for (const opt of sel.options) opt.hidden = v && !opt.value.includes(v);
+    const first = [...sel.options].find(o => !o.hidden);
+    if (first) { sel.value = first.value; load(); }
+  });
+  sel.addEventListener("change", load);
+  body.append(h("div", { class: "toolbar" },
+    h("span", { class:"muted" }, `${gen.trajectories.length} trajectories`), sel, filter,
+    gen.has_openhands ? h("span", { class:"badge" }, "openhands available") : null));
+  body.append(host);
+  load();
+}
+
+boot();
+</script>
+</body>
+</html>
