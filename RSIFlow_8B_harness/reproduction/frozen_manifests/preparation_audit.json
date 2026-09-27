@@ -1,0 +1,710 @@
+{
+  "allocated_tasks": 900,
+  "cross_round_tool_environment_reuse": true,
+  "manifests": [
+    {
+      "by_domain": {
+        "code": 60,
+        "searchqa": 60,
+        "tool_use": 60
+      },
+      "manifest_hash": "1e340a2c8e4ecb6eb4851fb8669f5da21ce0d713d8f7e696446f4e6c2608a179",
+      "round_id": 1,
+      "tasks": 180
+    },
+    {
+      "by_domain": {
+        "code": 60,
+        "searchqa": 60,
+        "tool_use": 60
+      },
+      "manifest_hash": "8f7ca6a5659aa9d1a97d36b2953ebffd126ebd2bee2deee618509489626bedb1",
+      "round_id": 2,
+      "tasks": 180
+    },
+    {
+      "by_domain": {
+        "code": 60,
+        "searchqa": 60,
+        "tool_use": 60
+      },
+      "manifest_hash": "3554dbe67d8eab4c49a128f2e5039673aebc1d345a8a1a92f4a9f5eb8c430ce5",
+      "round_id": 3,
+      "tasks": 180
+    },
+    {
+      "by_domain": {
+        "code": 60,
+        "searchqa": 60,
+        "tool_use": 60
+      },
+      "manifest_hash": "f6ef06e13015a412685ae6017cc38b8a324a41a6ea8d575d80837bc0dad0f914",
+      "round_id": 4,
+      "tasks": 180
+    },
+    {
+      "by_domain": {
+        "code": 60,
+        "searchqa": 60,
+        "tool_use": 60
+      },
+      "manifest_hash": "18935083a094bc2aef02b15307c430d91482908ddc22c43686abb33c267e5972",
+      "round_id": 5,
+      "tasks": 180
+    }
+  ],
+  "new_rounds": [
+    4,
+    5
+  ],
+  "preserved_data_dir": "/root/data/RSI_iclr2027/rsiH/RSIFlow_4B/runtime/data/rounds_540",
+  "rounds": 5,
+  "source_audit": {
+    "duplicate_ids": [],
+    "files": [
+      {
+        "date_range": null,
+        "missing_labels": {
+          "difficulty": 2100,
+          "source": 2100,
+          "task_type": 2100,
+          "type": 2100
+        },
+        "original_split": "train",
+        "path": "/root/data/RSI_iclr2027/dataset/train/tool_use/envscaler/train/scenarios.jsonl",
+        "raw_records": 2100,
+        "sha256": "0296814c9f33fb129bee055f1507ced6d35e9a12b7cac18f0194009dd2c9154b",
+        "source": "envscaler"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "difficulty": 450,
+          "source": 450,
+          "task_type": 450,
+          "type": 450
+        },
+        "original_split": "heldout",
+        "path": "/root/data/RSI_iclr2027/dataset/train/tool_use/envscaler/heldout/scenarios.jsonl",
+        "raw_records": 450,
+        "sha256": "a2d402dcb75bb935da2451082c9b1e155a0670daf9ae732f6cb86d2e5d8d6148",
+        "source": "envscaler"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "difficulty": 6600,
+          "source": 6600,
+          "task_type": 6600,
+          "type": 6600
+        },
+        "original_split": "train",
+        "path": "/root/data/RSI_iclr2027/dataset/train/code/deepcoder_taco/train.jsonl",
+        "raw_records": 6600,
+        "sha256": "bb5d1b4f05dc0bd5d0589d211248ecf53cc4e6e06609c94f27317c7c8a2b937b",
+        "source": "deepcoder_taco"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "difficulty": 79168,
+          "source": 79168,
+          "task_type": 79168,
+          "type": 79168
+        },
+        "original_split": "train",
+        "path": "/root/data/RSI_iclr2027/dataset/train/searchqa/nq_open/train.jsonl",
+        "raw_records": 79168,
+        "sha256": "b171c184ccad0beabdb23d3fd3673e66da0f7505a764d637f16031ee8689d075",
+        "source": "nq_open"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "difficulty": 90447,
+          "source": 90447,
+          "task_type": 90447
+        },
+        "original_split": "train",
+        "path": "/root/data/RSI_iclr2027/dataset/train/searchqa/hotpotqa/train.jsonl",
+        "raw_records": 90447,
+        "sha256": "129cbbf72e860a7be334e511da38de0f9f45426570b19aa1209fa0c92e94f726",
+        "source": "hotpotqa"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "difficulty": 167454,
+          "source": 167454,
+          "task_type": 167454
+        },
+        "original_split": "train",
+        "path": "/root/data/RSI_iclr2027/dataset/train/searchqa/2wiki/train.jsonl",
+        "raw_records": 167454,
+        "sha256": "aa417871f2c4da8dcac4ca873157f3ab7002665a86c2924d10ce348075960e2f",
+        "source": "2wiki"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 240,
+          "difficulty": 240,
+          "question_type": 240,
+          "type": 240
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_irrelevance.json",
+        "raw_records": 240,
+        "sha256": "8237162db28f3cf2e3f7d0b0380333fdf829c2ff15234506b0f2205399c8c655",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 100,
+          "difficulty": 100,
+          "question_type": 100,
+          "type": 100
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_java.json",
+        "raw_records": 100,
+        "sha256": "261d327d50c1bb505614dd5f75a29167d5bd9f938e5cefefef989c325cb67848",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_javascript.json",
+        "raw_records": 50,
+        "sha256": "b69b6a99548f72e151be7abed4beb0ed70873d3370d5b78feed75b66f33795d3",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 882,
+          "difficulty": 882,
+          "question_type": 882,
+          "type": 882
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_live_irrelevance.json",
+        "raw_records": 882,
+        "sha256": "0d259e1c3ab6ba06c2a51911e2f49ecaa2eac3723a4a14f183a7687955e61338",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 1053,
+          "difficulty": 1053,
+          "question_type": 1053,
+          "type": 1053
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_live_multiple.json",
+        "raw_records": 1053,
+        "sha256": "791d1faaf5ba5579196cd45a5fb37fa096d88848d6077f33cb6e2d22ebf58206",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 16,
+          "difficulty": 16,
+          "question_type": 16,
+          "type": 16
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_live_parallel.json",
+        "raw_records": 16,
+        "sha256": "6c26e9fdc3350cf596e6d1ea9c179cbff834761bccf562f4141ed29a839ca421",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 24,
+          "difficulty": 24,
+          "question_type": 24,
+          "type": 24
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_live_parallel_multiple.json",
+        "raw_records": 24,
+        "sha256": "21d4b9319c1faac431e22757b367ea28917fe467364c3a4b17f16ec06d4f6e79",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 18,
+          "difficulty": 18,
+          "question_type": 18,
+          "type": 18
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_live_relevance.json",
+        "raw_records": 18,
+        "sha256": "9ce547600184f700de6995cbfaa310d50ccb79e69bc84a94f36a3b5e89bfafa9",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 258,
+          "difficulty": 258,
+          "question_type": 258,
+          "type": 258
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_live_simple.json",
+        "raw_records": 258,
+        "sha256": "10e5cedb6dc73cd16bc430755643c658d6032a69363dfc41a22a84988eaa312a",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 200,
+          "difficulty": 200,
+          "question_type": 200,
+          "type": 200
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_multi_turn_base.json",
+        "raw_records": 200,
+        "sha256": "fe5c442849bdb2c2cdedc91f377411ff7fc6cd11af299766f4554d71d3d40f98",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 200,
+          "difficulty": 200,
+          "question_type": 200,
+          "type": 200
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_multi_turn_long_context.json",
+        "raw_records": 200,
+        "sha256": "17898c71fc5ceca4538e812602bc0338efafe665594380094bd4288f10394f51",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 200,
+          "difficulty": 200,
+          "question_type": 200,
+          "type": 200
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_multi_turn_miss_func.json",
+        "raw_records": 200,
+        "sha256": "4a3a862f3e897d121ad94aa2c3f29ea752b7f7ac4eac6a23c8d502d1143e3492",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 200,
+          "difficulty": 200,
+          "question_type": 200,
+          "type": 200
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_multi_turn_miss_param.json",
+        "raw_records": 200,
+        "sha256": "25509d5c441017c51de784e7670647dbec11a22fe0640990b0dafabf32e8c8d1",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 200,
+          "difficulty": 200,
+          "question_type": 200,
+          "type": 200
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_multiple.json",
+        "raw_records": 200,
+        "sha256": "aef168155ebd74b7ac2401198b201343bc7d16d7a3d7e0d4e6d8ee82c6969b2a",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 200,
+          "difficulty": 200,
+          "question_type": 200,
+          "type": 200
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_parallel.json",
+        "raw_records": 200,
+        "sha256": "fad375d68295776efb63e5aa331dd884f8635e7bb50e05908113c74f14281c3c",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 200,
+          "difficulty": 200,
+          "question_type": 200,
+          "type": 200
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_parallel_multiple.json",
+        "raw_records": 200,
+        "sha256": "8863ea8433239f55c5f016154cf0830853c89f693c6ea270396a2fa121960579",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 400,
+          "difficulty": 400,
+          "question_type": 400,
+          "type": 400
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3/berkeley-function-call-leaderboard/bfcl_eval/data/BFCL_v3_simple.json",
+        "raw_records": 400,
+        "sha256": "fbc37b2ad252bf9af985582e0e07b456173fe627d957491472ea9cef5fb83158",
+        "source": "bfcl_v3"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 20,
+          "difficulty": 20,
+          "question_type": 20,
+          "type": 20
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_agent_multi_step.json",
+        "raw_records": 20,
+        "sha256": "c04b7561a2a5b31b3c4fd3067807ab4e0a7907f5a72cd5ec987da3469eac1fe9",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 30,
+          "difficulty": 30,
+          "question_type": 30,
+          "type": 30
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_agent_multi_turn.json",
+        "raw_records": 30,
+        "sha256": "0380631f379510fad4aab885b9679cfe99e66cf3a01e92f570f9180141f637d0",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_atom_bool.json",
+        "raw_records": 50,
+        "sha256": "59695e59c0d92cd22ec418bfd6f936d0d44a8d6e1fc16e6cb033b12213c57b0b",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_atom_enum.json",
+        "raw_records": 50,
+        "sha256": "a2e870f8ba23687ba182a2bb0bdba0a7e02c21b67f3ebc5cc07a71fc2007d31b",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_atom_list.json",
+        "raw_records": 50,
+        "sha256": "2e6c7c35e18379c886c17ae2f52d62637e92a388a1f810025c57206698c3e7ff",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_atom_number.json",
+        "raw_records": 50,
+        "sha256": "eba9d748fcd08f142abf053fe2eecc573c98232f218ff412eb9ea5350abca422",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_atom_object_deep.json",
+        "raw_records": 50,
+        "sha256": "2df8cd21fcf7388ee4fa0d98f0587292ba4c14b7c8bde059b3dca18ad885d1ec",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_atom_object_short.json",
+        "raw_records": 50,
+        "sha256": "eef597c5400e17e1c23a7548505e48139a3648d6e5bd5feabbc9b12fcf7a1a76",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 123,
+          "difficulty": 123,
+          "question_type": 123,
+          "type": 123
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_multi_turn_user_adjust.json",
+        "raw_records": 123,
+        "sha256": "b05dd0fe2afb02270ecbdfddfc7a8b1606339c234d5098749742e79bc51ea8cc",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 100,
+          "difficulty": 100,
+          "question_type": 100,
+          "type": 100
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_multi_turn_user_switch.json",
+        "raw_records": 100,
+        "sha256": "3ed94d09401c53a99c23edc8b60ebfda8d4ae486f9bea19f87b6000a66588cf0",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_preference.json",
+        "raw_records": 50,
+        "sha256": "61413bbfb5f94b3ad74f348d9f33c8c10b531dfcf6e5429caa3f1a91fa64252d",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_similar_api.json",
+        "raw_records": 50,
+        "sha256": "f3ae38a6b56ab27c47bd929f16468598636ff76ecc095ff60c41c8b5a9ee843f",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 100,
+          "difficulty": 100,
+          "question_type": 100,
+          "type": 100
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_single_turn_parallel_function.json",
+        "raw_records": 100,
+        "sha256": "7b9b9200cf5224e93f20bf14f076bead8e75d451a7dd6956d346fb1200412235",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 100,
+          "difficulty": 100,
+          "question_type": 100,
+          "type": 100
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_normal_single_turn_single_function.json",
+        "raw_records": 100,
+        "sha256": "45278849617f4b3e290db1da13929ba0a43fc4cb3332b461560a519e32af82f2",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_special_error_param.json",
+        "raw_records": 50,
+        "sha256": "3ce0f322934d8a8a96eb8bae945949f61c53b74505ba0d65c4850f98e8ba3bae",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_special_incomplete.json",
+        "raw_records": 50,
+        "sha256": "186f593f8f2be7e709c5878f57d23f401c51e326ffcadcd62f9c5c08c8e34f3b",
+        "source": "acebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 50,
+          "difficulty": 50,
+          "question_type": 50,
+          "type": 50
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench/data_all/data_en/data_special_irrelevant.json",
+        "raw_records": 50,
+        "sha256": "20bb62a9c48b1daf852870096f5d70d53a09a07b8f90a7c09815c6d934e8f41e",
+        "source": "acebench"
+      },
+      {
+        "date_range": [
+          "2023-05-07T00:00:00",
+          "2025-04-06T00:00:00"
+        ],
+        "missing_labels": {
+          "category": 1055,
+          "question_type": 1055,
+          "type": 1055
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/dataset/test/code/livecodebench_release_v6/test.jsonl",
+        "raw_records": 1055,
+        "sha256": "cba1a96d60cf5af0fca536bc28b4120c24d07283ea815a3c740e2edfba45287e",
+        "source": "livecodebench"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 164,
+          "difficulty": 164,
+          "question_type": 164,
+          "type": 164
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/native/HumanEvalPlus-v0.1.10.jsonl",
+        "raw_records": 164,
+        "sha256": "42526ec0e7d5f3ee0b06d6ced98f8c8bae3d76519151bfb3d36f79010645bd7f",
+        "source": "humaneval_plus"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 378,
+          "difficulty": 378,
+          "question_type": 378,
+          "type": 378
+        },
+        "original_split": "test",
+        "path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/native/MbppPlus-v0.2.0.jsonl",
+        "raw_records": 378,
+        "sha256": "b54e762755248ca411b523c917fa9f93c07b5ff2966bf60b3917b853926a3dad",
+        "source": "mbpp_plus"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 7405,
+          "difficulty": 7405,
+          "question_type": 7405
+        },
+        "original_split": "dev",
+        "path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/hotpotqa_dev_official.json",
+        "raw_records": 7405,
+        "sha256": "e32a6ef773c6999d1b8d7f9c47c934435e1ab1beb4cb48b9ed9b95d60fb72326",
+        "source": "hotpotqa_dev"
+      },
+      {
+        "date_range": null,
+        "missing_labels": {
+          "category": 12576,
+          "difficulty": 12576,
+          "question_type": 12576
+        },
+        "original_split": "dev",
+        "path": "/root/data/RSI_iclr2027/rsiH/data/report_eval/2wiki_dev_official.json",
+        "raw_records": 12576,
+        "sha256": "d610a26e47b75981a10722cb7d46d77588987627094fdd8cbd3efc0c050fb6d0",
+        "source": "2wiki_dev"
+      }
+    ],
+    "group_count": 370164,
+    "limitations": [
+      "No semantic paraphrase guarantee",
+      "Unlabeled variants may remain undetected",
+      "No claim about model pretraining contamination"
+    ],
+    "overlap_method": "NFKC/casefold/whitespace public-text equality + explicit family/dialogue IDs + environment families; transitive union",
+    "valid_unique_ids": 373138,
+    "valid_unique_native_ids": 373261
+  },
+  "status": "prepared_not_executed",
+  "unchanged_rounds": [
+    1,
+    2,
+    3
+  ]
+}

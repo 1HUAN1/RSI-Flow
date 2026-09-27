@@ -2,6 +2,8 @@
 
 Current experiment: **[RSIFlow_8B](RSIFlow_8B/)** (Qwen3-4B Task, persistent Codex Meta, five-round skill evolution). See **[source release and external dependencies](RSIFlow_8B/SOURCE_RELEASE.md)** and **[debug log](RSIFlow_8B/DEBUG_LOG.md)** before launching. The earlier [RSIFlow_4B](RSIFlow_4B/) implementation remains available. Credentials, datasets, model weights and runtime logs are excluded; cloning alone does not recreate the server environment.
 
+Latest implementation: **[RSIFlow_8B_harness](RSIFlow_8B_harness/)** adds versioned, actually executed Meta `workflow.py`, `planning.py`, and `memory.py` packages on top of skill maintenance. It retains the five-round Qwen3-4B Task protocol. See [Meta package interfaces](RSIFlow_8B_harness/META_HARNESS.md), [reproduction inputs and setup](RSIFlow_8B_harness/reproduction/README.md), and [debug records](RSIFlow_8B_harness/DEBUG_LOG.md). This source release has passed 168 offline tests; it does not claim a completed GPU/API run of Meta-program evolution. The existing skill-only implementation and historical results remain unchanged.
+
 ---
 Update logs：
 9.27 目前这一版已经有效果了，但是meta更新自己的方式是迭代skills。

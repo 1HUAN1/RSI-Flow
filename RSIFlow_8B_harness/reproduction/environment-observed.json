@@ -1,0 +1,32 @@
+{
+  "kind": "observed_dependencies_not_complete_lock",
+  "observed_date": "2026-09-27",
+  "python": "3.12.14",
+  "codex_server_binary_version": "0.153.4",
+  "codex_provenance_path": "../../third_party/codex-provenance.json",
+  "packages": {
+    "torch": "2.13.0",
+    "transformers": "5.5.4",
+    "peft": "0.20.0",
+    "accelerate": "1.14.0",
+    "datasets": "5.0.1",
+    "numpy": "2.3.5",
+    "pydantic": "2.13.5",
+    "fastapi": "0.136.3",
+    "uvicorn": "0.52.4",
+    "httpx": "0.28.1",
+    "openai": "3.8.0",
+    "json-repair": "0.63.4",
+    "jsonschema": "4.26.0",
+    "PyYAML": "6.0.3",
+    "rich": "15.0.0",
+    "scikit-learn": "1.9.0",
+    "pandas": "3.0.5",
+    "pytest": "9.1.1"
+  },
+  "notes": [
+    "Versions were read from the server sia interpreter, without model or API calls.",
+    "Official evaluator environments are separate; this is not their complete package inventory.",
+    "A matching CUDA/driver/torch build and Codex app-server protocol must be prepared separately."
+  ]
+}

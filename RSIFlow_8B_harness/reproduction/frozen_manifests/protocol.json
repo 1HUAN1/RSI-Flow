@@ -1,0 +1,180 @@
+{
+  "allocated_tasks": 900,
+  "artifact_evaluation": "direct_submission",
+  "base_config": "configs/base.json",
+  "candidate_policy": "single_candidate_strict_positive_gain",
+  "cross_round_tool_environment_reuse": true,
+  "data_release": "rounds_900",
+  "dataset_root": "/root/data/RSI_iclr2027/dataset",
+  "datasets": [
+    {
+      "domain": "tool_use",
+      "files": [
+        {
+          "original_split": "train",
+          "path": "train/tool_use/envscaler/train/scenarios.jsonl"
+        },
+        {
+          "original_split": "heldout",
+          "path": "train/tool_use/envscaler/heldout/scenarios.jsonl"
+        }
+      ],
+      "name": "envscaler",
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    },
+    {
+      "domain": "code",
+      "files": [
+        {
+          "original_split": "train",
+          "path": "train/code/deepcoder_taco/train.jsonl"
+        }
+      ],
+      "name": "deepcoder_taco",
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    },
+    {
+      "domain": "searchqa",
+      "files": [
+        {
+          "original_split": "train",
+          "path": "train/searchqa/nq_open/train.jsonl"
+        }
+      ],
+      "name": "nq_open",
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    },
+    {
+      "domain": "searchqa",
+      "files": [
+        {
+          "original_split": "train",
+          "path": "train/searchqa/hotpotqa/train.jsonl"
+        }
+      ],
+      "name": "hotpotqa",
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    },
+    {
+      "domain": "searchqa",
+      "files": [
+        {
+          "original_split": "train",
+          "path": "train/searchqa/2wiki/train.jsonl"
+        }
+      ],
+      "name": "2wiki",
+      "stratify": [
+        "difficulty",
+        "source",
+        "type",
+        "task_type"
+      ]
+    }
+  ],
+  "environment_files": [
+    "train/tool_use/envscaler/train/environments.jsonl",
+    "train/tool_use/envscaler/heldout/environments.jsonl"
+  ],
+  "evaluate_initial_system": true,
+  "evidence_bound_interventions": true,
+  "exposure_ledger": null,
+  "final_test_limits": {
+    "2wiki_dev": 1000,
+    "acebench": null,
+    "bfcl_v3": null,
+    "hotpotqa_dev": 1000,
+    "humaneval_plus": null,
+    "livecodebench": null,
+    "mbpp_plus": null
+  },
+  "frozen_data_dir": "/root/data/RSI_iclr2027/rsiH/RSIFlow_8B/runtime/data/rounds_900",
+  "grouping": {
+    "envscaler_environment_family": true,
+    "family_fields": [
+      "group_id",
+      "problem_id",
+      "conversation_id",
+      "dialogue_id",
+      "parent_id",
+      "original_id"
+    ],
+    "max_environment_fraction_per_round": 0.1
+  },
+  "max_dataset_passes_per_stage": 2,
+  "max_length": 16384,
+  "max_sft_samples": 10000000,
+  "max_wall_seconds": 2592000,
+  "memory_policy": "append_component_skill_then_general_principle",
+  "meta_relay_socket": "/tmp/rsiflow_8b_meta_relay.sock",
+  "meta_skill_context_chars": 24000,
+  "meta_skill_per_category": 1,
+  "meta_skill_seed_path": null,
+  "meta_worker_socket": "/tmp/rsiflow_8b_meta_worker.sock",
+  "minimum_sft_samples": 1,
+  "output_root": "/root/data/RSI_iclr2027/rsiH/Rollout_logs",
+  "ports": [
+    8271,
+    8272,
+    8273,
+    8274
+  ],
+  "retrieval_index": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918/runtime/data/joint_full/search.sqlite",
+  "rollout_collection_policy": "meta_one_component_one_candidate_strict_positive_gain",
+  "rollout_seed": 42,
+  "rounds": 5,
+  "run_name": "rsiflow_8b_codex_180_a0_v1",
+  "runtime_source": "runtime",
+  "seed": 42,
+  "sequential_domains": false,
+  "sft_epochs_per_update": 1,
+  "sft_max_steps": -1,
+  "skip_acebench": true,
+  "split_seed": 42,
+  "train_quotas_per_round": {
+    "2wiki": 22,
+    "deepcoder_taco": 60,
+    "envscaler": 60,
+    "hotpotqa": 23,
+    "nq_open": 15
+  },
+  "training_rollouts_per_round": {
+    "max": 360,
+    "min": 180
+  },
+  "training_schedule": "round_disjoint",
+  "training_seed": 42,
+  "training_tasks_per_pass": 180,
+  "training_timeout_seconds": 604800,
+  "validation_config": "configs/validation.json",
+  "validation_limits": {
+    "2wiki_dev": 50,
+    "acebench": 50,
+    "bfcl_v3": 50,
+    "hotpotqa_dev": 50,
+    "humaneval_plus": 25,
+    "livecodebench": 50,
+    "mbpp_plus": 25
+  },
+  "validation_vault": "/root/data/RSI_iclr2027/rsiH/evaluation_vault/append_memory_1080_fast"
+}

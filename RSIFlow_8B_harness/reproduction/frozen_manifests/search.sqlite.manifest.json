@@ -1,0 +1,17 @@
+{
+  "data_manifest_hash": "4336ea127725df55eb04d0e15113a0d4121ba1ceab314cf2cc2ec79b8a9b63e9",
+  "external_corpus_sha256": null,
+  "frozen_index_sha256": "01e85ea2f294181e05db7b244e8df212a24ce45d1ec6737e3231440c51464340",
+  "label_fields_indexed": false,
+  "nq_coverage": "training_context_pool_only_unmeasured",
+  "protocol": "open_retrieval",
+  "retriever": "sqlite_fts5_bm25",
+  "schema_version": 1,
+  "sha256": "01e85ea2f294181e05db7b244e8df212a24ce45d1ec6737e3231440c51464340",
+  "sources": {
+    "2wiki": 396576,
+    "hotpotqa": 483027
+  },
+  "sqlite_version": "3.53.2",
+  "tokenizer": "unicode61"
+}

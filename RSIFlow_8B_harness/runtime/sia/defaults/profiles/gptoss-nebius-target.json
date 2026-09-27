@@ -1,0 +1,7 @@
+{
+  "profile_id": "gptoss-nebius-target",
+  "name": "GPT OSS 120B on Nebius",
+  "model": "openai/gpt-oss-120b-fast",
+  "provider_id": "nebius",
+  "agent_reference": "default"
+}
