@@ -6,8 +6,12 @@ Latest implementation: **[RSIFlow_8B_harness](RSIFlow_8B_harness/)** adds versio
 
 ---
 Update logs：
+
 # 9.27 RSIFlow_8B_harness meta修改自己的harness
 这个目录已经新增了修改meta自己的harness，具体的做法是将codex部分内容改写为`workflow.py`, `planning.py`, and `memory.py`三者harness组成部分，然后当目前skill库中维护的skill或者经验依旧无法知道meta修改一些task的组件或者错误依旧还犯，skill起不到指导作用时，考虑让meta直接根据当前的漏洞和已存储的skill经验，生成一版新的meta harness，具体指`workflow.py`, `planning.py`, and `memory.py`。目前RSIFlow_8B_harness已搭载4B的模型在8卡机器上运行了，下面要考虑的是根据实际的运行情况，让codex帮忙判断一下什么时候由单纯累计skill到进行meta修改自己的harnesss。看看这一过程应该怎么触发选择？由什么指标和内容触发？
+启动代码：【目前已发现的一个错误是：虽然修改前后训练集上的表现提升，但是单独的测试集下效果没有提升】
+cd /root/data1/RSI_iclr2027/rsiH/RSIFlow_8B_harness
+bash start_meta.sh --wait-for-gpus
 
 # 9.27 目前这一版已经有效果了，但是meta更新自己的方式是迭代skills。
 从架构上说，是的：目前 Meta 的进化主要发生在 skill／记忆层。 没有训练 Meta 的模型参数，也没有自动改写 Meta 的 Workflow、Planning 或 Codex 执行程序。
@@ -25,6 +29,11 @@ Task 前后差异 → 总结有适用条件的改法 → 维护技能库 → 下
   <img width="859" height="388" alt="image" src="https://github.com/user-attachments/assets/c43c6e4d-b598-4942-833b-1c1b2bd1d8dd" />
 实验效果均达到提升：
 <img width="855" height="498" alt="image" src="https://github.com/user-attachments/assets/cab4806b-014c-4da4-a564-2f7abc4ca838" />
+启动代码：
+cd /root/data/RSI_iclr2027/rsiH/RSIFlow_8B
+bash start_meta.sh \
+  --config configs/train_180_a0_v1.json \
+  --run-dir /root/data/RSI_iclr2027/rsiH/Rollout_logs/runs/rsiflow_8b_skillops_180_3round_20260926
 
 9.21 目前这一版的问题是meta在总结经验的时候超过了工作区上下文限制，单次达到了36MB，超过了单次最大上下文限制16MB。
 # RSI-Flow
