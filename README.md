@@ -28,7 +28,8 @@ Task 前后差异 → 总结有适用条件的改法 → 维护技能库 → 下
   在另一版git的代码仓库中开始新增如果skill维系的经验或者skill没有被满足或者是记录的解决方案依旧解决不了当下的meta问题时，则总结meta的漏洞着手修改meta的harness。
   <img width="859" height="388" alt="image" src="https://github.com/user-attachments/assets/c43c6e4d-b598-4942-833b-1c1b2bd1d8dd" />
 实验效果均达到提升：
-<img width="855" height="498" alt="image" src="https://github.com/user-attachments/assets/cab4806b-014c-4da4-a564-2f7abc4ca838" />
+<img width="949" height="432" alt="image" src="https://github.com/user-attachments/assets/a4f59148-9701-474b-9041-67cf4b8f097f" />
+
 启动代码：
 cd /root/data/RSI_iclr2027/rsiH/RSIFlow_8B
 bash start_meta.sh \
