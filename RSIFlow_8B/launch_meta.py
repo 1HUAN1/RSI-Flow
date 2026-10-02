@@ -28,7 +28,7 @@ from skill_memory import DEFAULT_CONTEXT_CHARS, DEFAULT_PER_CATEGORY, SKILL_GUID
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-DEFAULT_CONFIG = PROJECT_ROOT / "configs/train_180_a0_v1.json"
+DEFAULT_CONFIG = PROJECT_ROOT / "configs/train_600_5round_744.json"
 KEY_LABEL = "autodl.art"
 
 
@@ -230,6 +230,8 @@ def experiment_prompt(config_path: Path, config: dict[str, Any], run_dir: Path) 
         "training_schedule": config.get("training_schedule"),
         "initial_independent_evaluation": config.get("evaluate_initial_system"),
         "validation_limits": config.get("validation_limits"),
+        "evaluation_schedule": config.get("evaluation_schedule", "after_each_committed_round"),
+        "validation_manifest": config.get("validation_manifest"),
         "skip_acebench": config.get("skip_acebench"),
         "model_config_path": str(base_path),
         "task_checkpoint": base.get("task_checkpoint"),
@@ -247,7 +249,7 @@ def experiment_prompt(config_path: Path, config: dict[str, Any], run_dir: Path) 
         "run_status": str(run_dir / "meta_session/RUN_STATUS.md"),
         "workflow_policy": policy,
     }
-    return (PERSISTENT_META_INSTRUCTIONS + "\n" + SKILL_GUIDANCE + "\n" + MAINLINE_REMINDER
+    prompt = (PERSISTENT_META_INSTRUCTIONS + "\n" + SKILL_GUIDANCE + "\n" + MAINLINE_REMINDER
             + "\nExperiment facts and required sequence:\n"
             + json.dumps(protocol, ensure_ascii=False, indent=2)
             + "\nMainline stages:\n"
@@ -351,6 +353,23 @@ def experiment_prompt(config_path: Path, config: dict[str, Any], run_dir: Path) 
               "If a tool fails, read its receipt and repair the issue as Meta; avoid "
               "ending the session prematurely. Call finish_experiment only after all "
               "configured rounds and available independent validations are complete.\n")
+    if config.get("evaluation_schedule") == "final_only":
+        # Replace the legacy schedule, rather than append conflicting instructions.
+        prompt = prompt.replace(
+            "A0: freeze the initial Task/Meta state and complete independent baseline validation.",
+            "A0: freeze the initial Task/Meta state; do not run baseline validation.")
+        prompt = prompt.replace(
+            "acceptance leads to skills/context/snapshots, then report-only independent validation.",
+            "acceptance leads to skills/context/snapshots. Only the final round leads to independent validation.")
+        prompt = prompt.replace(
+            "After acceptance run the configured independent validation for reporting only, then continue with the next round's fresh tasks.",
+            "After acceptance save the selected complete Task and continue with the next round's fresh tasks. Only after the final round evaluate its saved model/checkpoint + Harness + Artifacts on the frozen 744-task cohort (no LiveCodeBench).")
+        prompt = prompt.replace(
+            "Then prepare_validation_snapshot with task_state_path from its restorable_task_state_path, source_round_path=its receipt_path FILE, destination under snapshots_root and round=0, then evaluate.",
+            "After the A0 snapshot start round 1; do not prepare or run A0 validation.")
+        prompt = prompt.replace("Only after acceptance request prepare_validation_snapshot with",
+                                "Only after FINAL-round acceptance and snapshot request prepare_validation_snapshot with")
+    return prompt
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -396,6 +415,12 @@ def main(argv: list[str] | None = None) -> int:
     prepare_meta_storage(run_dir, config.get("meta_logs_root"))
     session_dir = run_dir / "meta_session"
     session_dir.mkdir(exist_ok=True)
+    policy_path = session_dir / "workflow_policy.json"
+    if not policy_path.exists():
+        policy_path.write_text(json.dumps({
+            "rounds": config.get("rounds", 3), "retry_rejected_from_round": 1,
+            "evaluation_schedule": config.get("evaluation_schedule", "after_each_committed_round"),
+        }, indent=2) + "\n", encoding="utf-8")
     if args.detach:
         log_path = session_dir / "launcher.log"
         argv = [sys.executable, "-u", str(PROJECT_ROOT / "launch_meta.py"),

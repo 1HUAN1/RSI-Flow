@@ -35,6 +35,16 @@ def select_length_eligible(tokenizer, rows, max_length, *, supervision):
                 'tokens': exc.token_count, 'reason': 'exceeds_max_length',
                 'source_sha256': hashlib.sha256(json.dumps(row, sort_keys=True, ensure_ascii=False).encode()).hexdigest()})
             continue
+        except (ValueError, KeyError, TypeError) as exc:
+            # One recorded call whose chat template cannot preserve the
+            # assistant token boundary is ineligible supervision; exclude that
+            # sample and keep training on the rest instead of failing the whole
+            # MODEL update. Excluded samples are recorded, never relabelled.
+            excluded.append({'row_index': index, 'task_id': row.get('task_id', row.get('question_id')),
+                'rollout_id': row.get('rollout_id'), 'call_id': row.get('call_id'),
+                'reason': 'ineligible_supervision: ' + str(exc)[:200],
+                'source_sha256': hashlib.sha256(json.dumps(row, sort_keys=True, ensure_ascii=False).encode()).hexdigest()})
+            continue
         selected.append(row)
         lengths.append(len(encoded['input_ids']))
     return selected, {'policy': 'whole_recorded_call_length_filter_v1', 'max_length': max_length,

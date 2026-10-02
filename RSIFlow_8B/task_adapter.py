@@ -78,7 +78,7 @@ class TaskAdapter:
         base["round_protocol"] = {
             "data_dir": data_dir,
             "train_quotas_per_round": quotas,
-            "validation_manifest": str(Path(value["validation_vault"]) / "validation/manifest.json"),
+            "validation_manifest": value.get("validation_manifest") or str(Path(value["validation_vault"]) / "validation/manifest.json"),
             "minimum_sft_samples": value.get("minimum_sft_samples", 1),
             "skip_acebench": value.get("skip_acebench", False),
         }
@@ -478,7 +478,7 @@ class TaskAdapter:
                 "budget": budget}
 
     def evaluate(self, arguments: dict[str, Any]) -> dict[str, Any]:
-        """Call the separate official 300-task evaluator; never feed its score to SFT."""
+        """Evaluate the complete selected Task on the configured reporting cohort."""
         output = self._output(arguments, "evaluation")
         output.mkdir(parents=True, exist_ok=True)
         prepared = self.prepare_evaluation(arguments)

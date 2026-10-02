@@ -462,8 +462,22 @@ class EnvScalerAdapter:
         except SandboxUnavailable:
             return AdapterResult.infrastructure_failure(self.verifier_id, "envscaler_worker_unavailable")
         checks = result["checks"]
-        if not checks or any(not check["valid"] or not isinstance(check["result"], bool) for check in checks):
+        if not checks:
             return AdapterResult.infrastructure_failure(self.verifier_id, "official_checker_failure")
+        # A single official check that cannot be evaluated (its check function
+        # raised, or it returned a non-boolean) is a failed requirement, not a
+        # benchmark-wide infrastructure failure: score it as not satisfied and
+        # keep the fixed denominator. This cannot turn a failing check into a
+        # passing one.
+        contained = []
+        for check in checks:
+            if check.get("valid") and isinstance(check.get("result"), bool):
+                contained.append(check)
+            else:
+                contained.append({**check, "valid": False, "result": False,
+                                  "contained_error": str(check.get("error") or check.get("reason")
+                                                         or "official check unavailable")[:300]})
+        checks = contained
         native_score = round(sum(check["result"] for check in checks) / len(checks), 4)
         success = all(check["result"] for check in checks) and not self.terminated
         return AdapterResult(float(success), {"task_success": float(success), "native_partial_score": native_score},

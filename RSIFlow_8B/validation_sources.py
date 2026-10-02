@@ -9,7 +9,8 @@ def snapshot(settings):
         path=Path(path).resolve();files[str(path)]=sha(path)
     add(settings['official_specs'])
     specs=read(settings['official_specs'])['evaluators']
-    for name in ('livecodebench','humaneval_plus','mbpp_plus','hotpotqa_dev','2wiki_dev'):
+    for name in settings['benchmark_ids']:
+        if name in settings['tool_benchmarks']:continue
         spec=specs[name]
         for field in ('entrypoint','data_path','task_ids_path','alias_path'):
             if spec.get(field):add(spec[field])

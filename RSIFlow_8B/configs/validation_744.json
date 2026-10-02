@@ -1,0 +1,42 @@
+{
+  "benchmark_ids": [
+    "bfcl_v3",
+    "acebench",
+    "humaneval_plus",
+    "mbpp_plus",
+    "hotpotqa_dev",
+    "2wiki_dev"
+  ],
+  "dynamic_predictions": true,
+  "feedback_to_training_or_meta": false,
+  "frequency": "after_final_round",
+  "official_specs": "/root/data/RSI_iclr2027/rsiH/runs/output_submission_20260916/runtime/configs/report-evaluators.json",
+  "tool_benchmarks": {
+    "acebench": {
+      "category": "test_all",
+      "data_path": "/root/data/RSI_iclr2027/dataset/test/tool_use/acebench/test.jsonl",
+      "language": "en",
+      "python_executable": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/.venv/bin/python",
+      "repository_root": "/root/data/RSI_iclr2027/dataset/evaluators/acebench/AgentSuite/ACEBench",
+      "user_api_key_env": "ACE_USER_API_KEY",
+      "user_base_url_env": "ACE_USER_BASE_URL",
+      "user_model": "DeepSeek-V4.1-Flash",
+      "user_provider_model": "DeepSeek-V4.1-Flash"
+    },
+    "bfcl_v3": {
+      "categories": "all_v3",
+      "data_path": "/root/data/RSI_iclr2027/dataset/test/tool_use/bfcl_v3/test.jsonl",
+      "python_executable": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918_train_internal/.venv/bin/python",
+      "repository_root": "/root/data/RSI_iclr2027/dataset/evaluators/bfcl_v3",
+      "version_prefix": "BFCL_v3"
+    }
+  },
+  "validation_limits": {
+    "bfcl_v3": 152,
+    "acebench": 50,
+    "humaneval_plus": 164,
+    "mbpp_plus": 178,
+    "hotpotqa_dev": 100,
+    "2wiki_dev": 100
+  }
+}

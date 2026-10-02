@@ -24,7 +24,7 @@ MAX_INLINE_RECEIPT_BYTES = 256 * 1024
 
 MAINLINE_REMINDER = """[Experiment mainline reminder]
 For each evolution round, keep the following ten-step mainline in order:
-1. Run 180 parent rollouts for the current Task.
+1. Run the configured number of parent rollouts for the current Task.
 2. Read statistics, 48 representative trajectories, retrieve relevant skills/contradictions, and previous-round context.
 3. Choose one component from HARNESS, MODEL, or ARTIFACTS for this attempt.
 4. Generate one candidate for that attempt, in a new attempt directory.
@@ -33,7 +33,7 @@ For each evolution round, keep the following ten-step mainline in order:
 7. Use paired task differences to append cases, conditional rules and revisions for every attempt. If rejected, keep the
    parent and return to step 3 on this SAME round/batch; do not go to validation or the next round.
 8. Save the Task and Meta snapshots.
-9. Run the independent validation.
+9. Run independent validation only when due under the configured evaluation schedule; for final_only, only after the final round.
 10. Continue to the next round, carrying evidence and artifacts through the configured final stage.
 HARNESS: read the pinned three production prompts and execute fault localization from parent
 source + metrics/costs + failed AND successful trajectories; then improvement directions using
@@ -43,7 +43,7 @@ MODEL uses successful-parent SFT. Reuse unchanged parent results across rejected
 Keep decision, reports, candidate, scores and selection under round_N/attempts/attempt_K/;
 never overwrite earlier attempts. No fixed retry count is imposed; Meta chooses again after rejection.
 After each attempt snapshot numbered before/after components and Meta skills without full code/weight copies.
-After acceptance, activate, snapshot, independently validate, then advance to fresh next-round tasks.
+After acceptance, activate and snapshot, independently validate only when due under the configured schedule, then advance to fresh next-round tasks.
 Activate a candidate only for a strict positive gain on complete paired scores.
 Only this order is fixed; Meta owns all component, candidate, debugging, and acceptance decisions."""
 

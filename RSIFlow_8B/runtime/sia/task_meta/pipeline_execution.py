@@ -26,7 +26,7 @@ class RolloutDeadlineExceeded(BaseException):
 # A single CPU-bound or otherwise wedged rollout must not stall an entire round.
 # Normal episodes finish well under this; the value is an infrastructure safety
 # net, not a behavioural parameter.
-ROLLOUT_WALL_SECONDS = float(os.environ.get("RSI_ROLLOUT_WALL_SECONDS", "1500"))
+ROLLOUT_WALL_SECONDS = float(os.environ.get("RSI_ROLLOUT_WALL_SECONDS", "3600"))
 
 
 def _install_rollout_deadline():

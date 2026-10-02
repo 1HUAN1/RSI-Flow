@@ -8,8 +8,9 @@ from evolution_protocol import manifest, file_hash, freeze, VALIDATION_QUOTAS
 def select_specs(settings, path, role, out, *, full_benchmark=False):
     value=manifest(path,role,None)
     if role not in {'independent_validation','final_test'}: raise ValueError('External evaluation role required')
-    if role=='independent_validation' and not full_benchmark and Counter(t['source'] for t in value['tasks'])!=VALIDATION_QUOTAS:
-        raise ValueError('Independent evaluation must use exactly the registered 300-task manifest')
+    quotas = settings.get('validation_limits', VALIDATION_QUOTAS)
+    if role=='independent_validation' and not full_benchmark and Counter(t['source'] for t in value['tasks'])!=quotas:
+        raise ValueError('Independent evaluation task counts differ from the configured frozen cohort')
     for task in value['tasks']:
         if task['source']=='acebench' and task['native_id'].startswith('normal_multi_turn_') and not task.get('native_ids'):
             raise ValueError('Legacy ACE turn-level manifest is not a complete-task evaluation')

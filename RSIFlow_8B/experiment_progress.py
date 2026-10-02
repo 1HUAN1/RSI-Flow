@@ -266,6 +266,17 @@ class ExperimentProgress:
         policy = _read_object(self.meta_session / "workflow_policy.json") or {}
         self.rounds = int(policy.get("rounds", self.rounds))
         stages = _stage_template(self.rounds)
+        final_only = policy.get('evaluation_schedule') == 'final_only'
+        if final_only:
+            for stage in stages:
+                if stage['round'] != self.rounds:
+                    stage['required_milestones'] = [m for m in stage['required_milestones']
+                        if m not in {'validation_snapshot', 'independent_validation'}]
+                stage['purpose'] = ('Save initial Task/Meta state; no A0 evaluation.' if stage['round'] == 0
+                    else f"Evolution round {stage['round']}: evolve Task and maintain skills; save the selected complete Task. "
+                    + ('Then independently evaluate that final Task.' if stage['round'] == self.rounds
+                       else 'Continue to the next fresh batch without independent evaluation.'))
+                _refresh_stage(stage)
         retry_from = int(policy.get("retry_rejected_from_round", 1))
         by_round = {stage["round"]: stage for stage in stages}
         events: list[dict[str, Any]] = []
@@ -282,6 +293,15 @@ class ExperimentProgress:
             operation = request.get("operation") if isinstance(request.get("operation"), str) else None
             receipt_path = turn_dir / "receipt.json"
             receipt = _read_object(receipt_path)
+            # Long operations return a job id immediately, so the turn receipt is
+            # written while the controller job is still "running". Resolve the
+            # durable job result so completed work is not reported as pending.
+            if isinstance(receipt, dict) and str(receipt.get("status", "")).lower() == "running":
+                durable_path = receipt.get("result_path")
+                if isinstance(durable_path, str) and durable_path:
+                    durable = _read_object(Path(durable_path))
+                    if isinstance(durable, dict) and durable.get("status") not in {None, "running"}:
+                        receipt = durable
             round_number = _explicit_round(request, receipt)
             if round_number is None:
                 round_number = _earliest_incomplete_round(stages)
@@ -368,7 +388,8 @@ class ExperimentProgress:
             "schema_version": SCHEMA_VERSION,
             "rounds": self.rounds,
             "retry_rejected_from_round": retry_from,
-            "mainline_goal": MAINLINE_GOAL.format(rounds=self.rounds),
+            "mainline_goal": (f"Save A0, complete B1-B{self.rounds} with a snapshot each round, then independently evaluate ONLY the final selected complete Task."
+                              if final_only else MAINLINE_GOAL.format(rounds=self.rounds)),
             "current_stage": current["id"] if current else "COMPLETE",
             "current_stage_purpose": current["purpose"] if current else "All required stages are complete.",
             "next_milestone": current["remaining_milestones"][0] if current else None,

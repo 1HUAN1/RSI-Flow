@@ -2,7 +2,30 @@
 
 `8B` 是新版代码目录名，Task 模型仍是本机 Qwen3-4B。本目录保留 Task 执行引擎，但不调用旧版 `pipeline.run()` / `run_sequential_task_meta()` 固定决策循环。
 
-**当前配置已扩展为五轮 B1—B5，每轮 180 条，共 900 条不同任务。** 下文的三轮说明保留最初协议背景，实际结束阶段以配置和进度账本为准。前三批冻结数据不变；新增两批不同任务，EnvScaler 环境定义可以复用。克隆仓库后的外部依赖与启动边界见 [SOURCE_RELEASE.md](SOURCE_RELEASE.md)。
+**当前新实验默认：五轮 B1—B5，每轮 600 条，共 3000 条不同任务；每轮保存快照，仅第五轮结束后评测完整 Task，验证集固定 744 条，不包含 LiveCodeBench。** Meta 仍为 skill-only，不启用 Meta Harness 自修改。历史 180 条配置和实验记录保持不变，下文旧协议说明不覆盖新配置。外部依赖见 [SOURCE_RELEASE.md](SOURCE_RELEASE.md)。
+
+## 600×5 / 744 新实验
+
+配置为 `configs/train_600_5round_744.json`，评测配置为 `configs/validation_744.json`。
+训练沿用 shared3000 的全部既有任务，不重新抽样：每轮 EnvScaler 200、Code 200（stdio 120 / function 80）、HotpotQA 100、2Wiki 100。
+任务 ID 与问题内容跨轮不重复；EnvScaler 可以复用环境定义，不宣称环境跨轮隔离。
+验证为 BFCL-v3 152、ACEBench 50、HumanEval+ 164、MBPP+ 178、HotpotQA-dev 100、2Wiki-dev 100。
+ACE 沿用这份已有评测的 DeepSeek-V4.1-Flash 用户模拟器口径，启动评测前需提供 `ACE_USER_API_KEY` / `ACE_USER_BASE_URL`；不跳过 ACE，不复用旧模型分数。
+
+```bash
+cd /root/data/RSI_iclr2027/rsiH/RSIFlow_8B
+# 仅准备数据、检查路径，不调用 API/GPU
+/root/data/conda/envs/sia/bin/python prepare_600_744.py
+/root/data/conda/envs/sia/bin/python launch_meta.py --check
+# 明确要启动时执行；四卡忙时等待，不终止其他作业
+bash start_5round_600.sh --wait-for-gpus
+```
+
+新数据在 `runtime/data/rounds_3000_5x600/B1..B5` 与 `runtime/data/validation_744`；准备脚本可重复运行，不覆盖旧数据。
+A0 只保存初始化快照，不评测；B1—B4 仍完成修改、配对复测、skill 维护和快照，但不做独立评测。
+B5 保存选定 Task 后，以快照中的 checkpoint + Harness + Artifacts 调用独立评测；完成全部 744 条评分后才能结束。
+配对接受规则、拒绝后重选、MODEL 的成功轨迹单 epoch LoRA SFT、48 条路由片段规则不变。
+此轮变更不迁移其他项目的推理引擎，继续使用本项目现有 Task runtime。
 
 ## 职责边界
 

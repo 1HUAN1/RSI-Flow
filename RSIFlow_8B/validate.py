@@ -55,8 +55,8 @@ def validate(snapshot_path,pipeline_path,validation_path, *, role=None, manifest
     ensure_services(config,state.checkpoint_path)
     immutable(out/'serving_fingerprint.json',verify_services(config,state.checkpoint_path))
     specs=selected_specs or read(settings['official_specs'])['evaluators']
-    expected={'livecodebench','humaneval_plus','mbpp_plus','hotpotqa_dev','2wiki_dev'}
-    if not expected<=set(specs):raise RuntimeError('All five Code/Search official evaluators are required')
+    expected=set(settings['benchmark_ids'])-set(settings['tool_benchmarks'])
+    if not expected<=set(specs):raise RuntimeError('Configured Code/Search official evaluators are missing')
     results=[]
     if selected_manifest:
         from evaluation_results import publish
@@ -81,7 +81,7 @@ def validate(snapshot_path,pipeline_path,validation_path, *, role=None, manifest
             single=out/(identifier+'.spec.json')
             immutable(single,{'evaluators':{identifier:specs[identifier]}})
             predictions=out/'predictions'
-            generator=generate_dynamic if skip_ace else generate_parallel
+            generator=generate_dynamic if skip_ace or settings.get('dynamic_predictions') else generate_parallel
             generator(config,out/'frozen_task.json',single,predictions/identifier)
             rows=[json.loads(line) for line in (predictions/identifier/(identifier+'.jsonl')).read_text().splitlines() if line.strip()]
             result=evaluate_official(OfficialEvaluatorSpec(**{**specs[identifier],'benchmark':identifier}),rows,binding,result_path.parent)
@@ -120,7 +120,8 @@ def validate(snapshot_path,pipeline_path,validation_path, *, role=None, manifest
         done.update(source_role=role,purpose='report_only',manifest_hash=selected_manifest['manifest_hash'],
             metrics_kind='held_out_test_metrics' if role=='final_test' else 'independent_validation_metrics',
             official_full_benchmark=False,clean_independence_audited=selected_manifest.get('clean_independence_audited',False))
-    if len(results)!=7:raise RuntimeError('All seven benchmarks are mandatory')
+    if {r['benchmark_id'] for r in results} != set(settings['benchmark_ids']):
+        raise RuntimeError('Not all configured benchmarks were evaluated')
     if selected_manifest and not metrics['overall']['complete']:
         raise RuntimeError('Generated predictions are not a complete scored evaluation')
     if selected_manifest:

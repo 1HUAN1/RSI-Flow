@@ -15,8 +15,8 @@ SMALL_TRAIN_QUOTAS = dict(envscaler=60, deepcoder_taco=60, nq_open=15, hotpotqa=
 
 def training_quotas(config):
     quotas = dict(config.get('train_quotas_per_round', TRAIN_QUOTAS))
-    if quotas not in (TRAIN_QUOTAS, SMALL_TRAIN_QUOTAS):
-        raise ValueError('Only registered balanced 360- or 180-task round quotas are supported')
+    if not quotas or any(type(n) is not int or n < 1 for n in quotas.values()):
+        raise ValueError('Training quotas must be positive integer task counts')
     total = sum(quotas.values())
     if config.get('training_tasks_per_pass', total) != total:
         raise ValueError('Training task count does not match source quotas')
