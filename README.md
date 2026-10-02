@@ -6,6 +6,15 @@ Latest implementation: **[RSIFlow_8B_harness](RSIFlow_8B_harness/)** adds versio
 
 ---
 Update logs：
+# 10.02 RSIFlow_8B 最终版迭代skills的meta代码。
+是的，这条命令启动的就是修改数据集后的 skill-only 方法：
+cd /root/data/RSI_iclr2027/rsiH/RSIFlow_8B
+bash start_5round_600.sh --wait-for-gpus
+它会：
+1. 准备或复用固定数据：五轮×600 条，共 3000 条，轮间任务不重复。
+2. 等待四张 GPU 空闲后启动，不终止其他实验。
+3. 每轮由 Meta 选择修改 Task 的组件，配对复测、维护 skill、保存快照；不修改 Meta 自身 Harness。
+4. 第五轮结束后，加载选定的完整 Task（模型＋Harness＋Artifacts），在 744 条验证集上评测，不包含 LiveCodeBench。A0 和前四轮不做独立验证。
 
 # 9.27 RSIFlow_8B_harness meta修改自己的harness
 这个目录已经新增了修改meta自己的harness，具体的做法是将codex部分内容改写为`workflow.py`, `planning.py`, and `memory.py`三者harness组成部分，然后当目前skill库中维护的skill或者经验依旧无法知道meta修改一些task的组件或者错误依旧还犯，skill起不到指导作用时，考虑让meta直接根据当前的漏洞和已存储的skill经验，生成一版新的meta harness，具体指`workflow.py`, `planning.py`, and `memory.py`。目前RSIFlow_8B_harness已搭载4B的模型在8卡机器上运行了，下面要考虑的是根据实际的运行情况，让codex帮忙判断一下什么时候由单纯累计skill到进行meta修改自己的harnesss。看看这一过程应该怎么触发选择？由什么指标和内容触发？
