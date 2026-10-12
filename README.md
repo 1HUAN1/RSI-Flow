@@ -203,9 +203,3 @@ external data, model checkpoints, benchmark services, and GPU/API access.
 
 Citation details for RSI-Flow will be added after anonymous review.
 
-## Acknowledgments
-
-We thank the authors and maintainers of the runtime components, Task-agent
-templates, and benchmark toolkits used in this implementation. Original sources
-and retained attributions are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-See [LICENSE](LICENSE) and the included third-party license files.
