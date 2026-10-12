@@ -40,9 +40,10 @@ class CodexAppServer:
     """JSON-RPC connection; the same server PID handles every native tool call."""
 
     def __init__(self, *, codex_home: Path, workspace: Path, journal: Path,
-                 executable: str = 'codex', on_tool=None, chat=None):
+                 executable: str | None = None, on_tool=None, chat=None):
         self.home, self.workspace, self.journal = codex_home, workspace, journal
-        self.executable, self.on_tool = executable, on_tool
+        self.executable = executable or os.environ.get('RSIFLOW_CODEX_EXECUTABLE') or 'codex'
+        self.on_tool = on_tool
         self.inbox = queue.Queue()
         self.sequence = 0
         self.responses = {}

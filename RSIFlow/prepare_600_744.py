@@ -90,9 +90,19 @@ def prepare(config_path=DEFAULT):
         ready = output / 'READY.json'
         if ready.is_file():
             receipt = read(ready)
+            same_config = receipt['config_hash'] == fingerprint(config)
+            protocol_path = output / 'protocol.json'
+            if not same_config and protocol_path.is_file():
+                previous = read(protocol_path)
+                # Backbone and run name do not change the frozen task cohort.
+                # Verify the saved protocol before comparing the remaining fields.
+                data_config = lambda value: {k: v for k, v in value.items()
+                                             if k not in {'base_config', 'run_name'}}
+                same_config = (fingerprint(previous) == receipt['config_hash']
+                               and data_config(previous) == data_config(config))
             if (receipt['source_training_hash'] == training['manifest_hash']
                     and receipt['source_validation_hash'] == validation['manifest_hash']
-                    and receipt['config_hash'] == fingerprint(config)):
+                    and same_config):
                 return {**receipt, 'status': 'already_prepared'}
         raise FileExistsError('Use a new release directory; existing releases are never overwritten')
     packed = []

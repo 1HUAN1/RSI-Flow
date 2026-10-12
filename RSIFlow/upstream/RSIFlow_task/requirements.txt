@@ -1,5 +1,5 @@
 # RSIFlow Task-component inference dependencies.
-# Python 3.10 is recommended. This file is infer/eval focused and intentionally
+# Use Python 3.11+ with the shared RSIFlow runtime. This file is infer/eval focused and intentionally
 # does not include full verl training dependencies such as ray/vllm.
 openai>=1.0.0
 python-dotenv>=1.0.0
@@ -11,7 +11,8 @@ jinja2>=3.1.0
 rich>=13.0.0
 json-repair>=0.25.0
 tqdm>=4.66.0
-numpy>=1.24.0,<2.0.0
+# The shared runtime requires NumPy >=2; do not force a conflicting downgrade.
+numpy>=2.0
 scikit-learn>=1.3.0
 pandas>=2.0.0
 pyarrow>=14.0.0

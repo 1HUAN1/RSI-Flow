@@ -135,14 +135,14 @@ Run either entry point from the repository root:
 
 ```bash
 python RSIFlow_4B/launch.py --check
-bash RSIFlow_4B/start_5round_600.sh --wait-for-gpus --run-dir /path/to/outputs/rsiflow-4b
+bash RSIFlow_4B/start_5round_600.sh --wait-for-gpus --run-dir "$PWD/Rollout_logs/runs/rsiflow-4b"
 ```
 
 ### Qwen3-8B
 
 ```bash
 python RSIFlow_8B/launch.py --check
-bash RSIFlow_8B/start_5round_600.sh --wait-for-gpus --run-dir /path/to/outputs/rsiflow-8b
+bash RSIFlow_8B/start_5round_600.sh --wait-for-gpus --run-dir "$PWD/Rollout_logs/runs/rsiflow-8b"
 ```
 
 The shell entry points prepare the configured task data and invoke the same shared
@@ -150,8 +150,14 @@ launcher. Set `RSIFLOW_PYTHON` to the Python interpreter in your environment. Us
 `--config /absolute/path/to/train.json` for a customized profile. Monitor either run:
 
 ```bash
-bash RSIFlow/watch_meta.sh --run-dir /path/to/outputs/rsiflow-4b
+bash RSIFlow/watch_meta.sh --run-dir "$PWD/Rollout_logs/runs/rsiflow-4b"
 ```
+
+Keep run outputs inside the repository workspace: the Meta controller rejects
+tool writes outside that directory. Set `output_root` consistently in both profiles.
+The two profiles reuse the same prepared task cohort; changing only `base_config`
+and `run_name` does not require preparing a duplicate dataset. Run them sequentially
+on the default shared GPUs and ports.
 
 Use a new output directory for each backbone. Relaunching with the same directory
 resumes its existing run. Renamed packages, tool names, and bundle identifiers in
@@ -191,6 +197,7 @@ Meta memory stores intervention cases, conditional rules, and diagnosed incident
 Run the selected workspace's offline tests with its runtime on the Python path:
 
 ```bash
+cd RSIFlow  # from the repository root
 PYTHONPATH="$PWD/runtime:$PWD" python -m pytest -q tests
 ```
 
@@ -202,4 +209,3 @@ external data, model checkpoints, benchmark services, and GPU/API access.
 ## Citation
 
 Citation details for RSI-Flow will be added after anonymous review.
-

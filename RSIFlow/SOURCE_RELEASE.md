@@ -11,6 +11,20 @@ The inherited absolute server paths are examples and must be replaced locally.
 The frozen cohort must contain 3,000 training tasks and 744 independent evaluation
 tasks. Keep both profiles' protocol and non-model settings identical.
 
+For an existing working server, retain its model weights, datasets, evaluator
+installations, retrieval indexes and Python environments. Point the new profiles
+to those assets; `/path/to/models/Qwen3-*` is a placeholder, not a downloaded model.
+In particular, `configs/validation_744.json` still requires your external
+`official_specs` file and benchmark-specific `python_executable` paths. A path
+containing an old experiment directory may refer to an external environment;
+do not delete that environment when cleaning up source checkouts.
+Use a fresh frozen-data destination when migrating a release prepared with the
+old directory names. Both new backbones can then share that frozen release.
+Keep run outputs under the repository root and use a fresh run directory.
+Set `RSIFLOW_CODEX_EXECUTABLE` to the actual Codex binary, or make `codex`
+available on `PATH`. `--check` reports paths and does not execute the model,
+the API, or the official evaluators; a zero exit code is not a full-run guarantee.
+
 Model weights, task data, indexes, API credentials, and the Codex binary are not
 included. Use environment variables for credentials. See the repository README
 for the Meta endpoint configuration and dependency setup.
