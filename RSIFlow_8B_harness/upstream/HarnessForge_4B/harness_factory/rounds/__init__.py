@@ -1,1 +1,0 @@
-"""Versioned harness candidate packages."""

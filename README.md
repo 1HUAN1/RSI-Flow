@@ -1,342 +1,211 @@
 # RSI-Flow
 
-Current experiment: **[RSIFlow_8B](RSIFlow_8B/)** (Qwen3-4B Task, persistent Codex Meta, five-round skill evolution). See **[source release and external dependencies](RSIFlow_8B/SOURCE_RELEASE.md)** and **[debug log](RSIFlow_8B/DEBUG_LOG.md)** before launching. The earlier [RSIFlow_4B](RSIFlow_4B/) implementation remains available. Credentials, datasets, model weights and runtime logs are excluded; cloning alone does not recreate the server environment.
+## Introduction
 
-Latest implementation: **[RSIFlow_8B_harness](RSIFlow_8B_harness/)** adds versioned, actually executed Meta `workflow.py`, `planning.py`, and `memory.py` packages on top of skill maintenance. It retains the five-round Qwen3-4B Task protocol. See [Meta package interfaces](RSIFlow_8B_harness/META_HARNESS.md), [reproduction inputs and setup](RSIFlow_8B_harness/reproduction/README.md), and [debug records](RSIFlow_8B_harness/DEBUG_LOG.md). This source release has passed 168 offline tests; it does not claim a completed GPU/API run of Meta-program evolution. The existing skill-only implementation and historical results remain unchanged.
+RSI-Flow is a framework for iterative improvement of LLM agent systems through a persistent Meta agent. The Task agent combines a reasoning model, an executable harness, and task artifacts. The Meta agent examines execution feedback, selects a component to improve, constructs a candidate, and compares it with the parent agent on the same tasks.
 
----
-Update logs：
-# 10.02 RSIFlow_8B 最终版迭代skills的meta代码。
-是的，这条命令启动的就是修改数据集后的 skill-only 方法：
-cd /root/data/RSI_iclr2027/rsiH/RSIFlow_8B
-bash start_5round_600.sh --wait-for-gpus
-它会：
-1. 准备或复用固定数据：五轮×600 条，共 3000 条，轮间任务不重复。
-2. 等待四张 GPU 空闲后启动，不终止其他实验。
-3. 每轮由 Meta 选择修改 Task 的组件，配对复测、维护 skill、保存快照；不修改 Meta 自身 Harness。
-4. 第五轮结束后，加载选定的完整 Task（模型＋Harness＋Artifacts），在 744 条验证集上评测，不包含 LiveCodeBench。A0 和前四轮不做独立验证。
+The framework connects Task improvement with Meta experience. Each attempt contributes evidence to a skill memory that supports later diagnosis and candidate design. This release contains the skill-based variant: Meta maintains experience in a skill memory, while its executable program stays fixed. The 4B and 8B variants execute the same algorithm and differ only in the Task model backbone, Qwen3-4B or Qwen3-8B.
 
-# 9.27 RSIFlow_8B_harness meta修改自己的harness
-这个目录已经新增了修改meta自己的harness，具体的做法是将codex部分内容改写为`workflow.py`, `planning.py`, and `memory.py`三者harness组成部分，然后当目前skill库中维护的skill或者经验依旧无法知道meta修改一些task的组件或者错误依旧还犯，skill起不到指导作用时，考虑让meta直接根据当前的漏洞和已存储的skill经验，生成一版新的meta harness，具体指`workflow.py`, `planning.py`, and `memory.py`。目前RSIFlow_8B_harness已搭载4B的模型在8卡机器上运行了，下面要考虑的是根据实际的运行情况，让codex帮忙判断一下什么时候由单纯累计skill到进行meta修改自己的harnesss。看看这一过程应该怎么触发选择？由什么指标和内容触发？
-启动代码：【目前已发现的一个错误是：虽然修改前后训练集上的表现提升，但是单独的测试集下效果没有提升】
-cd /root/data1/RSI_iclr2027/rsiH/RSIFlow_8B_harness
-bash start_meta.sh --wait-for-gpus
+This repository contains the Task runtimes, Meta controllers, harness-generation templates, skill-memory tools, experiment configurations, and evaluation interfaces. The released workflows cover tool use, code generation, and multi-hop question answering. Model checkpoints, datasets, retrieval indexes, and API credentials are supplied separately.
 
-# 9.27 目前这一版已经有效果了，但是meta更新自己的方式是迭代skills。
-从架构上说，是的：目前 Meta 的进化主要发生在 skill／记忆层。 没有训练 Meta 的模型参数，也没有自动改写 Meta 的 Workflow、Planning 或 Codex 执行程序。
-现在设计的是：
-Task 前后差异 → 总结有适用条件的改法 → 维护技能库 → 下一轮检索相关技能 → 辅助组件选择和候选设计
-技能维护支持：
-- 新增：建立尚未覆盖的具体修改方法。
-- 补证：给已有方法添加支持或反例。
-- 修订：改变适用条件、操作步骤，形成关联版本。
-- 归并／停用：减少重复或失效技能，原记录仍保留。
-  本次实际已经执行的是“新增”和“补证”：B1 建立了“代码提交格式保护”的操作型 skill；B2 对已有运行异常经验补充了证据。暂未看到实际执行修订、归并或停用。
-现在是常驻 Meta 进程负责推进整个五轮实验，不是每次输出一个操作就退出。
-  并且已经发现了meta的深层次的原因：关于深层问题，有些不是“多加几条经验和skill”就能自然解决的，Meta 持续存活，闭环在推进，但其规划、机制归因和经验输入边界仍有漏洞。 这些是项目中的 Meta 行为与接线问题，目前不能据此断言 Codex 底座本身有错误，也不是简单归因于权限太大或沙箱不足。
-  在另一版git的代码仓库中开始新增如果skill维系的经验或者skill没有被满足或者是记录的解决方案依旧解决不了当下的meta问题时，则总结meta的漏洞着手修改meta的harness。
-  <img width="859" height="388" alt="image" src="https://github.com/user-attachments/assets/c43c6e4d-b598-4942-833b-1c1b2bd1d8dd" />
-实验效果均达到提升：
-<img width="949" height="432" alt="image" src="https://github.com/user-attachments/assets/a4f59148-9701-474b-9041-67cf4b8f097f" />
+## Repository Structure
 
-启动代码：
-cd /root/data/RSI_iclr2027/rsiH/RSIFlow_8B
-bash start_meta.sh \
-  --config configs/train_180_a0_v1.json \
-  --run-dir /root/data/RSI_iclr2027/rsiH/Rollout_logs/runs/rsiflow_8b_skillops_180_3round_20260926
+```text
+RSI-Flow/
+|-- RSIFlow/                       # Shared skill-evolution implementation
+|   |-- configs/train_4b.json      # Same protocol, Qwen3-4B backbone
+|   |-- configs/train_8b.json      # Same protocol, Qwen3-8B backbone
+|   |-- runtime/rsiflow/           # Shared Task engine
+|   |-- upstream/RSIFlow_task/     # Adapted Task components and templates
+|   |-- seed_harness/              # Initial Task harness bundle
+|   |-- launcher.py                # Backbone selection and launch dispatch
+|   |-- launch_meta.py             # Persistent Meta controller
+|   |-- skill_memory.py            # Skill retrieval and maintenance
+|   `-- tests/
+|-- RSIFlow_4B/                    # Thin 4B launch entry point
+|-- RSIFlow_8B/                    # Thin 8B launch entry point
+|-- third_party/                   # Evaluation tools and provenance
+|-- THIRD_PARTY_NOTICES.md
+`-- LICENSE
+```
 
-9.21 目前这一版的问题是meta在总结经验的时候超过了工作区上下文限制，单次达到了36MB，超过了单次最大上下文限制16MB。
-# RSI-Flow
+Both entry points call the same controller, Task runtime, and skill-memory code.
+Their effective runtime configurations differ only in `task_checkpoint`. Training
+data, random seeds, update rules, LoRA settings, and final evaluation are identical.
+Run names differ to keep outputs separate. This release does not include the
+executable Meta-program evolution variant or the historical experiment copies.
 
+## Setup
 
+### 1. Environment Setup
 
-Official implementation of [**SIA: Self Improving AI with Harness & Weight Updates**](https://arxiv.org/abs/2605.27276) (Hebbar et al., 2026) — a self-improving loop where a language-model agent updates both the harness and the weights of a task-specific agent. The paper reports a 56.6% gain on LawBench, 91.9% runtime reduction on GPU kernels, and 502% improvement on single-cell RNA denoising over baseline.
+Use Linux for the experiment workflows. The runtime requires Python 3.11 or later.
 
-SIA is a Self Improving AI framework to autonomously improve the performance of any AI system (Model / Agent) on a benchmark task.
-
-> **Just want to try it?** Skip to [Run SIA locally](#run-sia-locally-with-built-in-tasks).
-
-## Introduction Videos
-
-- [SIA setup](https://www.loom.com/share/be0534bc818d408bab937033c6457ec9)
-- [SIA Runs Visualizer](https://www.loom.com/share/5b1dc2dc858b4493b4b348f0b88d5b9e)
-
-## Architecture
-
-<p align="center"><img src="docs/flow.png" alt="SIA orchestration flow" width="720"></p>
-<p align="center"><i>Control flow between Meta, Target, and Feedback agents over successive generations.</i></p>
-
-SIA operates by coordinating three main types of AI agents that work together to continuously improve task performance:
-
-### Glossary
-1. **Meta-Agent**: Reads the task description and generates an initial Target Agent tailored to the task.
-2. **Target / Task Specific Agent**: Attempts to complete the task and records its actions and results.
-3. **Feedback/Improvement Agent**: Reviews the Target Agent's performance logs, identifies improvements, and updates the Target Agent accordingly.
-
-This iterative process allows the system to autonomously refine and enhance its ability to solve scientific tasks.
-
-
-## Benchmark Results
-
-<p align="center"><img src="docs/mlebench.png" alt="MLE Bench Results" width="720"><br><i>OpenAI MLE-Bench Hard: a gauntlet of real Kaggle ML competitions where agents must write, run, and iterate full ML pipelines. SIA ranks #1 across all generations tested.</i></p>
-
-<p align="center"><img src="docs/lawbench.png" alt="LawBench Results" width="720"><br><i>LawBench: predict the criminal charge from Chinese court case descriptions across 191 charge categories. SIA-W+H reaches 70.1% Top-1 accuracy, beating the prior SOTA of 45%.</i></p>
-
-<p align="center"><img src="docs/trimul_cuda.png" alt="TriMul CUDA Results" width="720"><br><i>AlphaFold-3 TriMul Triton Kernel: implement and optimize the Triangle Multiplicative Update as a Triton kernel, preserving correctness while hitting H100 latency targets. SIA-W+H achieves 14x speedup over baseline.</i></p>
-
-<p align="center"><img src="docs/denoising.png" alt="Denoising Results" width="720"><br><i>scRNA-seq Denoising: impute missing gene expression values in single-cell RNA sequencing data. SIA-W+H scores 0.289 MSE<sub>norm</sub>, surpassing the prior SOTA of 0.240.</i></p>
-
----
-
-## Run SIA locally with built-in tasks
-
-SIA ships with four built-in tasks: `gpqa`, `lawbench`, `longcot-chess`, `spaceship-titanic`.
-
-### Install
-
-Pick the agent impl that matches the LLMs you want to run.
-
-**Claude agent impl** (Claude Agent SDK, Claude models only):
+Download and extract the anonymous repository archive, then enter its root directory. For a Git checkout, use the repository URL available to you.
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install 'sia-agent[claude]'
-export ANTHROPIC_API_KEY="..."
+cd RSI-Flow
+conda create -n rsiflow python=3.11 -y
+conda activate rsiflow
+python -m pip install -U pip setuptools wheel
+
+# Choose the workspace to reproduce.
+cd RSIFlow
+python -m pip install -e './runtime[dev]'
 ```
 
-**OpenHands agent impl** (multi-provider — Gemini, OpenAI, Anthropic, etc.):
+Install the dependencies needed by the selected harness and benchmarks; the bundled [harness requirements](RSIFlow/upstream/RSIFlow_task/requirements.txt) provide an additional reference.
+
+### 2. Model Serving and Training Dependencies
+
+Prepare a CUDA/PyTorch environment compatible with your GPUs, Task inference backend, and LoRA training stack. The runtime's `pipeline` extra declares Transformers, PEFT, and Accelerate dependencies:
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install 'sia-agent[openhands]'
-
-# Export the key(s) for the provider(s) you'll use:
-export ANTHROPIC_API_KEY="..."   # for anthropic/* models
-export GEMINI_API_KEY="..."      # for gemini/* models (or GOOGLE_API_KEY)
-export OPENAI_API_KEY="..."      # for openai/* models
-export OPENROUTER_API_KEY="..."  # for any model, via the openrouter provider
+python -m pip install -e './runtime[pipeline]'
 ```
 
-One key for everything: the bundled `openrouter-meta` / `openrouter-target` profiles route both
-agents through [OpenRouter](https://openrouter.ai/models), so a single `OPENROUTER_API_KEY` covers
-400+ models without a per-provider account:
+Obtain the Qwen3-4B or Qwen3-8B checkpoint and set `task_checkpoint` in the matching `runtime/configs/base_4b.json` or `base_8b.json`. Both profiles use the same four-GPU configuration. Adjust GPU indices, service ports, concurrency, and training settings together for your machine.
+
+The persistent Meta controller also requires a compatible Codex executable. See the [Codex provenance record](third_party/codex-provenance.json) and [source-release guide](RSIFlow/SOURCE_RELEASE.md) for the recorded environment and external inputs.
+
+### 3. Configure Environment Variables
+
+Set credentials in the shell rather than in tracked files:
 
 ```bash
-sia run --task gpqa --meta-agent-profile openrouter-meta --target-agent-profile openrouter-target
+export RSIFLOW_PYTHON="$(command -v python)"
+export RSIFLOW_CODEX_EXECUTABLE="$(command -v codex)"
+export AUTODL_API_KEY="<your-meta-api-key>"
+
+# Required when running the ACEBench user simulator.
+export ACE_USER_API_KEY="<your-user-simulator-api-key>"
+export ACE_USER_BASE_URL="<your-user-simulator-api-base>"
 ```
 
-Full provider/model reference: [docs/configuration.md](docs/configuration.md#api-keys).
+The checked-in Meta configuration uses a DeepSeek-V4.1-Flash endpoint through the Codex Responses interface. Configure the endpoint and model in the selected workspace's `configs/codex_host.toml` and model catalog.
 
-### Run
+Before launching, update the local paths in the experiment JSON files: model checkpoint, Task data, retrieval index, evaluator installations, Python interpreters, and output directories. `RSIFLOW_PYTHON` selects the launcher interpreter; it does not replace interpreter paths stored in JSON configuration.
 
-The CLI has two sub-commands: **`sia run`** (the self-improvement loop) and
-**`sia web`** (the runs visualizer, see [Visualize runs](#visualize-runs)).
+## Benchmark Configuration
+
+The five-round skill-memory experiment uses [train_4b.json](RSIFlow/configs/train_4b.json) or [train_8b.json](RSIFlow/configs/train_8b.json). Each round contains 600 tasks:
+
+| Domain | Source | Tasks per round |
+|---|---|---:|
+| Tool use | EnvScaler | 200 |
+| Code generation | DeepCoder/TACO: 120 STDIO + 80 function tasks | 200 |
+| Multi-hop QA | HotpotQA | 100 |
+| Multi-hop QA | 2WikiMultiHopQA | 100 |
+
+The five rounds use 3,000 distinct tasks. Configure `source_training_manifest`, `source_validation_manifest`, `dataset_root`, and retrieval paths before preparing the data. EnvScaler environment definitions may be reused across rounds.
+
+Independent evaluation follows [validation_744.json](RSIFlow/configs/validation_744.json):
+
+| Benchmark | Tasks |
+|---|---:|
+| BFCL-v3 | 152 |
+| ACEBench | 50 |
+| HumanEval+ | 164 |
+| MBPP+ | 178 |
+| HotpotQA-dev | 100 |
+| 2Wiki-dev | 100 |
+| **Total** | **744** |
+
+For this protocol, independent evaluation runs after the fifth round on the selected model, harness, and artifacts. Its results are excluded from Task training and Meta feedback. Both backbone profiles use this same evaluation protocol.
+
+## Inference
+
+Task inference uses the checkpoint, service ports, and runtime configuration of the selected experiment. Prepare the local model and benchmark assets before starting services through the experiment launcher.
+
+From `RSIFlow`, prepare the fixed task batches and run the launch preflight:
 
 ```bash
-sia run --task gpqa --max_gen 5 --run_id 1
+python prepare_600_744.py --config configs/train_4b.json
+python launcher.py --backbone 4b --check
+python launcher.py --backbone 8b --check
 ```
 
-Swap `--task` for any of the four bundled tasks. (`sia --task ...` without the
-`run` sub-command still works and is treated as `sia run ...`.)
+These commands prepare data and check launch configuration without starting a GPU/API experiment. The preflight is a configuration check; benchmark-specific dependencies must also be installed.
 
-Artifacts land in `runs/run_{run_id}/gen_{n}/`:
-- `target_agent.py` — the agent for that generation
-- `agent_execution.json` — execution logs
-- `improvement.md` — diff rationale (gen 2+)
+## Reproduce the Released Experiments
 
-While a run is in progress a **live dashboard** auto-starts at
-`http://127.0.0.1:8000` (disable with `--no-web`).
+Run either entry point from the repository root:
 
-**Security:** the default `--sandbox none` mode runs agent-generated code with host access. For untrusted tasks or models, use `--sandbox docker`, which isolates execution in a Docker container with no network access. See [SECURITY.md](SECURITY.md) for the full security model.
-
-### Common flags (`sia run`)
-
-| Flag | Default | Description |
-|---|---|---|
-| `--task` | — | Bundled task name (mutually exclusive with `--task_dir`) |
-| `--task_dir` | — | Path to an external task directory |
-| `--max_gen` | 3 | Number of self-improvement generations |
-| `--run_id` | 1 | Unique run identifier |
-| `--meta-agent-profile` | `default-meta` | Profile for the meta/feedback agent (name or path to a `.json`) |
-| `--target-agent-profile` | `default-target` | Profile for the target agent (name or path to a `.json`) |
-| `--no-web` | off | Don't auto-start the live dashboard during the run |
-| `--web-port` | 8000 | Port for the live dashboard (`--web-host` to change the bind host) |
-
-The model, agent impl, and provider for each agent come from a **profile** (see below). For example,
-to evaluate Kimi-K2.6 on Nebius as the target model:
+### Qwen3-4B
 
 ```bash
-export NEBIUS_API_KEY="..."        # + ANTHROPIC_API_KEY for the default meta agent
-sia run --task gpqa --target-agent-profile kimi-nebius-target --max_gen 5 --run_id 2
+python RSIFlow_4B/launch.py --check
+bash RSIFlow_4B/start_5round_600.sh --wait-for-gpus --run-dir /path/to/outputs/rsiflow-4b
 ```
 
-Full agent-impl, model, and API-key reference: [docs/configuration.md](docs/configuration.md). Hit a snag? [docs/troubleshooting.md](docs/troubleshooting.md).
-
-### Visualize runs
-
-A built-in web dashboard renders everything under `runs/`: the per-generation
-target-agent code (syntax-highlighted), meta/feedback prompts, improvement
-plans, evaluation scores (with an accuracy-across-generations chart and
-per-domain breakdown), execution trajectories, and logs.
+### Qwen3-8B
 
 ```bash
-sia web                          # serve ./runs at http://127.0.0.1:8000
-sia web --runs-dir ./runs --port 8080
+python RSIFlow_8B/launch.py --check
+bash RSIFlow_8B/start_5round_600.sh --wait-for-gpus --run-dir /path/to/outputs/rsiflow-8b
 ```
 
-It also starts automatically alongside `sia run` (disable with `--no-web`), so
-you can watch generations land live.
-
-| Flag | Default | Description |
-|---|---|---|
-| `--runs-dir` | `./runs` | Directory of runs to visualize |
-| `--host` | `127.0.0.1` | Bind host |
-| `--port` | 8000 | Bind port |
-| `--no-browser` | off | Don't open a browser window automatically |
-
-### Author your own profile
-
-A **provider** is an endpoint + credentials; a **profile** configures one agent role. A meta-agent
-profile bundles `(agent_impl, model, provider)`; a target-agent profile bundles `(model, provider,
-agent_reference)`. Both are JSON files — bundled defaults live in `sia/defaults/{providers,profiles}/`,
-and you can add your own under `./providers/` and `./profiles/` (or set `$SIA_PROVIDERS_DIR` /
-`$SIA_PROFILES_DIR`). No code change required.
+The shell entry points prepare the configured task data and invoke the same shared
+launcher. Set `RSIFLOW_PYTHON` to the Python interpreter in your environment. Use
+`--config /absolute/path/to/train.json` for a customized profile. Monitor either run:
 
 ```bash
-mkdir -p providers profiles
+bash RSIFlow/watch_meta.sh --run-dir /path/to/outputs/rsiflow-4b
 ```
 
-```jsonc
-// providers/my-endpoint.json   — an OpenAI-compatible provider
-{
-  "provider_id": "my-endpoint",
-  "name": "My Endpoint",
-  "client_kind": "openai",                 // anthropic | openai | google
-  "base_url": "https://api.example.com/v1",
-  "api_key_env": "MY_ENDPOINT_API_KEY"
-}
-```
+Use a new output directory for each backbone. Relaunching with the same directory
+resumes its existing run. Renamed packages, tool names, and bundle identifiers in
+this release are intended for fresh runs; previous run records require migration.
+No new GPU experiment or performance comparison is claimed by this source cleanup.
 
-```jsonc
-// profiles/my-target.json      — the target agent's model + provider + reference
-{
-  "profile_id": "my-target",
-  "name": "My model on My Endpoint",
-  "model": "vendor/my-model",
-  "provider_id": "my-endpoint",             // references the provider above
-  "agent_reference": "default"              // "default" = the task package's reference;
-                                            // or { "source": "./my_agent_dir/", "entrypoint": "main.py" }
-}
-```
+## Task Evolution
+
+### Step 1: Collect Feedback
+
+Run the current Task agent and collect scores, costs, and execution trajectories. The Meta agent reads representative successes and failures together with relevant prior experience.
+
+### Step 2: Select a Component
+
+The Meta agent chooses a harness, model, or artifact update based on the observed failures. The controller exposes operations for executing that choice and records their results.
+
+### Step 3: Construct a Candidate
+
+Harness updates follow module localization, improvement planning, and candidate generation. Model updates use successful trajectories for LoRA SFT. Artifact updates revise the task-side files selected by Meta. Candidate versions remain separate from the active parent.
+
+### Step 4: Validate and Compare
+
+Check candidate executability, then evaluate the parent and candidate on the same round tasks. The Meta agent applies the configured acceptance rule and records the selected Task state. A rejected candidate leaves the parent active and contributes evidence for the next attempt.
+
+### Step 5: Save the Selected State
+
+Save version references for the model, harness, artifacts, and Meta memory. These snapshots support resumption, later evaluation, and controlled component combinations. Model checkpoint files must be retained alongside their references.
+
+## Meta Evolution
+
+### Skill Retrieval and Maintenance
+
+Meta memory stores intervention cases, conditional rules, and diagnosed incidents. Before designing an update, the Meta agent retrieves relevant evidence and records how it uses that evidence. After paired evaluation, it can add support, retain counterexamples, revise a skill, merge related skills, or retire an ineffective one. See [META_SKILLS.md](RSIFlow/META_SKILLS.md).
+
+## Evaluation and Tests
+
+Run the selected workspace's offline tests with its runtime on the Python path:
 
 ```bash
-export MY_ENDPOINT_API_KEY="..."
-sia run --task gpqa --target-agent-profile my-target      # by name (resolves ./profiles/my-target.json)
-sia run --task gpqa --target-agent-profile ./profiles/my-target.json   # or by explicit path
+PYTHONPATH="$PWD/runtime:$PWD" python -m pytest -q tests
 ```
 
-The `agent_reference` is the seed the meta-agent starts from and the feedback-agent improves:
-`"default"` uses the task package's bundled reference, or supply your own with
-`{ "source": "./my_agent.py" }` (a single file) or `{ "source": "./dir/", "entrypoint": "main.py" }`
-(a multi-file directory the agent reads with its tools). A `requirements.txt` inside a directory
-reference is installed per generation.
-
-To run the **meta/feedback** agent elsewhere, give a meta profile a different `agent_impl`
-(`openhands` or `pydantic-ai`) and pass it with `--meta-agent-profile`. The `claude` agent impl is
-Anthropic-only. See [docs/configuration.md](docs/configuration.md) for the full schema and more examples.
-
----
-
-## Bring your own task
-
-Prepare a task directory with the layout below and point `--task_dir` at it:
-
-```
-my-task/
-├── data/
-│   ├── public/
-│   │   ├── task.md          # Task description — SIA reads this
-│   │   └── ...              # Inputs the agent is allowed to see
-│   └── private/             # Held-out eval data; never exposed to the agent
-└── reference/
-    ├── reference_target_agent.py     # Template; copy from sia/tasks/_shared/
-    └── SAMPLE_TASK_DESCRIPTIONS.md   # Optional: example tasks for the meta-agent
-```
-
-```bash
-sia run --task_dir ./my-task --max_gen 5 --run_id 1
-```
-
-**Or bring an MLE-Bench competition.** SIA can bootstrap a task directory directly from any [MLE-Bench](https://github.com/openai/mle-bench) competition — it pulls the dataset via the Kaggle API, sets up the public/private split, and drops in the reference agent template:
-
-```bash
-python -m sia.prepare_mlebench_dataset -c "spaceship-titanic"
-sia run --task_dir ./tasks/spaceship-titanic --max_gen 5 --run_id 1
-```
-
-Full step-by-step for both paths: [docs/walkthrough.md](docs/walkthrough.md).
-
----
-
-## Evaluation
-
-After every generation the orchestrator scores the target agent automatically and
-feeds the result into the next generation's feedback prompt — this is the signal
-the self-improvement loop optimizes against.
-
-1. The target agent writes its output into the generation directory (e.g. `gen_1/submission.csv`).
-2. The orchestrator runs the task's evaluator: `python evaluate.py --gen-dir gen_1/`.
-3. `evaluate.py` scores the output against the held-out ground truth in `data/private/`
-   and writes `gen_1/results.json` (or `evaluation_results.json`).
-4. Those metrics are injected into the feedback prompt and surfaced in `context.md`
-   and the [web dashboard](#visualize-runs) (accuracy-across-generations chart, per-domain breakdown).
-
-The four bundled tasks already ship an evaluator. For a **custom task**, drop an
-`evaluate.py` exposing an `evaluate()` function into `data/public/` — it decides the
-submission format, compares against `data/private/`, and returns a metrics dict.
-Test it standalone before a full run:
-
-```bash
-python my-task/data/public/evaluate.py --gen-dir runs/run_1/gen_1   # should write results.json
-```
-
-Full contract, return-format rules, and a complete example: [EVALUATION_GUIDE.md](EVALUATION_GUIDE.md).
-For metric robustness and anti-gaming checks, see [docs/evaluator_design.md](docs/evaluator_design.md).
-
-## Contributing
-
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, test/lint/type-check commands, and guidance for adding new tasks.
-
----
-
-## Further reading
-
-- [docs/architecture.md](docs/architecture.md) — directory layout, generation flow, prompt customization
-- [docs/walkthrough.md](docs/walkthrough.md) — detailed custom-task walkthrough
-- [docs/configuration.md](docs/configuration.md) — agent impls, models, API keys, CLI reference
-- [EVALUATION_GUIDE.md](EVALUATION_GUIDE.md) — writing `evaluate.py` for a custom task
-- [docs/evaluator_design.md](docs/evaluator_design.md) — evaluator robustness, private data separation, anti-gaming checks
-- [docs/troubleshooting.md](docs/troubleshooting.md) — common errors and fixes
+The suite covers skill maintenance, candidate construction and acceptance, frozen
+task cohorts, evaluation isolation, and equality of the two effective backbone
+configurations apart from the checkpoint. Full experiments additionally require
+external data, model checkpoints, benchmark services, and GPU/API access.
 
 ## Citation
 
-If you use SIA in your research, please cite:
+Citation details for RSI-Flow will be added after anonymous review.
 
-```bibtex
-@article{hebbar2026sia,
-  title   = {SIA: Self Improving AI with Harness \& Weight Updates},
-  author  = {Hebbar, Prannay and Manawat, Yogendra and Verboomen, Samuel and Ivanova, Alesia and Palanimalai, Selvam and Bhatia, Kunal and Baskaran, Vignesh},
-  journal = {arXiv preprint arXiv:2605.27276},
-  year    = {2026},
-  url     = {https://arxiv.org/abs/2605.27276}
-}
-```
+## Acknowledgments
 
-
-## RSI experiment GPU policy (2026-09-16)
-
-User-approved default for subsequent RSI experiments: use GPUs 0, 1, 2, and 3 for rollout replicas; when Meta autonomously chooses MODEL, release inference allocations, run four-rank SFT, then verify and reload the updated checkpoint on all four inference replicas. Do not permanently reserve one card for SFT. Preserve the declared effective batch, optimizer steps, sample selection, and budgets.
-
-Reuse the existing run/service/trainer entry points and the `gpu_execution: phased_four` setting. The deployed 128-task profile is `runs/method2_four_gpu_20260916/runtime/configs/envscaler-128-fixed-five.json`; its runtime contains the phase adapter and four-rank trainer. Legacy runtime copies do not implement this setting. Start subsequent experiments from this deployed source/profile, with a distinct run directory and recorded configuration; do not revert to legacy single-GPU training defaults.
-
-Maintain existing scripts/configuration instead of creating per-attempt launchers. Historical configurations and receipts remain immutable. Current T0 finishes under its recorded three-replica deployment before the already-armed four-GPU segment takes over; monitor `runs/method2_four_gpu_20260916/handoff_status.json` and `launch.json` for actual activation. Four-GPU configuration is not itself evidence that four-GPU rollout or SFT has executed.
+We thank the authors and maintainers of the runtime components, Task-agent
+templates, and benchmark toolkits used in this implementation. Original sources
+and retained attributions are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+See [LICENSE](LICENSE) and the included third-party license files.
