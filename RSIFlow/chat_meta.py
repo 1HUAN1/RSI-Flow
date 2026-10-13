@@ -15,13 +15,13 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run-dir', type=Path)
     parser.add_argument('--history', type=int, default=12)
-    parser.add_argument('--send', help='只发送一条消息并返回消息 ID，不启动另一个 Meta')
+    parser.add_argument('--send', help='Send one message and return its ID without starting another Meta agent')
     args = parser.parse_args(argv)
     config = read_json(Path(__file__).resolve().parent/'configs/train_180_a0_v1.json')
     run = (args.run_dir or Path(config['output_root'])/'runs'/config['run_name']).resolve()
     session = run/'meta_session'
     if not (session/'state.json').is_file():
-        parser.error(f'没有找到现有实验会话：{session}')
+        parser.error(f'Existing experiment session not found: {session}')
     mailbox = ChatMailbox(session/'chat')
     if args.send is not None:
         try:
@@ -42,8 +42,8 @@ def main(argv=None):
     stop = threading.Event()
     with output_context:
         view = EventView()
-        print(f'Meta 双向对话 | {run}\n输入消息后回车发送；/status 查看状态；/quit 退出界面。')
-        print('不会另起 Meta；退出界面不停止实验。消息在 Codex 的处理点被读取，不会取消已启动的 GPU 任务。')
+        print(f'Meta chat | {run}\nEnter a message to send; /status shows status; /quit closes the interface.')
+        print('Uses the existing Meta agent. Closing this interface leaves the experiment running. Messages are read at Codex processing points and do not cancel GPU jobs.')
         show_status(session, view)
         tail = EventTail(session/'app_server/events.jsonl')
         for event in tail.history(max(args.history, 0)):
@@ -64,7 +64,7 @@ def main(argv=None):
         try:
             while True:
                 try:
-                    line = (prompt.prompt('你 > ') if prompt else input('你 > ')).strip()
+                    line = (prompt.prompt('You > ') if prompt else input('You > ')).strip()
                 except (EOFError, KeyboardInterrupt):
                     break
                 if line in {'/quit', '/exit'}:
@@ -78,7 +78,7 @@ def main(argv=None):
         finally:
             stop.set()
             follower.join(timeout=2)
-        view.line('已关闭聊天界面；Meta 和实验继续运行。')
+        view.line('Chat closed; Meta and the experiment continue running.')
     return 0
 
 

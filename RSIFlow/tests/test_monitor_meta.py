@@ -14,10 +14,10 @@ def event(method, item=None, **params):
 
 def test_streaming_message_is_not_duplicated_at_completion():
     output=io.StringIO();view=EventView(output)
-    view.handle(event('item/agentMessage/delta',itemId='m',delta='正在检查'))
-    view.handle(event('item/agentMessage/delta',itemId='m',delta='候选。'))
-    view.handle(event('item/completed',{'type':'agentMessage','id':'m','text':'正在检查候选。'}))
-    assert output.getvalue().count('正在检查候选。')==1
+    view.handle(event('item/agentMessage/delta',itemId='m',delta='Checking the '))
+    view.handle(event('item/agentMessage/delta',itemId='m',delta='candidate.'))
+    view.handle(event('item/completed',{'type':'agentMessage','id':'m','text':'Checking the candidate.'}))
+    assert output.getvalue().count('Checking the candidate.')==1
 
 
 def test_monitor_does_not_show_system_prompts_or_raw_reasoning():
@@ -39,7 +39,7 @@ def test_monitor_shows_native_shell_and_file_edits_in_history(tmp_path):
         view.handle(record,replay=True)
     assert 'python check.py' in output.getvalue()
     assert 'NATIVE_CODING_OK' in output.getvalue()
-    assert '原生文件修改' in output.getvalue()
+    assert 'Native file change' in output.getvalue()
 
 
 def test_tool_receipt_status_overrides_successful_transport():
@@ -53,12 +53,12 @@ def test_tool_receipt_status_overrides_successful_transport():
 def test_partial_utf8_line_and_rotation_are_followed(tmp_path):
     path=tmp_path/'events.jsonl';tail=EventTail(path)
     assert tail.history(5)==[]
-    raw=json.dumps(event('item/agentMessage/delta',itemId='m',delta='你好'),ensure_ascii=False).encode()+b'\n'
-    cut=raw.index('你'.encode())+1
+    raw=json.dumps(event('item/agentMessage/delta',itemId='m',delta='café'),ensure_ascii=False).encode()+b'\n'
+    cut=raw.index('é'.encode())+1
     path.write_bytes(raw[:cut])
     assert tail.poll()==[]
     with path.open('ab') as stream:stream.write(raw[cut:])
-    assert tail.poll()[0]['params']['delta']=='你好'
+    assert tail.poll()[0]['params']['delta']=='café'
     assert tail.poll()==[]
     path.rename(tmp_path/'old.jsonl')
     path.write_bytes(raw)
@@ -80,4 +80,4 @@ def test_once_creates_no_files_and_starts_no_process(tmp_path,capsys):
     assert main(['--run-dir',str(run),'--once'])==0
     assert not run.exists()
     output=capsys.readouterr().out
-    assert '不在运行' in output and '只读' in output
+    assert 'not running' in output and 'read-only' in output

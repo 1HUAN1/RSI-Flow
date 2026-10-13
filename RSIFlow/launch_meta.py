@@ -4,7 +4,7 @@ The Codex app-server stays alive throughout the experiment and calls native
 experiment tools. Python transports tool results and preserves durable jobs.
 
 Offline check: ``python launch_meta.py --check``
-Actual run: ``python launch_meta.py --run-dir /root/data/RSI_iclr2027/rsiH/Rollout_logs/runs/<name>``
+Actual run: ``python launch_meta.py --run-dir /path/to/RSIFlow/Rollout_logs/runs/<name>``
 Use --detach for a server-side launcher independent of the invoking terminal.
 Re-run the same command to resume the native thread and existing jobs.
 """

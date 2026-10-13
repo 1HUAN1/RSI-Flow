@@ -38,14 +38,14 @@ class PipelineConfig(BaseModel):
     model_config = ConfigDict(extra='forbid')
     schema_version: Literal[1] = 1
     mode: Literal['dev', 'api_smoke', 'pilot', 'full'] = 'dev'
-    task_checkpoint: str = '/root/data/zh/huggingface/Qwen3-4B'
+    task_checkpoint: str = '/path/to/models/Qwen3-4B'
     task_base_url: str = 'http://127.0.0.1:8071/v1'
     task_enable_thinking: bool = False
     task_timeout: int = Field(default=180, ge=1, le=1800)
     seed_harness: str = 'seed_harness/rsiflow_base_manifest.json'
     initial_meta_bundle: str | None = None
     initial_meta_bundle_hash: str | None = Field(default=None, pattern=r'^[a-f0-9]{64}$')
-    source_manifest: str = '/root/data/RSI_iclr2027/dataset/manifests/dataset_manifest.json'
+    source_manifest: str = '/path/to/rsiflow-assets/dataset/manifests/dataset_manifest.json'
     data_dir: str = 'data/pipeline_v2'
     # Legacy callers may omit this; production launch always supplies the
     # dedicated external root from configs/train.json.
@@ -64,14 +64,14 @@ class PipelineConfig(BaseModel):
     inference_gpu: int = Field(default=0, ge=0, le=3)
     gpu_execution: Literal['dedicated', 'phased_four'] = 'dedicated'
     training_gpu: int = Field(default=1, ge=0, le=3)
-    trainer_python: str = '/root/data/conda/envs/rsiflow/bin/python'
+    trainer_python: str = '/path/to/envs/rsiflow/bin/python'
     training: dict = Field(default_factory=lambda: {'max_steps': 100, 'learning_rate': 2e-5,
         'batch_size': 1, 'gradient_accumulation_steps': 8, 'max_length': 8192, 'lora_rank': 16,
         'lora_target_modules': ['q_proj', 'k_proj', 'v_proj', 'o_proj'], 'save_steps': 50, 'seed': 42})
     supervision: Literal['final_assistant'] = 'final_assistant'
     external_corpus: str | None = None
-    envscaler_root: str = '/root/data/RSI_iclr2027/dataset/train/tool_use/envscaler'
-    envscaler_utils: str = '/root/data/RSI_iclr2027/dataset/evaluators/envscaler/EnvScaler/interact_with_env/envscaler_env/utils/env_util.py'
+    envscaler_root: str = '/path/to/rsiflow-assets/dataset/train/tool_use/envscaler'
+    envscaler_utils: str = '/path/to/rsiflow-assets/dataset/evaluators/envscaler/EnvScaler/interact_with_env/envscaler_env/utils/env_util.py'
     envscaler_commit: str = '96ae8b02dc0187c911b8e2101e7bb6904271597b'
     meta: MetaBackendConfig = Field(default_factory=MetaBackendConfig)
     experiment_scope: Literal['multidomain', 'envscaler_validation'] = 'multidomain'

@@ -24,9 +24,7 @@ Canonical flow is three prompts plus one executable validator:
    - Note: missing project dependencies are reported as `failed_environment` and are not sent to auto-fix.
    - Closed loop: validator runs first; if the verdict is `failed_static`, `failed_import`, or `failed_build`, a repair agent patches the harness and validation retries. If retries are exhausted, the report returns `needs_regeneration` for a new Stage 3 generation.
 
-The `参考/` directory keeps the original memory-system analysis/generation prompts
-used as style references. Other scripts and older prompt catalogs are legacy helpers;
-the main harness-production design is the four files above.
+The main harness-production flow uses the four files above.
 
 ## API Pipeline Script
 

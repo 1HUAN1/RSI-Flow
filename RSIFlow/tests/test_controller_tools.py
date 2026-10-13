@@ -257,7 +257,7 @@ def test_missing_snapshot_input_can_be_retried(tmp_path):
 
 
 def test_read_text_pages_unicode_and_bounds_default(tmp_path):
-    content = "前缀" + ("x" * 70000) + "终点"
+    content = "préfix" + ("x" * 70000) + "end"
     (tmp_path / "long.txt").write_text(content, encoding="utf-8")
     tools = ControllerTools(tmp_path)
     first = tools.execute({"operation": "read_text", "path": "long.txt"})

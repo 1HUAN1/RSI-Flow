@@ -84,7 +84,7 @@ export ACE_USER_BASE_URL="<your-user-simulator-api-base>"
 
 The checked-in Meta configuration uses a DeepSeek-V4.1-Flash endpoint through the Codex Responses interface. Configure the endpoint and model in the selected workspace's `configs/codex_host.toml` and model catalog.
 
-Before launching, update the local paths in the experiment JSON files: model checkpoint, Task data, retrieval index, evaluator installations, Python interpreters, and output directories. `RSIFLOW_PYTHON` selects the launcher interpreter; it does not replace interpreter paths stored in JSON configuration.
+This source release uses `/path/to/...` placeholders for machine-specific paths. Before launching, update the local paths in the experiment JSON files: model checkpoint, Task data, retrieval index, evaluator installations, Python interpreters, and output directories. `RSIFLOW_PYTHON` selects the launcher interpreter; it does not replace interpreter paths stored in JSON configuration.
 
 ## Benchmark Configuration
 

@@ -14,7 +14,7 @@ from importlib.resources import files as resource_files
 from pathlib import Path
 
 # Tasks that ship inside the wheel via package-data (rsiflow/tasks/<name>/...).
-BUNDLED_TASKS = ("gpqa", "lawbench", "longcot-chess", "spaceship-titanic")
+BUNDLED_TASKS = ("gpqa", "longcot-chess", "spaceship-titanic")
 
 
 class Names:

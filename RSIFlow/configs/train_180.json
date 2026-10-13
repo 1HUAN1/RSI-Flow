@@ -3,7 +3,7 @@
   "seed": 42,
   "runtime_source": "runtime",
   "base_config": "configs/base.json",
-  "dataset_root": "/root/data/RSI_iclr2027/dataset",
+  "dataset_root": "/path/to/rsiflow-assets/dataset",
   "environment_files": [
     "train/tool_use/envscaler/train/environments.jsonl",
     "train/tool_use/envscaler/heldout/environments.jsonl"
@@ -101,7 +101,7 @@
   "training_timeout_seconds": 604800,
   "max_wall_seconds": 2592000,
   "validation_config": "configs/validation.json",
-  "output_root": "/root/data/RSI_iclr2027/rsiH/Rollout_logs",
+  "output_root": "/path/to/RSIFlow/Rollout_logs",
   "run_name": "rsiflow_4b_ds41_180_fresh_v1",
   "meta_worker_socket": "/tmp/rsi_meta_joint_20260918_worker.sock",
   "meta_relay_socket": "/tmp/rsi_meta_joint_20260918_relay.sock",
@@ -155,8 +155,8 @@
     "hotpotqa_dev": 1000,
     "2wiki_dev": 1000
   },
-  "retrieval_index": "/root/data/RSI_iclr2027/rsiH/RSI_joint_training_20260918/runtime/data/joint_full/search.sqlite",
-  "validation_vault": "/root/data/RSI_iclr2027/rsiH/evaluation_vault/append_memory_1080_fast",
+  "retrieval_index": "/path/to/retrieval/search.sqlite",
+  "validation_vault": "/path/to/RSIFlow/evaluation_vault/append_memory_1080_fast",
   "rollout_collection_policy": "meta_one_component_one_candidate_strict_positive_gain",
   "training_rollouts_per_round": {
     "min": 180,
@@ -167,7 +167,7 @@
   "data_release": "rounds_540",
   "memory_policy": "append_component_skill_then_general_principle",
   "sequential_domains": false,
-  "frozen_data_dir": "/root/data/RSI_iclr2027/rsiH/RSIFlow/runtime/data/rounds_540",
+  "frozen_data_dir": "/path/to/RSIFlow/RSIFlow/runtime/data/rounds_540",
   "candidate_policy": "single_candidate_strict_positive_gain",
   "max_dataset_passes_per_stage": 2,
   "artifact_evaluation": "direct_submission",

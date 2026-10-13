@@ -527,7 +527,7 @@ class OpenAIServerModel(Model):
     def truncate_content_based_on_stop_sequences(content: str, stop_sequences: List[str]) -> str:
         if not stop_sequences:
             return content
-        # 在stop_seq之后截断content
+        # Truncate content at stop_seq
         for stop_seq in stop_sequences:
             index = content.find(stop_seq)
             if index != -1:
@@ -664,7 +664,7 @@ __all__ = [
 
 
 class LocalTransformersModel(Model):
-    """本地加载 Transformers 模型的类"""
+    """Load a local Transformers model"""
 
     def __init__(
         self,
@@ -675,16 +675,16 @@ class LocalTransformersModel(Model):
         **kwargs,
     ):
         if AutoModelForCausalLM is None or AutoTokenizer is None:
-            raise ImportError("请安装 transformers 和 torch: pip install transformers torch")
+            raise ImportError("Install transformers and torch: pip install transformers torch")
 
         super().__init__(**kwargs)
-        # 如果带有 local: 前缀，去掉它
+        # Remove the local: prefix when present
         self.model_id = model_id.replace("local:", "") if model_id.startswith("local:") else model_id
         self.device = device
         
         dtype = torch.float16 if torch_dtype == "float16" else torch.bfloat16
         
-        logger.info(f"正在从本地加载模型: {self.model_id}")
+        logger.info(f"Loading local model: {self.model_id}")
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=trust_remote_code)
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_id,
@@ -692,7 +692,7 @@ class LocalTransformersModel(Model):
             device_map=device,
             trust_remote_code=trust_remote_code
         )
-        logger.info("本地模型加载完成。")
+        logger.info("Local model loaded.")
 
     def __call__(
         self,

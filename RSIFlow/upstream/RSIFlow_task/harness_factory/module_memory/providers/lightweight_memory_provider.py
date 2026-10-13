@@ -1,4 +1,4 @@
-﻿"""
+"""
 Lightweight Memory Provider
 
 A streamlined, efficient dual-memory system:
@@ -215,7 +215,7 @@ class LightweightMemoryProvider(BaseMemoryProvider):
                 # Check if this is a new task (different query or no task initialized)
                 if (self.task_context["query"] is None or 
                     self.task_context["query"] != request.query):
-                    self.logger.info("馃攧 New task detected, resetting task context")
+                    self.logger.info("New task detected, resetting task context")
                     self.reset_task_context(query=request.query)
             
             # Increment step counter
@@ -227,7 +227,7 @@ class LightweightMemoryProvider(BaseMemoryProvider):
             # ===== BEGIN Phase: Provide long-term memory (only once) =====
             if request.status == MemoryStatus.BEGIN:
                 if not self.enable_longterm_provision:
-                    self.logger.info("馃毇 Long-term memory provision is disabled via config")
+                    self.logger.info("Long-term memory provision is disabled via config")
                 elif not self.task_context["longterm_provided"]:
                     self.logger.info("BEGIN phase: Retrieving long-term memory...")
                     longterm_guidance = self._retrieve_longterm_memory(request)
@@ -256,7 +256,7 @@ class LightweightMemoryProvider(BaseMemoryProvider):
                         self.logger.info("Short-term memory provided")
                 else:
                     self.logger.info(
-                        f"馃毇 FREQUENCY CONTROL: Skipping short-term memory "
+                        f"FREQUENCY CONTROL: Skipping short-term memory "
                         f"(steps since last: {steps_since_last} < {self.shortterm_provision_interval})"
                     )
             
@@ -341,12 +341,12 @@ class LightweightMemoryProvider(BaseMemoryProvider):
                 if query_key in self._task_snapshots:
                     del self._task_snapshots[query_key]
                     self.logger.info(
-                        f"馃棏锔? Deleted task snapshot: hash={query_key[:16]}..., "
+                        f"Deleted task snapshot: hash={query_key[:16]}..., "
                         f"query_preview={full_query[:80]}..."
                     )
                 else:
                     self.logger.warning(
-                        f"鈿狅笍  Snapshot to delete NOT found: hash={query_key[:16]}..."
+                        f"Snapshot to delete NOT found: hash={query_key[:16]}..."
                     )
             
             # Note: Do NOT reset task_context here! It may belong to another task already in progress.
@@ -543,7 +543,7 @@ class LightweightMemoryProvider(BaseMemoryProvider):
                 query_key = self._compute_signature(current_query)  # Reuse existing hash function
                 self._task_snapshots[query_key] = list(self.task_context["used_memory_ids"])
                 self.logger.info(
-                    f"馃摳 Saved task snapshot: hash={query_key[:16]}..., "
+                    f"Saved task snapshot: hash={query_key[:16]}..., "
                     f"{len(self.task_context['used_memory_ids'])} memory IDs, "
                     f"query_preview={current_query[:80]}..."
                 )
@@ -653,7 +653,7 @@ Extract ONLY task-related information that is truly critical:
 
 **EXTRACT (Task-Related Information):**
 - Task-specific constraints or requirements discovered during execution (e.g., "output must be in kilometers", "no commas allowed", "date format: YYYY-MM-DD")
-- Key data values or numerical results from the task (e.g., "Beijing coordinates: 39.9掳N, 116.4掳E", "total population: 21.5 million")
+- Key data values or numerical results from the task (e.g., "Beijing coordinates: 39.9 degrees N, 116.4 degrees E", "total population: 21.5 million")
 - Important discoveries or findings related to the task content (e.g., "source A contradicts source B", "calculation requires unit conversion")
 - Task-specific conditions or constraints (e.g., "must use data from 2023", "exclude weekends")
 
@@ -675,8 +675,8 @@ Extract ONLY task-related information that is truly critical:
 
 **Critical Filter:**
 Before extracting any item, ask: "Is this about the TASK CONTENT (data, constraints, results) or about SYSTEM INSTRUCTIONS (format, tools, workflow)?"
-- If about task content 鈫?EXTRACT
-- If about system instructions 鈫?SKIP
+- If about task content -> EXTRACT
+- If about system instructions -> SKIP
 
 **Your Response (JSON only):**"""
 
@@ -933,19 +933,19 @@ Only provide the JSON array, nothing else.
             if not used_memory_ids and query:
                 query_key = self._compute_signature(query)
                 self.logger.info(
-                    f"馃攳 Looking for snapshot: hash={query_key[:16]}..., "
+                    f"Looking for snapshot: hash={query_key[:16]}..., "
                     f"query_preview={query[:80]}..., "
                     f"available_snapshots={list(k[:16] + '...' for k in self._task_snapshots.keys())}"
                 )
                 used_memory_ids = self._task_snapshots.get(query_key, [])
                 if used_memory_ids:
                     self.logger.info(
-                        f"鉁?Restored {len(used_memory_ids)} memory IDs from task snapshot "
+                        f"Restored {len(used_memory_ids)} memory IDs from task snapshot "
                         f"(query hash={query_key[:16]}...)"
                     )
                 else:
                     self.logger.warning(
-                        f"鉂?Snapshot NOT found for hash={query_key[:16]}..."
+                        f"Snapshot NOT found for hash={query_key[:16]}..."
                     )
             
             if not used_memory_ids:
@@ -1015,7 +1015,7 @@ Only provide the JSON array, nothing else.
 - When/why to choose specific approaches
 - How to break down complex problems
 - Decision criteria for method selection
-Example: "When a task is making no progress, proactively try to get the answer from other third-party sources鈥攕ometimes this is even more effective."
+Example: "When a task is making no progress, proactively try to get the answer from other third-party sources -- sometimes this is even more effective."
 
 **2. OPERATIONAL (Tool Usage & Edge Case Handling):**
 - How to use tools/APIs effectively
@@ -1030,7 +1030,7 @@ Example: "When web_search fails, try alternative query phrasings or search terms
 }}
 
 **Rules:**
-- Focus on REUSABLE patterns (not task-specific data like "Beijing = 39.9掳N")
+- Focus on REUSABLE patterns (not task-specific data like "Beijing = 39.9 degrees N")
 - Strategic = planning/decisions, Operational = execution/handling
 - Only valuable insights, skip obvious points
 - Focus on the agent itself in the trajectory, ignore the guidance content of the memory system

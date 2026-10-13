@@ -12,6 +12,6 @@ def check_system_disk(reserve_bytes=0):
             'SYSTEM_DISK_BUDGET: used=' + str(usage.used)
             + '; reserve=' + str(reserve_bytes)
             + '; ceiling=' + str(SYSTEM_DISK_LIMIT_BYTES)
-            + '; move inactive RSI files to /root/data/RSI_iclr2027 before continuing')
+            + '; move inactive RSI files to /path/to/rsiflow-assets before continuing')
     return {'used_bytes': usage.used, 'reserve_bytes': reserve_bytes,
             'ceiling_bytes': SYSTEM_DISK_LIMIT_BYTES}

@@ -206,6 +206,6 @@ def validate_recursive_memory(candidate, meta, attempts, experience_id, boundary
     # Native materialize validates fast bindings, unchanged interfaces, residual
     # mismatch history, bounded graph edits and schema. Never bypass it here.
     
-    # Native Materialize 会验证快速绑定、未更改的接口、残留数据
-    # 不匹配历史记录、有界图编辑和模式。切勿在此处绕过它。
+    # Native Materialize validates fast bindings, unchanged interfaces, residual data,
+    # mismatched history, bounded graph edits, and schemas. Never bypass it here.
     return dict(skills=list(skills),principles=[r.principle_id for r in principles])

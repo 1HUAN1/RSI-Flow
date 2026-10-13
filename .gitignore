@@ -45,3 +45,15 @@ evaluation_vault/
 third_party/codex/
 third_party/codex-bin/
 deepseek-harness/
+
+# Additional private credential stores
+.netrc
+.npmrc
+.pypirc
+id_rsa
+id_ed25519
+*.p12
+*.pfx
+**/.aws/
+**/.ssh/
+**/.codex/

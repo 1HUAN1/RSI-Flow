@@ -11,10 +11,10 @@ from persistent_meta import CodexAppServer, write_json
 
 def test_queue_recovery_never_repeats_accepted_or_ambiguous_messages(tmp_path):
     mailbox=ChatMailbox(tmp_path/'chat')
-    first=mailbox.enqueue('正常消息')
-    accepted=mailbox.enqueue('已经接收')
+    first=mailbox.enqueue('Normal message')
+    accepted=mailbox.enqueue('Already accepted')
     mailbox.save({**accepted,'status':'accepted'})
-    sending=mailbox.enqueue('中断时正在投递')
+    sending=mailbox.enqueue('In flight at interruption')
     mailbox.save({**sending,'status':'sending'})
     mailbox.recover()
     assert [x['id'] for x in mailbox.pending('new-turn')]==[first['id']]
@@ -77,10 +77,10 @@ def test_delivery_error_is_a_message_receipt_not_an_experiment_exception(tmp_pat
 def test_send_cli_only_queues_message(tmp_path,capsys):
     run=tmp_path/'run'
     write_json(run/'meta_session/state.json',{'thread_id':'existing','interactive_chat':True})
-    assert main(['--run-dir',str(run),'--send','请汇报当前进展'])==0
+    assert main(['--run-dir',str(run),'--send','Please report current progress'])==0
     result=json.loads(capsys.readouterr().out)
     assert result['status']=='queued'
-    assert result['text']=='请汇报当前进展'
+    assert result['text']=='Please report current progress'
     assert list((run/'meta_session/chat').glob('*.json'))
     assert not (run/'meta_session/app_server').exists()
 
@@ -94,4 +94,4 @@ def test_quit_interface_does_not_change_experiment(tmp_path,monkeypatch,capsys):
     assert main(['--run-dir',str(run),'--history','0'])==0
     assert path.read_bytes()==original
     assert not (run/'meta_session/chat').exists()
-    assert '实验继续运行' in capsys.readouterr().out
+    assert 'experiment continue running' in capsys.readouterr().out

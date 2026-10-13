@@ -22,7 +22,7 @@ class ChatMailbox:
     def enqueue(self, text):
         text = text.strip()
         if not text:
-            raise ValueError('消息不能为空')
+            raise ValueError('Message must not be empty')
         return self.save({'id': f'{time.time_ns()}_{uuid.uuid4().hex[:8]}', 'text': text,
                           'status': 'queued', 'created_at': time.time()})
 
@@ -40,14 +40,14 @@ class ChatMailbox:
         for record in self.records():
             if record.get('status') == 'sending':
                 self.save({**record, 'status': 'delivery_unknown',
-                           'detail': '连接在确认前中断；请查看对话后决定是否重新发送。'})
+                           'detail': 'Connection lost before acknowledgement; inspect the conversation before resending.'})
 
     def pending(self, turn_id):
         return [record for record in self.records() if record.get('status') == 'queued'
                 and record.get('last_attempt_turn') != turn_id]
 
     def status_event(self, record):
-        labels = {'queued': '已排队', 'sending': '发送中', 'accepted': 'Codex 已接收（不等于已执行）',
-                  'delivery_error': '发送失败', 'delivery_unknown': '投递状态待确认'}
-        return f"消息 {record['id']} | {labels.get(record['status'], record['status'])}" + (
+        labels = {'queued': 'Queued', 'sending': 'Sending', 'accepted': 'Accepted by Codex (execution not confirmed)',
+                  'delivery_error': 'Delivery failed', 'delivery_unknown': 'Delivery unknown'}
+        return f"Message {record['id']} | {labels.get(record['status'], record['status'])}" + (
             ' | ' + str(record['detail']) if record.get('detail') else '')

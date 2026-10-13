@@ -240,34 +240,34 @@ def build_overall_assessment(metrics: dict[str, Any], type_breakdown: dict[str, 
     framework_name = metrics["framework_name"]
 
     if acc >= 0.48 and token_avg <= 45000:
-        opening = "整体上这是一个相对均衡的 harness，质量提升是实打实的，同时成本还没有失控。"
+        opening = "Overall, this harness balances improved quality with controlled cost."
     elif acc >= 0.45 and token_avg > 60000:
-        opening = "整体上更像是质量略有提升但成本明显升高的 harness，收益和代价之间并不划算。"
+        opening = "Overall, quality improves slightly but cost rises substantially; the tradeoff is unfavorable."
     elif acc < 0.35 and avg_actions <= 1.5:
-        opening = "整体上属于成本压得很低、但收益也比较弱的 harness，主要短板是推理深度不够。"
+        opening = "Overall, this harness keeps costs low but achieves limited gains, with insufficient reasoning depth."
     else:
-        opening = "整体上这是一个中等表现的 harness，既有保留价值，也有很明确的结构瓶颈。"
+        opening = "Overall, this harness performs moderately, with useful features and clear structural bottlenecks."
 
     stronger_types = [name for name, stats in type_breakdown.items() if float(stats["accuracy"]) >= max(acc, 0.45)]
     weaker_types = [name for name, stats in type_breakdown.items() if float(stats["accuracy"]) <= min(acc - 0.15, 0.15)]
 
     if stronger_types:
-        fit_text = f"它更适合 {', '.join(stronger_types[:3])} 这类证据链清晰、后处理较轻的题。"
+        fit_text = f"It better suits tasks such as {', '.join(stronger_types[:3])}, with clear evidence chains and little postprocessing."
     else:
-        fit_text = "它更适合实体链较短、最后一步只需要简单变换的题。"
+        fit_text = "It better suits short entity chains followed by a simple final transformation."
 
     if weaker_types:
-        weak_text = f"它当前不太适合 {', '.join(weaker_types[:3])} 这类对字符串、时间或格式统一要求更高的题。"
+        weak_text = f"It currently struggles with tasks such as {', '.join(weaker_types[:3])}, requiring consistent strings, times, or output formats."
     else:
-        weak_text = "它对强格式约束、复杂字符串处理或时间换算类题目仍然偏脆。"
+        weak_text = "It remains fragile under strict formatting, complex string processing, or time conversion."
 
     if signals["short_action_failures"] >= max(8, int(signals["failure_count"] * 0.45)):
         close_text = (
-            f"从行为上看，{framework_name} 的平均 action 只有 {avg_actions:.2f}，很多失败更像是还没走完整条 hop 链就提前提交了答案。"
+            f"Behaviorally, {framework_name} averages only {avg_actions:.2f} actions; many failures suggest submission before completing the hop chain."
         )
     else:
         close_text = (
-            f"从行为上看，path score ({path:.4f}) 明显高于 exact accuracy ({acc:.4f})，说明它经常能找到部分正确中间结论，但最后汇总和提交仍然不稳。"
+            f"Behaviorally, path score ({path:.4f}) exceeds exact accuracy ({acc:.4f}), suggesting partially correct intermediate reasoning but unreliable final synthesis and submission."
         )
 
     return " ".join([opening, fit_text, weak_text, close_text])
@@ -276,24 +276,24 @@ def build_overall_assessment(metrics: dict[str, Any], type_breakdown: dict[str, 
 def build_failure_patterns(metrics: dict[str, Any], type_breakdown: dict[str, dict[str, float | int]], signals: dict[str, Any]) -> list[str]:
     bullets: list[str] = []
     if metrics["path_score"] - metrics["answer_correct"] >= 0.12:
-        bullets.append("不少失败不是前面 hop 全错，而是中间链条部分正确、最后答案提交或汇总出错；这通常意味着 final synthesis 或 answer canonicalization 比检索本身更脆。")
+        bullets.append("Many failures retain partially correct hop chains but fail at final synthesis or submission; answer canonicalization may be weaker than retrieval.")
     if signals["short_action_failures"] >= max(8, int(signals["failure_count"] * 0.45)):
-        bullets.append("失败样本里有较高比例属于低 action 深度案例，说明这个 harness 经常过早终止，没有给 verify 或 repair 留出必要回合。")
+        bullets.append("Many failures have low action depth, suggesting early termination without enough verification or repair turns.")
     if signals["avg_failed_tool_calls"] >= signals["avg_success_tool_calls"] + 1.0:
-        bullets.append("另一类失败则表现为无效探索过多：失败样本的平均 tool call 明显高于成功样本，说明系统在不确定时会反复试探，但缺少真正的收敛机制。")
+        bullets.append("Other failures involve excessive ineffective exploration: failed samples use more tool calls than successful ones, suggesting weak convergence under uncertainty.")
     if signals["error_markers"]:
         rendered = ", ".join(f"{name}={count}" for name, count in signals["error_markers"].items())
-        bullets.append(f"工具契约错误也是一部分稳定噪声，当前可见的错误标记包括 {rendered}，说明参数名、必填字段或 schema 理解还不够稳。")
+        bullets.append(f"Tool-contract errors also recur: observed markers include {rendered}, suggesting unreliable argument names, required fields, or schema interpretation.")
     weakest = sorted(type_breakdown.items(), key=lambda item: float(item[1]["accuracy"]))[:2]
     if weakest:
         rendered = ", ".join(f"{name}({float(stats['accuracy']):.2f})" for name, stats in weakest)
-        bullets.append(f"从题型分布看，当前最脆弱的通常是 {rendered}；这类题更依赖字符串处理、时间换算或最终答案格式对齐。")
+        bullets.append(f"The weakest task types are usually {rendered}, which rely more on string processing, time conversion, or final-answer formatting.")
     if signals["parallel_failures"] >= max(8, int(signals["failure_count"] * 0.35)):
-        bullets.append("并行分支参与的失败占比不低，说明当前分支拆分和分支回收逻辑容易在依赖还没满足时就把子任务放出去，最后再被协调层错误合成。")
+        bullets.append("Parallel branches appear in many failures, suggesting premature dispatch before dependencies are ready and incorrect aggregation by the coordinator.")
     if signals["worker_failures"] >= max(8, int(signals["failure_count"] * 0.35)):
-        bullets.append("worker 型失败也比较明显，核心问题往往不是 worker 完全不会做，而是 coordinator 给出的子任务边界不够清晰，导致 worker 在缺少上游实体时被迫猜测。")
+        bullets.append("Worker failures are also common; unclear subtask boundaries may force workers to guess missing upstream entities.")
     if not bullets:
-        bullets.append("没有单一压倒性的失败模式，更像是若干中小问题叠加拉低了最终准确率；这种 harness 更适合小步迭代，而不是整体推翻重做。")
+        bullets.append("No single failure mode dominates. Several smaller issues likely reduce accuracy; incremental revision may be appropriate.")
     return bullets[:5]
 
 
@@ -301,29 +301,29 @@ def build_module_diagnosis(structure: dict[str, str], metrics: dict[str, Any], s
     path_gap = metrics["path_score"] - metrics["answer_correct"]
     diagnosis: dict[str, dict[str, str]] = {}
 
-    planning_help = structure["planning"] or "当前 harness 有明确的 planning 层。"
+    planning_help = structure["planning"] or "The harness has an explicit planning layer."
     if path_gap >= 0.1:
-        planning_hurt = "planning 往往能把中间路径拆出来，但没有把这些中间结论稳定地约束到最终答案，因此出现了明显的 path-correct / final-wrong 落差。"
+        planning_hurt = "Planning often decomposes intermediate paths but fails to constrain the final answer, leaving a path-correct / final-wrong gap."
     elif metrics["average_actions"] <= 1.5:
-        planning_hurt = "planning 虽然存在，但后续执行深度不够，计划没有真正转化为逐步落实的行动链。"
+        planning_hurt = "Planning is present, but execution is too shallow to carry out the plan step by step."
     else:
-        planning_hurt = "planning 的帮助还不够稳定，更多时候只是提供了一个起手框架，而不是持续约束后续执行。"
+        planning_hurt = "Planning provides an initial framework without consistently guiding subsequent execution."
 
-    action_help = structure["action"] or "当前 harness 有明确的 action 层。"
+    action_help = structure["action"] or "The harness has an explicit action layer."
     if signals["short_action_failures"] >= max(8, int(signals["failure_count"] * 0.45)):
-        action_hurt = "action 层最大的短板是过早终止，很多失败像是一轮执行后就直接提交，没有设置 verify 或 repair 回合。"
+        action_hurt = "The action layer often terminates early, submitting after one pass without verification or repair."
     elif signals["avg_failed_tool_calls"] >= signals["avg_success_tool_calls"] + 1.0:
-        action_hurt = "action 层在不确定时容易陷入低价值探索，失败样本的 tool call 偏多，说明停止规则和收敛机制还不够强。"
+        action_hurt = "Under uncertainty, the action layer explores low-value alternatives with excessive calls and weak stopping rules."
     else:
-        action_hurt = "action 层能完成基本执行，但在多跳依赖场景下还缺少更强的证据闭环。"
+        action_hurt = "The action layer handles basic execution but needs stronger evidence checks across multihop dependencies."
 
-    memory_help = structure["memory"] or "当前 harness 带有 memory 层。"
+    memory_help = structure["memory"] or "The harness includes a memory layer."
     if signals["parallel_failures"] > 0 or signals["worker_failures"] > 0:
-        memory_hurt = "memory 更像是在辅助协调层讲故事，而不是提供对当前 hop 真正有约束力的工具契约或实体缓存，所以在并行或委派场景里容易放大错误。"
+        memory_hurt = "Memory may support coordinator narration more than grounded tool contracts or entity caching, amplifying errors during parallel or delegated execution."
     elif path_gap >= 0.1:
-        memory_hurt = "memory 可能帮助了中间分解，但没有稳定改善最终提交，说明它更像提供提示感，而不是提供强约束。"
+        memory_hurt = "Memory may aid decomposition without reliably improving final submission, suggesting weak operational constraints."
     else:
-        memory_hurt = "memory 的增益目前不够显著，还没有明显改变这个 harness 的主要失败模式。"
+        memory_hurt = "Memory gains are limited and have not clearly changed the main failure modes."
 
     diagnosis["Planning"] = {"help": planning_help, "hurt": planning_hurt}
     diagnosis["Action"] = {"help": action_help, "hurt": action_hurt}

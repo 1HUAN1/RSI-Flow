@@ -79,6 +79,6 @@ def prepare(root, data_root):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--data-root', type=Path, default=Path('/root/data/RSI_iclr2027/dataset'))
+    parser.add_argument('--data-root', type=Path, default=Path('/path/to/rsiflow-assets/dataset'))
     args = parser.parse_args()
     print(json.dumps(prepare(Path(__file__).resolve().parents[1], args.data_root), indent=2))

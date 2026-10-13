@@ -59,9 +59,9 @@ def receipt_summary(item):
             if value.get(key) is not None:
                 details.append(f'{key}={brief(value[key])}')
         if isinstance(value.get('result'), dict):
-            details.append('任务结果=' + str(value['result'].get('status', '?')))
+            details.append('job result=' + str(value['result'].get('status', '?')))
         if text.startswith('Tool receipt at '):
-            details.append('\n    回执：' + text.split('\n', 1)[0][len('Tool receipt at '):].rstrip(':'))
+            details.append('\n    Receipt: ' + text.split('\n', 1)[0][len('Tool receipt at '):].rstrip(':'))
         return ' | '.join(details)
     return f"transport={item.get('status')} success={item.get('success')}"
 
@@ -100,25 +100,25 @@ class EventView:
                 self.stream = None
             self.streamed.discard(item.get('id'))
         elif method == 'item/started' and item.get('type') == 'dynamicToolCall':
-            self.line('调用 → ' + tool_name(item), stamp)
+            self.line('Call -> ' + tool_name(item), stamp)
         elif method == 'item/completed' and item.get('type') == 'dynamicToolCall':
-            self.line('返回 ← ' + item.get('tool', '?') + ' | ' + receipt_summary(item), stamp)
+            self.line('Return <- ' + item.get('tool', '?') + ' | ' + receipt_summary(item), stamp)
         elif method in {'item/started', 'item/completed'} and item.get('type') == 'commandExecution':
-            self.line('原生命令 | ' + brief(item.get('command', ''), 600)
+            self.line('Native command | ' + brief(item.get('command', ''), 600)
                       + ' | ' + str(item.get('status', '?'))
                       + ' | exit=' + str(item.get('exitCode')), stamp)
             if method == 'item/completed' and item.get('aggregatedOutput'):
                 self.line(brief(item['aggregatedOutput'], 2000), stamp)
         elif method in {'item/started', 'item/completed'} and item.get('type') == 'fileChange':
             paths = [change.get('path', '?') for change in item.get('changes', [])]
-            self.line('原生文件修改 | ' + str(item.get('status', '?'))
+            self.line('Native file change | ' + str(item.get('status', '?'))
                       + ' | ' + brief(', '.join(paths), 1200), stamp)
         elif method == 'turn/started':
-            self.line('会话开始工作 | turn=' + str(params.get('turn', {}).get('id')), stamp)
+            self.line('Turn started | turn=' + str(params.get('turn', {}).get('id')), stamp)
         elif method == 'turn/completed':
-            self.line('本次 turn 结束（不等于实验结束） | ' + str(params.get('turn', {}).get('status')), stamp)
+            self.line('Turn ended (experiment may continue) | ' + str(params.get('turn', {}).get('status')), stamp)
         elif method in {'error', 'warning', 'configWarning'}:
-            self.line('提示/错误：' + brief(json.dumps(params, ensure_ascii=False), 800), stamp)
+            self.line('Notice/error: ' + brief(json.dumps(params, ensure_ascii=False), 800), stamp)
 
 
 class EventTail:
@@ -186,9 +186,9 @@ def show_status(session, view):
     pid = state.get('codex_pid')
     process_state, _ = process_info(pid)
     alive = process_state is not None and process_state != 'Z'
-    view.line(f"状态 | Codex PID={pid} {'存活' if alive else '不在运行'}({process_state or '-'})"
-              f" | launcher={state.get('launcher_pid')} | 会话记录={state.get('status', '尚无记录')}"
-              f" | 阶段={progress.get('current_stage', '?')} | 下一产物={progress.get('next_milestone', '?')}")
+    view.line(f"Status | Codex PID={pid} {'alive' if alive else 'not running'}({process_state or '-'})"
+              f" | launcher={state.get('launcher_pid')} | session={state.get('status', 'no record')}"
+              f" | stage={progress.get('current_stage', '?')} | next artifact={progress.get('next_milestone', '?')}")
     print('    thread=' + str(state.get('thread_id', '?')), file=view.output, flush=True)
     for path in sorted((session/'jobs').glob('*/job.json')):
         job = read_json(path)
@@ -197,38 +197,38 @@ def show_status(session, view):
         running = identity is not None and identity == job.get('process_start') and actual_state != 'Z'
         if result_path.is_file():
             result = read_json(result_path)
-            status = '已有回执，任务结果=' + str(result.get('status', '?'))
+            status = 'Receipt available, job result=' + str(result.get('status', '?'))
         else:
-            status = '运行中，尚无最终回执' if running else '进程已退出，未发现最终回执'
-        view.line(f"后台任务 | {job.get('request', {}).get('operation')} | pid={job.get('pid')}"
+            status = 'Running; no final receipt yet' if running else 'Process exited without a final receipt'
+        view.line(f"Background job | {job.get('request', {}).get('operation')} | pid={job.get('pid')}"
                   f" | {status} | job={job.get('job_id')}")
     log = session/'app_server/events.jsonl'
     if log.exists():
-        view.line(f'事件日志距最近写入 {int(max(0, time.time()-log.stat().st_mtime))} 秒；存活不代表任务成功。')
+        view.line(f'Event log last written {int(max(0, time.time()-log.stat().st_mtime))} seconds ago; a live process does not imply success.')
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run-dir', type=Path)
-    parser.add_argument('--history', type=int, default=12, help='显示最近 N 条可见消息/回执；0 为只看新增')
-    parser.add_argument('--once', action='store_true', help='打印一次状态和历史后退出')
-    parser.add_argument('--heartbeat', type=float, default=30, help='状态刷新间隔（秒）')
+    parser.add_argument('--history', type=int, default=12, help='Show the last N visible messages/receipts; 0 shows new events only')
+    parser.add_argument('--once', action='store_true', help='Print status and history once, then exit')
+    parser.add_argument('--heartbeat', type=float, default=30, help='Status refresh interval in seconds')
     args = parser.parse_args(argv)
     if args.history < 0 or args.heartbeat <= 0:
-        parser.error('history 必须 >= 0，heartbeat 必须 > 0')
+        parser.error('history must be >= 0 and heartbeat must be > 0')
     config = read_json(Path(__file__).resolve().parent/'configs/train_180_a0_v1.json')
     run = args.run_dir or Path(config['output_root'])/'runs'/config['run_name']
     session = run.resolve()/'meta_session'
     view = EventView()
-    print(f'RSIFlow Meta 对话监控（只读）\n运行目录：{run}\nCtrl+C 仅退出监控，不会停止 Meta 或 GPU 任务。', flush=True)
-    print('显示可见回复与工具事件，不显示内部推理；不会调用 API、重启实验或写入状态。', flush=True)
+    print(f'RSIFlow Meta conversation monitor (read-only)\nRun directory: {run}\nCtrl+C exits the monitor without stopping Meta or GPU jobs.', flush=True)
+    print('Displays visible replies and tool events. Does not expose internal reasoning, call APIs, restart the experiment, or write state.', flush=True)
     show_status(session, view)
     tail = EventTail(session/'app_server/events.jsonl')
     for event in tail.history(args.history):
         view.handle(event, replay=True)
     if args.once:
         return 0
-    view.line('开始跟随新增对话……')
+    view.line('Following new conversation events...')
     next_status = time.monotonic() + args.heartbeat
     try:
         while True:
@@ -239,7 +239,7 @@ def main(argv=None):
                 next_status = time.monotonic() + args.heartbeat
             time.sleep(.5)
     except KeyboardInterrupt:
-        view.line('已退出监控；实验未停止。')
+        view.line('Monitor closed; experiment continues.')
     return 0
 
 

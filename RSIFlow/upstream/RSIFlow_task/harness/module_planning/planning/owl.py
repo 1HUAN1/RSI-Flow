@@ -1,4 +1,4 @@
-﻿import textwrap
+import textwrap
 from typing import Any, Callable, Dict, List, Optional
 
 from jinja2 import StrictUndefined, Template
@@ -56,7 +56,7 @@ class OwlPlanning(BasePlanning):
             }],
         }
 
-        # User prompt (planning.task_input) 鈥?keep it minimal and stable
+        # User prompt (planning.task_input) -- keep it minimal and stable
         user_msg = {
             "role": MessageRole.USER,
             "content": [{

@@ -255,13 +255,6 @@ async def step(self, action_tokens: list[int], extra=None):
         else:
             format_reward = -0.5  # Penalize wrong format
 
-    # LawBench: Must extract to valid charge label
-    elif self.task_type == "lawbench":
-        if can_extract_charge_label(response_text):  # Must match one of 191 classes
-            format_reward = +0.5
-        else:
-            format_reward = -0.5
-
     # Chess: Must output "solution = [...] or solution = <number>"
     elif self.task_type == "chess":
         if has_solution_field(response_text):  # solution = ...

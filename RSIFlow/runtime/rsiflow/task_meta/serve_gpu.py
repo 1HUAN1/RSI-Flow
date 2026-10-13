@@ -16,7 +16,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from rsiflow.task_meta.storage import checkpoint_manifest
 from rsiflow.task_meta.task_client import qwen_message
 
-BASE_MODEL = os.environ.get("TASK_META_BASE_MODEL", "/root/data/zh/huggingface/Qwen2.5-3B-Instruct")
+BASE_MODEL = os.environ.get("TASK_META_BASE_MODEL", "/path/to/models/Qwen2.5-3B-Instruct")
 RUNS_ROOT = Path(os.environ.get(
     "TASK_META_RUNS_ROOT", Path(__file__).resolve().parents[2] / "runs")).resolve()
 DEVICE = "cuda:0"  # CUDA_VISIBLE_DEVICES chooses the physical GPU.

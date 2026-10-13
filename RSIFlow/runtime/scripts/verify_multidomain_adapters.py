@@ -31,7 +31,7 @@ def _first(path: Path, domain: str, source: str) -> TaskRecord:
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data-root", type=Path, default=Path("/root/data/RSI_iclr2027/dataset"))
+    parser.add_argument("--data-root", type=Path, default=Path("/path/to/rsiflow-assets/dataset"))
     parser.add_argument("--search-index", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--envscaler-utils", type=Path)

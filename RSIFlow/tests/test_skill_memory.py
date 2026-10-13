@@ -86,7 +86,7 @@ def test_legacy_skill_principle_compatibility_and_inherited_triggers(tmp_path):
 
 def test_budget_and_paginated_read_do_not_remove_original_content(tmp_path):
     memory = SkillMemory(tmp_path / "skills.jsonl")
-    memory.append([case("skill.HARNESS.long", .1, mechanism="轨迹引用" * 20000)])
+    memory.append([case("skill.HARNESS.long", .1, mechanism="trace reference" * 20000)])
     result = memory.retrieve({"domains": ["searchqa"]}, max_chars=2200)
     assert len(json.dumps(result, ensure_ascii=False)) <= 2200
     assert "skill.HARNESS.long" in result["omitted_detail_ids"]
@@ -97,7 +97,7 @@ def test_budget_and_paginated_read_do_not_remove_original_content(tmp_path):
         if page["next_offset_chars"] is None:
             break
         offset = page["next_offset_chars"]
-    assert json.loads("".join(chunks))[0]["mechanism"] == "轨迹引用" * 20000
+    assert json.loads("".join(chunks))[0]["mechanism"] == "trace reference" * 20000
 
 
 def test_malformed_historical_line_is_reported_and_retrieval_continues(tmp_path):
